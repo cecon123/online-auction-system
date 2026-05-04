@@ -1254,24 +1254,12 @@ cd online-auction-system
 ### 16.3 Build toàn bộ
 
 ```bash
-mvn clean test
+mvn clean install
 ```
 
-### 16.4 Package toàn bộ
-
-```bash
-mvn clean package
-```
-
-### 16.5 Chạy server
+### 16.4 Chạy server
 
 Sau khi package:
-
-```bash
-java -jar server/target/auction-server.jar
-```
-
-Hoặc chạy bằng Maven nếu cấu hình plugin:
 
 ```bash
 mvn -pl server exec:java
@@ -1280,7 +1268,7 @@ mvn -pl server exec:java
 ### 16.6 Chạy client JavaFX
 
 ```bash
-mvn -pl client javafx:run
+mvn -pl server exec:java
 ```
 
 Nếu client cần build kèm common:

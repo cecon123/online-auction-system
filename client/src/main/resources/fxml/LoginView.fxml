@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.auction.client.controller.LoginController"
+           styleClass="login-root">
+
+    <VBox styleClass="login-card" spacing="16" maxWidth="420" maxHeight="500">
+        <padding>
+            <Insets top="32" right="32" bottom="32" left="32"/>
+        </padding>
+
+        <Label text="⚖" styleClass="login-logo"/>
+        <Label text="Online Auction System" styleClass="login-title"/>
+        <Label text="BIDDER · SELLER · ADMIN" styleClass="login-subtitle"/>
+
+        <VBox spacing="6">
+            <Label text="Username" styleClass="form-label"/>
+            <TextField fx:id="usernameField"
+                       promptText="Enter your username"
+                       styleClass="text-field"/>
+        </VBox>
+
+        <VBox spacing="6">
+            <Label text="Password" styleClass="form-label"/>
+            <PasswordField fx:id="passwordField"
+                           promptText="Enter your password"
+                           styleClass="password-field"/>
+        </VBox>
+
+        <HBox fx:id="errorBox" styleClass="error-box" spacing="8">
+            <Label text="!" styleClass="error-icon"/>
+            <Label fx:id="errorLabel" wrapText="true" styleClass="error-text"/>
+        </HBox>
+
+        <Button text="Login"
+                onAction="#handleLogin"
+                maxWidth="Infinity"
+                styleClass="primary-button"/>
+
+        <Button text="Create Account"
+                onAction="#handleCreateAccount"
+                maxWidth="Infinity"
+                styleClass="secondary-button"/>
+    </VBox>
+</StackPane>

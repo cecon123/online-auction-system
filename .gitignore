@@ -1,0 +1,36 @@
+# Maven
+target/
+*.class
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# SQLite runtime database
+*.db
+*.sqlite
+*.sqlite3
+
+# JavaFX / local runtime
+out/
+build/
+
+# Environment
+.env
