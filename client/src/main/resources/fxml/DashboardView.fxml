@@ -1,86 +1,89 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
+<?xml version="1.0" encoding="UTF-8" ?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.TilePane?>
 <?import javafx.scene.layout.VBox?>
-
-<VBox xmlns="http://javafx.com/javafx"
-      xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.auction.client.controller.DashboardController"
-      spacing="24"
-      styleClass="page">
+<VBox
+    xmlns="http://javafx.com/javafx"
+    xmlns:fx="http://javafx.com/fxml"
+    fx:controller="com.auction.client.controller.DashboardController"
+    spacing="24"
+    styleClass="page"
+>
 
     <padding>
-        <Insets top="32" right="32" bottom="32" left="32"/>
+        <Insets top="32" right="32" bottom="32" left="32" />
     </padding>
 
     <VBox spacing="6">
-        <Label text="Overview" styleClass="page-title"/>
-        <Label text="Track your auction portfolio and recent market activity." styleClass="page-subtitle"/>
+        <Label text="Overview" styleClass="page-title" />
+        <Label
+            text="Track your auction portfolio and recent market activity."
+            styleClass="page-subtitle"
+        />
     </VBox>
 
     <HBox spacing="16">
         <VBox styleClass="card" spacing="8" prefWidth="220">
             <padding>
-                <Insets top="18" right="18" bottom="18" left="18"/>
+                <Insets top="18" right="18" bottom="18" left="18" />
             </padding>
-            <Label text="ACTIVE AUCTIONS" styleClass="form-label"/>
-            <Label text="124" styleClass="stat-number"/>
-            <Label text="+12 since yesterday" styleClass="success-text"/>
+            <Label text="ACTIVE AUCTIONS" styleClass="form-label" />
+            <Label text="124" styleClass="stat-number" />
+            <Label text="+12 since yesterday" styleClass="success-text" />
         </VBox>
 
         <VBox styleClass="card" spacing="8" prefWidth="220">
             <padding>
-                <Insets top="18" right="18" bottom="18" left="18"/>
+                <Insets top="18" right="18" bottom="18" left="18" />
             </padding>
-            <Label text="MY ACTIVE BIDS" styleClass="form-label"/>
-            <Label text="18" styleClass="stat-number"/>
-            <Label text="Across 5 categories" styleClass="page-subtitle"/>
+            <Label text="MY ACTIVE BIDS" styleClass="form-label" />
+            <Label text="18" styleClass="stat-number" />
+            <Label text="Across 5 categories" styleClass="page-subtitle" />
         </VBox>
 
         <VBox styleClass="card" spacing="8" prefWidth="220">
             <padding>
-                <Insets top="18" right="18" bottom="18" left="18"/>
+                <Insets top="18" right="18" bottom="18" left="18" />
             </padding>
-            <Label text="CURRENTLY WINNING" styleClass="form-label"/>
-            <Label text="7" styleClass="stat-number"/>
-            <Label text="Outbid on 2 items" styleClass="error-text"/>
+            <Label text="CURRENTLY WINNING" styleClass="form-label" />
+            <Label text="7" styleClass="stat-number" />
+            <Label text="Outbid on 2 items" styleClass="error-text" />
         </VBox>
     </HBox>
 
-    <Label text="Featured Lots" styleClass="section-title"/>
+    <Label text="Featured Lots" styleClass="section-title" />
 
     <TilePane hgap="16" vgap="16" prefColumns="3">
         <VBox styleClass="card" spacing="8" prefWidth="260">
             <padding>
-                <Insets top="18" right="18" bottom="18" left="18"/>
+                <Insets top="18" right="18" bottom="18" left="18" />
             </padding>
-            <Label text="LOT #4920" styleClass="form-label"/>
-            <Label text="Patek Philippe Nautilus" styleClass="card-title"/>
-            <Label text="Current Bid" styleClass="page-subtitle"/>
-            <Label text="$125,000" styleClass="money-large"/>
+            <Label text="LOT #4920" styleClass="form-label" />
+            <Label text="Patek Philippe Nautilus" styleClass="card-title" />
+            <Label text="Current Bid" styleClass="page-subtitle" />
+            <Label text="\$125,000" styleClass="money-large" />
         </VBox>
 
         <VBox styleClass="card" spacing="8" prefWidth="260">
             <padding>
-                <Insets top="18" right="18" bottom="18" left="18"/>
+                <Insets top="18" right="18" bottom="18" left="18" />
             </padding>
-            <Label text="LOT #4921" styleClass="form-label"/>
-            <Label text="1964 Aston Martin DB5" styleClass="card-title"/>
-            <Label text="Current Bid" styleClass="page-subtitle"/>
-            <Label text="$850,000" styleClass="money-large"/>
+            <Label text="LOT #4921" styleClass="form-label" />
+            <Label text="1964 Aston Martin DB5" styleClass="card-title" />
+            <Label text="Current Bid" styleClass="page-subtitle" />
+            <Label text="\$850,000" styleClass="money-large" />
         </VBox>
 
         <VBox styleClass="card" spacing="8" prefWidth="260">
             <padding>
-                <Insets top="18" right="18" bottom="18" left="18"/>
+                <Insets top="18" right="18" bottom="18" left="18" />
             </padding>
-            <Label text="LOT #4922" styleClass="form-label"/>
-            <Label text="Untitled Composition II" styleClass="card-title"/>
-            <Label text="Current Bid" styleClass="page-subtitle"/>
-            <Label text="$32,000" styleClass="money-large"/>
+            <Label text="LOT #4922" styleClass="form-label" />
+            <Label text="Untitled Composition II" styleClass="card-title" />
+            <Label text="Current Bid" styleClass="page-subtitle" />
+            <Label text="\$32,000" styleClass="money-large" />
         </VBox>
     </TilePane>
 </VBox>

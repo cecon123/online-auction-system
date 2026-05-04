@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
+<?xml version="1.0" encoding="UTF-8" ?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.chart.CategoryAxis?>
 <?import javafx.scene.chart.LineChart?>
@@ -10,31 +9,35 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-
-<VBox xmlns="http://javafx.com/javafx"
-      xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.auction.client.controller.LiveBiddingController"
-      spacing="20"
-      styleClass="page">
+<VBox
+    xmlns="http://javafx.com/javafx"
+    xmlns:fx="http://javafx.com/fxml"
+    fx:controller="com.auction.client.controller.LiveBiddingController"
+    spacing="20"
+    styleClass="page"
+>
 
     <padding>
-        <Insets top="28" right="32" bottom="32" left="32"/>
+        <Insets top="28" right="32" bottom="32" left="32" />
     </padding>
 
     <HBox spacing="16" styleClass="card">
         <padding>
-            <Insets top="18" right="18" bottom="18" left="18"/>
+            <Insets top="18" right="18" bottom="18" left="18" />
         </padding>
 
         <VBox spacing="4" HBox.hgrow="ALWAYS">
-            <Label text="LIVE AUCTION" styleClass="status-running"/>
-            <Label text="Vintage 1969 Omega Speedmaster Professional" styleClass="page-title"/>
-            <Label text="Lot #4092-A" styleClass="page-subtitle"/>
+            <Label text="LIVE AUCTION" styleClass="status-running" />
+            <Label
+                text="Vintage 1969 Omega Speedmaster Professional"
+                styleClass="page-title"
+            />
+            <Label text="Lot #4092-A" styleClass="page-subtitle" />
         </VBox>
 
         <VBox spacing="4">
-            <Label text="TIME REMAINING" styleClass="form-label"/>
-            <Label fx:id="countdownLabel" styleClass="money-large"/>
+            <Label text="TIME REMAINING" styleClass="form-label" />
+            <Label fx:id="countdownLabel" styleClass="money-large" />
         </VBox>
     </HBox>
 
@@ -42,33 +45,41 @@
         <VBox spacing="16" HBox.hgrow="ALWAYS">
             <VBox styleClass="card" spacing="10">
                 <padding>
-                    <Insets top="20" right="20" bottom="20" left="20"/>
+                    <Insets top="20" right="20" bottom="20" left="20" />
                 </padding>
 
-                <Label text="CURRENT HIGHEST BID" styleClass="form-label"/>
-                <Label fx:id="currentPriceLabel" styleClass="money-large"/>
-                <Label text="Highest Bidder" styleClass="form-label"/>
-                <Label fx:id="highestBidderLabel" styleClass="card-title"/>
+                <Label text="CURRENT HIGHEST BID" styleClass="form-label" />
+                <Label fx:id="currentPriceLabel" styleClass="money-large" />
+                <Label text="Highest Bidder" styleClass="form-label" />
+                <Label fx:id="highestBidderLabel" styleClass="card-title" />
 
                 <HBox spacing="10">
-                    <TextField fx:id="bidAmountField" promptText="Enter bid amount" prefWidth="200"/>
-                    <Button text="Confirm Bid" onAction="#handlePlaceBid" styleClass="primary-button"/>
+                    <TextField
+                        fx:id="bidAmountField"
+                        promptText="Enter bid amount"
+                        prefWidth="200"
+                    />
+                    <Button
+                        text="Confirm Bid"
+                        onAction="#handlePlaceBid"
+                        styleClass="primary-button"
+                    />
                 </HBox>
             </VBox>
 
             <VBox styleClass="card" spacing="10">
                 <padding>
-                    <Insets top="20" right="20" bottom="20" left="20"/>
+                    <Insets top="20" right="20" bottom="20" left="20" />
                 </padding>
 
-                <Label text="Realtime Price Curve" styleClass="section-title"/>
+                <Label text="Realtime Price Curve" styleClass="section-title" />
 
                 <LineChart fx:id="priceChart" animated="false" prefHeight="300">
                     <xAxis>
-                        <CategoryAxis label="Time"/>
+                        <CategoryAxis label="Time" />
                     </xAxis>
                     <yAxis>
-                        <NumberAxis label="Price"/>
+                        <NumberAxis label="Price" />
                     </yAxis>
                 </LineChart>
             </VBox>
@@ -76,11 +87,11 @@
 
         <VBox styleClass="card" spacing="10" prefWidth="380">
             <padding>
-                <Insets top="20" right="20" bottom="20" left="20"/>
+                <Insets top="20" right="20" bottom="20" left="20" />
             </padding>
 
-            <Label text="Live History" styleClass="section-title"/>
-            <ListView fx:id="bidHistoryList" prefHeight="500"/>
+            <Label text="Live History" styleClass="section-title" />
+            <ListView fx:id="bidHistoryList" prefHeight="500" />
         </VBox>
     </HBox>
 </VBox>
