@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.BorderPane?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.auction.client.controller.AppShellController"
+            styleClass="app-shell">
+
+    <left>
+        <fx:include source="components/Sidebar.fxml"/>
+    </left>
+
+    <top>
+        <fx:include source="components/TopBar.fxml"/>
+    </top>
+
+</BorderPane>

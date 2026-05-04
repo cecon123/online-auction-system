@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+
+<HBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.controller.TopBarController"
+      styleClass="topbar"
+      spacing="16"
+      alignment="CENTER_LEFT">
+
+    <padding>
+        <Insets top="12" right="24" bottom="12" left="24"/>
+    </padding>
+
+    <TextField promptText="Search auctions..." prefWidth="360"/>
+
+    <Region HBox.hgrow="ALWAYS"/>
+
+    <Button text="Place Bid" onAction="#handlePlaceBidShortcut" styleClass="primary-button"/>
+</HBox>
