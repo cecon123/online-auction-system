@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.controller.SellerCenterController"
+      spacing="24"
+      styleClass="page">
+
+    <padding>
+        <Insets top="32" right="32" bottom="32" left="32"/>
+    </padding>
+
+    <HBox spacing="16">
+        <VBox HBox.hgrow="ALWAYS">
+            <Label text="Seller Center" styleClass="page-title"/>
+            <Label text="Manage your active listings, track bids, and create new auctions."
+                   styleClass="page-subtitle"/>
+        </VBox>
+
+        <Button text="+ Create New Auction"
+                onAction="#handleCreateAuction"
+                styleClass="primary-button"/>
+    </HBox>
+
+    <VBox styleClass="card" spacing="12">
+        <padding>
+            <Insets top="20" right="20" bottom="20" left="20"/>
+        </padding>
+
+        <Label text="Active Listings" styleClass="section-title"/>
+
+        <HBox spacing="24">
+            <Label text="Vintage Omega Seamaster" prefWidth="260"/>
+            <Label text="$1,200.00" prefWidth="140"/>
+            <Label text="$3,450.00" prefWidth="140"/>
+            <Label text="Active" styleClass="status-running"/>
+        </HBox>
+
+        <HBox spacing="24">
+            <Label text="Leica M3 Rangefinder" prefWidth="260"/>
+            <Label text="$800.00" prefWidth="140"/>
+            <Label text="$800.00" prefWidth="140"/>
+            <Label text="Draft" styleClass="page-subtitle"/>
+        </HBox>
+    </VBox>
+
+    <VBox styleClass="card" spacing="12" alignment="CENTER" prefHeight="220">
+        <Label text="No Past Auctions" styleClass="section-title"/>
+        <Label text="Completed auctions will appear here." styleClass="page-subtitle"/>
+    </VBox>
+</VBox>
