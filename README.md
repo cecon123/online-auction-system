@@ -1,649 +1,1189 @@
-# 🏛️ Online Auction System
+# Online Auction System - AuctionPro
 
-> **Bài tập lớn – UET.CS2043 Lập trình nâng cao**  
-> Học kỳ II, 2025–2026 | FIT-DSE, Vietnam National University  
-> Repository: [cecon123/online-auction-system](https://github.com/cecon123/online-auction-system)
+> Bài tập lớn Lập trình nâng cao 2026: xây dựng hệ thống đấu giá trực tuyến theo kiến trúc **Client-Server**, sử dụng **Java 21**, **JavaFX**, **Socket JSON**, **SQLite**, **Maven multi-module**, **JUnit 5** và **Git/GitHub**.
 
 ---
 
-## 📋 Mục lục
+## 1. Thông tin dự án
 
-1. [Giới thiệu](#1-giới-thiệu)
-2. [Thành viên & Phân công](#2-thành-viên--phân-công)
-3. [Công nghệ sử dụng](#3-công-nghệ-sử-dụng)
-4. [Kiến trúc hệ thống](#4-kiến-trúc-hệ-thống)
-5. [Cấu trúc dự án](#5-cấu-trúc-dự-án)
-6. [Design Patterns](#6-design-patterns)
-7. [Hướng dẫn cài đặt & chạy](#7-hướng-dẫn-cài-đặt--chạy)
-8. [Git Workflow](#8-git-workflow)
-9. [Lộ trình thực hiện](#9-lộ-trình-thực-hiện)
-10. [JSON Protocol](#10-json-protocol)
-11. [Database Schema](#11-database-schema)
-12. [Thang điểm](#12-thang-điểm)
-
----
-
-## 1. Giới thiệu
-
-Hệ thống đấu giá trực tuyến (Online Auction System) theo mô hình eBay, cho phép nhiều người dùng cùng tham gia cạnh tranh giá để mua sản phẩm trong một khoảng thời gian xác định.
-
-**Chức năng bắt buộc:**
-- Quản lý người dùng (Bidder / Seller / Admin)
-- Quản lý sản phẩm đấu giá (CRUD)
-- Tham gia đấu giá theo thời gian thực (realtime)
-- Tự động kết thúc phiên & xác định người thắng
-- Xử lý lỗi & ngoại lệ toàn diện
-- Giao diện GUI (JavaFX + FXML)
-- Xử lý đấu giá đồng thời an toàn (concurrency)
-- CI/CD tự động (GitHub Actions)
-
-**Chức năng nâng cao (tuỳ chọn):**
-- Auto-Bidding (đấu giá tự động với `maxBid`, `increment`, `PriorityQueue`)
-- Anti-sniping (gia hạn phiên khi có bid trong X giây cuối)
-- Bid History Visualization (LineChart giá realtime)
+- **Tên dự án:** Online Auction System / AuctionPro
+- **Repository:** `https://github.com/cecon123/online-auction-system`
+- **Môn học:** Lập trình nâng cao - LTNC 2026
+- **Mô hình:** Client-Server + MVC
+- **Ngôn ngữ:** Java 21
+- **GUI:** JavaFX + FXML + CSS
+- **Giao tiếp:** TCP Socket + JSON
+- **Database:** SQLite
+- **Build tool:** Maven multi-module
+- **Testing:** JUnit 5, JaCoCo
+- **CI/CD:** GitHub Actions
+- **Quản lý mã nguồn:** Git + Pull Request review
 
 ---
 
-## 2. Thành viên & Phân công
+## 2. Current Progress
 
-| Thành viên | Vai trò | Phụ trách |
-|---|---|---|
-| **Huy** | Backend 1 (Lead) | Kiến trúc tổng thể, JSON protocol, SocketServer, AuthService, AuctionService (concurrency), GitHub Actions, PR review |
-| **Mạnh** | Backend 2 | DAO/Repository layer, SQLite schema, AuctionScheduler, custom exceptions, unit tests (JUnit 5, JaCoCo) |
-| **Linh** | Frontend 1 | Login/Register, Dashboard, AuctionList, shared layout & CSS, scene routing |
-| **Hải Anh** | Frontend 2 | AuctionDetail, LiveBidding (realtime), Seller screens, LineChart realtime |
+### 2.1 Trạng thái hiện tại
 
-> ⚠️ **Quy tắc quan trọng:** Mỗi thành viên phải hiểu **toàn bộ codebase**. Nếu bất kỳ thành viên nào không giải thích được bất kỳ phần code nào → **toàn nhóm bị 0 điểm**. Thực hiện code review chéo qua Pull Request.
+Dự án đã hoàn thành phần lớn nội dung **W6 - Khởi động, Thiết kế OOP & Bắt đầu JavaFX** và hiện chuyển sang:
 
----
-
-## 3. Công nghệ sử dụng
-
-| Layer | Công nghệ |
-|---|---|
-| Language | Java 21 (LTS) |
-| Build tool | Maven 3.9+ (multimodule: `common`, `server`, `client`) |
-| GUI | JavaFX 21 + SceneBuilder + FXML |
-| Network | Java Socket TCP (port 8080) + Gson (JSON serialization) |
-| Database | SQLite 3 (WAL mode) + JDBC |
-| Security | jBCrypt (password hashing) |
-| Testing | JUnit 5 + JaCoCo (coverage ≥ 65%) |
-| CI/CD | GitHub Actions |
-| Code style | Google Java Style Guide + Checkstyle Maven plugin |
-| Version control | Git + GitHub (Conventional Commits) |
-
----
-
-## 4. Kiến trúc hệ thống
-
-```
-┌─────────────────────────────────────────────────────┐
-│              CLIENT (JavaFX MVC)                     │
-│  JavaFX Views (.fxml) ── Controllers ── SocketClient│
-│  Platform.runLater()   MessageListener (Observer)    │
-└──────────────────────┬──────────────────────────────┘
-                       │  JSON over TCP Socket (port 8080)
-┌──────────────────────▼──────────────────────────────┐
-│              SERVER                                   │
-│  SocketServer ── ClientHandler ×N ── RequestRouter   │
-│  AuctionService (ReentrantLock)   BroadcastService   │
-│  AuthService (BCrypt)             AuctionScheduler   │
-└──────────────────────┬──────────────────────────────┘
-                       │  JDBC (WAL mode)
-┌──────────────────────▼──────────────────────────────┐
-│              DATA LAYER (SQLite)                      │
-│  UserDAO  AuctionDAO  BidDAO  ItemDAO  → auction.db  │
-└─────────────────────────────────────────────────────┘
+```text
+W7 - Concurrency & Observer Pattern
 ```
 
-### OOP Class Hierarchy
+### 2.2 Đã hoàn thành
 
-```
-Entity (abstract)
-├── User (abstract)
-│   ├── Bidder         – tham gia đấu giá, có balance
-│   ├── Seller         – đăng sản phẩm, có shopName
-│   └── Admin          – quản trị hệ thống
-├── Item (abstract)
-│   ├── Electronics    – thêm brand, warrantyMonths
-│   ├── Art            – thêm artist, yearCreated
-│   └── Vehicle        – thêm make, model, year
-├── Auction            – quản lý phiên, có ReentrantLock
-└── Bid                – giao dịch đặt giá
-```
-
----
-
-## 5. Cấu trúc dự án
-
-```
-online-auction-system/
-├── pom.xml                               ← Parent POM (3 modules)
-├── .github/
-│   └── workflows/
-│       └── ci.yml                        ← GitHub Actions CI/CD
-│
-├── common/                               ← Shared giữa server & client
-│   └── src/main/java/com/auction/common/
-│       ├── model/
-│       │   ├── Entity.java               ← Abstract base class
-│       │   ├── User.java                 ← Abstract
-│       │   ├── Bidder.java
-│       │   ├── Seller.java
-│       │   ├── Admin.java
-│       │   ├── Item.java                 ← Abstract
-│       │   ├── Electronics.java
-│       │   ├── Art.java
-│       │   ├── Vehicle.java
-│       │   ├── Auction.java
-│       │   ├── Bid.java
-│       │   ├── UserRole.java             ← Enum
-│       │   ├── AuctionStatus.java        ← Enum: OPEN→RUNNING→FINISHED→PAID/CANCELED
-│       │   └── ItemCategory.java         ← Enum
-│       ├── protocol/
-│       │   ├── MessageType.java          ← Enum tất cả message types
-│       │   ├── Request.java              ← Client → Server
-│       │   └── Response.java             ← Server → Client
-│       └── factory/
-│           └── ItemFactory.java          ← Factory Method Pattern
-│
-├── server/                               ← Backend
-│   └── src/main/java/com/auction/server/
-│       ├── ServerMain.java
-│       ├── socket/
-│       │   ├── SocketServer.java         ← ServerSocket + ExecutorService
-│       │   └── ClientHandler.java        ← Thread per client, Runnable
-│       ├── service/
-│       │   ├── AuctionService.java       ← placeBid() với ReentrantLock
-│       │   ├── AuthService.java          ← BCrypt login/register
-│       │   └── UserService.java
-│       ├── dao/
-│       │   ├── UserDAO.java              ← Interface
-│       │   ├── AuctionDAO.java           ← Interface
-│       │   ├── BidDAO.java               ← Interface
-│       │   ├── ItemDAO.java              ← Interface
-│       │   └── impl/
-│       │       ├── DatabaseConnection.java  ← Singleton + WAL
-│       │       ├── SQLiteUserDAO.java
-│       │       ├── SQLiteAuctionDAO.java
-│       │       ├── SQLiteBidDAO.java
-│       │       └── SQLiteItemDAO.java
-│       ├── observer/
-│       │   ├── AuctionObserver.java      ← Interface
-│       │   ├── AuctionSubject.java       ← Interface
-│       │   └── BroadcastService.java     ← notify all watchers
-│       ├── scheduler/
-│       │   └── AuctionScheduler.java     ← ScheduledExecutorService
-│       └── exception/
-│           ├── InvalidBidException.java
-│           ├── AuctionClosedException.java
-│           ├── AuthenticationException.java
-│           └── ItemNotFoundException.java
-│
-└── client/                               ← JavaFX Frontend
-    ├── src/main/java/com/auction/client/
-    │   ├── ClientApp.java                ← Application entry point
-    │   ├── network/
-    │   │   ├── SocketClient.java         ← Singleton TCP client
-    │   │   └── MessageListener.java      ← Observer, nhận broadcast
-    │   └── controller/
-    │       ├── LoginController.java
-    │       ├── RegisterController.java
-    │       ├── DashboardController.java
-    │       ├── AuctionListController.java
-    │       ├── AuctionDetailController.java
-    │       ├── LiveBiddingController.java ← realtime, countdown, LineChart
-    │       ├── SellerDashboardController.java
-    │       ├── AddItemController.java
-    │       └── AdminController.java
-    └── src/main/resources/
-        ├── fxml/
-        │   ├── Login.fxml
-        │   ├── Register.fxml
-        │   ├── Dashboard.fxml
-        │   ├── AuctionList.fxml
-        │   ├── AuctionDetail.fxml
-        │   ├── LiveBidding.fxml
-        │   ├── SellerDashboard.fxml
-        │   ├── AddItem.fxml
-        │   └── Admin.fxml
-        └── css/
-            └── styles.css
-```
-
----
-
-## 6. Design Patterns
-
-| Pattern | Vị trí | Mục đích |
-|---|---|---|
-| **Singleton** | `DatabaseConnection`, `AuctionManager`, `SocketClient` | 1 instance duy nhất, thread-safe double-checked locking |
-| **Factory Method** | `ItemFactory.create(category, ...)` | Tạo `Electronics`/`Art`/`Vehicle` theo loại, dễ mở rộng |
-| **Observer** | `AuctionObserver` ← `BroadcastService` ← `ClientHandler` | Notify realtime bid mới tới tất cả client đang xem phiên |
-| **Strategy** *(optional)* | `ManualBidStrategy`, `AutoBidStrategy` | Xử lý logic đặt giá khác nhau |
-| **Command** *(optional)* | `BidCommand` | Encapsulate bid action, hỗ trợ undo |
-
-### Concurrency – `AuctionService.placeBid()`
-
-```java
-// Dùng ReentrantLock (KHÔNG dùng synchronized đơn giản)
-// Lý do: ReentrantLock hỗ trợ tryLock() timeout, tránh deadlock với Scheduler
-private final Map<Integer, ReentrantLock> auctionLocks = new ConcurrentHashMap<>();
-
-public synchronized Bid placeBid(int auctionId, int bidderId, double amount) {
-    ReentrantLock lock = auctionLocks.computeIfAbsent(auctionId, k -> new ReentrantLock());
-    try {
-        if (!lock.tryLock(3, TimeUnit.SECONDS)) throw new TimeoutException("Server busy");
-        Auction auction = auctionDAO.findById(auctionId).orElseThrow(...);
-        if (!auction.isActive()) throw new AuctionClosedException(auctionId, auction.getStatus());
-        if (amount <= auction.getCurrentPrice()) throw new InvalidBidException(auction.getCurrentPrice(), amount);
-        // ... update + save + broadcast
-    } finally {
-        lock.unlock();
-    }
-}
-```
-
----
-
-## 7. Hướng dẫn cài đặt & chạy
-
-### Yêu cầu
-
-- **JDK 21** (temurin/OpenJDK): [https://adoptium.net](https://adoptium.net)
-- **Maven 3.9+**: [https://maven.apache.org/download.cgi](https://maven.apache.org/download.cgi)
-- **JavaFX 21 SDK** (nếu không dùng Maven plugin): [https://openjfx.io](https://openjfx.io)
-- **Git**: [https://git-scm.com](https://git-scm.com)
-- **SceneBuilder** (để edit FXML): [https://gluonhq.com/products/scene-builder](https://gluonhq.com/products/scene-builder)
-
-### Bước 1 – Clone repo
+- [x] Tạo GitHub repository.
+- [x] Thiết lập branch `main` và `dev`.
+- [x] Thiết lập Maven multi-module:
+  - `common`
+  - `server`
+  - `client`
+- [x] Cấu hình JDK 21.
+- [x] Cấu hình JavaFX client.
+- [x] Client chạy được bằng:
 
 ```bash
-git clone https://github.com/cecon123/online-auction-system.git
-cd online-auction-system
-```
-
-### Bước 2 – Build toàn bộ project
-
-```bash
-# Build tất cả 3 modules (common → server → client)
-mvn clean install -DskipTests
-
-# Kiểm tra build thành công
-mvn validate
-```
-
-### Bước 3 – Chạy Server
-
-```bash
-# Option A: Maven (development)
-mvn -pl server exec:java -Dexec.mainClass="com.auction.server.ServerMain"
-
-# Option B: Fat JAR (sau khi build)
-java -jar server/target/server-1.0.0-SNAPSHOT.jar
-```
-
-> Server khởi động tại **port 8080**. File `auction.db` được tạo tự động tại thư mục chạy lệnh.
-
-### Bước 4 – Chạy Client (JavaFX)
-
-```bash
-# Mở terminal mới (server vẫn chạy)
 mvn -pl client javafx:run
 ```
 
-> Mở nhiều terminal để chạy nhiều client cùng lúc → test concurrent bidding.
-
-### Bước 5 – Chạy Tests
+- [x] Server chạy được bằng:
 
 ```bash
-# Toàn bộ test
-mvn test
-
-# Chỉ module server (nơi có logic chính)
-mvn test -pl server
-
-# Xem coverage report (sau khi test xong)
-open server/target/site/jacoco/index.html    # macOS
-start server/target/site/jacoco/index.html   # Windows
+mvn -pl server exec:java
 ```
 
-### Tài khoản test mặc định (seed data)
+- [x] Build toàn bộ project bằng:
 
-| Username | Password | Role |
+```bash
+mvn clean install
+```
+
+- [x] Tạo nền JSON protocol:
+  - `MessageType`
+  - `Request<T>`
+  - `Response<T>`
+- [x] Tạo socket server mock:
+  - `SocketServer`
+  - `ClientHandler`
+  - `RequestRouter`
+  - `JsonMapper`
+- [x] Test thủ công socket JSON bằng `ncat` với request `LOGIN`.
+- [x] Tạo SQLite foundation:
+  - `Database`
+  - `SchemaInitializer`
+  - `application.properties`
+  - `schema.sql`
+- [x] Tạo `UserDao` và `SQLiteUserDao`.
+- [x] Tạo unit test cho `SQLiteUserDao`.
+- [x] Tạo common domain model:
+  - `Entity`
+  - `User`, `Bidder`, `Seller`, `Admin`
+  - `Item`, `Electronics`, `Art`, `Vehicle`
+  - `Auction`
+  - `BidTransaction`
+  - `AutoBidRule`
+- [x] Tạo `docs/class-diagram.md`.
+- [x] Tạo Factory Method:
+  - `ItemFactory`
+- [x] Tạo `docs/design-patterns.md`.
+
+### 2.3 Đang làm tiếp
+
+- [ ] W7: `AuctionService.placeBid()` dùng `ReentrantLock`.
+- [ ] W7: Observer skeleton cho realtime bidding.
+- [ ] W7: `ItemDao`, `AuctionDao`, `BidDao`.
+- [ ] W7: JavaFX AppShell, Dashboard, AuctionList mock UI.
+- [ ] W7: AuctionDetail, LiveBidding, Seller screens mock UI.
+
+---
+
+## 3. Thành viên và phân công chính
+
+| Vai trò | Thành viên | Phụ trách chính |
 |---|---|---|
-| `admin` | `admin123` | Admin |
-| `seller1` | `seller123` | Seller |
-| `bidder1` | `bidder123` | Bidder |
-| `bidder2` | `bidder123` | Bidder |
+| Backend 1 / Lead | Huy | Kiến trúc tổng thể, Maven multi-module, JSON protocol, socket server, auth, auction core, concurrency, review tích hợp |
+| Backend 2 | Mạnh | DAO/Repository, SQLite, scheduler, realtime backend, custom exceptions, unit test backend, CI/CD |
+| Frontend 1 | Linh | Login/Register, dashboard, auction list, AppShell, layout chung, CSS JavaFX |
+| Frontend 2 | Hải Anh | Auction detail, live bidding screen, seller screens, realtime chart, admin UI tối giản |
+
+Lead không có nghĩa là code hết. Lead chịu trách nhiệm khóa kiến trúc, protocol, tiêu chuẩn merge và đảm bảo mọi module tích hợp được.
+
+> Quy tắc quan trọng: Mỗi thành viên phải hiểu toàn bộ codebase. Nếu bất kỳ thành viên nào không giải thích được bất kỳ phần mã nguồn nào, toàn nhóm có nguy cơ bị 0 điểm. Vì vậy mọi PR cần review chéo và mọi người cần đọc code của nhau.
 
 ---
 
-## 8. Git Workflow
+## 4. Mục tiêu chức năng
 
-### Branch Strategy
+### 4.1 Chức năng bắt buộc
 
+- Đăng ký / đăng nhập tài khoản.
+- Role người dùng:
+  - `BIDDER`: tham gia đấu giá.
+  - `SELLER`: đăng sản phẩm và tạo phiên đấu giá.
+  - `ADMIN`: quản lý user, auction và hủy phiên nếu cần.
+- Quản lý sản phẩm đấu giá:
+  - Thêm / sửa / xóa sản phẩm.
+  - Tạo phiên đấu giá.
+  - Theo dõi danh sách sản phẩm của seller.
+- Tham gia đấu giá:
+  - Xem danh sách phiên đấu giá.
+  - Xem chi tiết sản phẩm.
+  - Đặt giá cao hơn giá hiện tại.
+  - Kiểm tra bid hợp lệ.
+  - Cập nhật người đang dẫn đầu.
+- Kết thúc phiên đấu giá:
+  - Tự động đóng phiên khi hết giờ.
+  - Xác định người thắng.
+  - Chuyển trạng thái phiên: `OPEN -> RUNNING -> FINISHED -> PAID/CANCELED`.
+- Xử lý lỗi:
+  - Sai username/password.
+  - Bid thấp hơn giá hiện tại.
+  - Bid khi auction đã đóng.
+  - Seller tự bid vào auction của mình.
+  - Lỗi dữ liệu, lỗi kết nối socket.
+- Realtime update:
+  - Client đang xem một auction nhận `BID_UPDATE` ngay khi có bid mới.
+  - Không dùng polling liên tục.
+- Concurrency:
+  - Nhiều bidder đặt giá cùng lúc không được gây lost update.
+  - Không rollback giá.
+  - Không có hai người cùng thắng.
+- OOP:
+  - Encapsulation.
+  - Inheritance.
+  - Polymorphism.
+  - Abstraction.
+- Design Patterns:
+  - Singleton.
+  - Factory Method.
+  - Observer.
+- Unit test và CI/CD:
+  - JUnit cho logic quan trọng.
+  - GitHub Actions chạy test khi push / pull request.
+
+### 4.2 Chức năng nâng cao nếu kịp
+
+Ưu tiên theo thứ tự:
+
+1. **Bid History Visualization**: JavaFX LineChart hiển thị giá theo thời gian thực.
+2. **Anti-sniping**: nếu có bid trong X giây cuối thì tự động gia hạn thêm Y giây.
+3. **Auto-Bidding**: user đặt `maxBid`, `increment`, hệ thống tự tăng giá thay user.
+
+---
+
+## 5. Kiến trúc tổng thể
+
+```text
+JavaFX Client
+    |
+    | TCP Socket + JSON
+    v
+Auction Server
+    |
+    v
+Controller Layer
+    |
+    v
+Service Layer
+    |
+    v
+DAO / Repository Layer
+    |
+    v
+SQLite Database
 ```
-main          ← Production, LUÔN chạy được, chỉ merge từ dev khi release
-dev           ← Tích hợp, merge tất cả features vào đây
+
+Nguyên tắc bắt buộc:
+
+- `client` không được truy cập SQLite trực tiếp.
+- `client` chỉ giao tiếp với `server` qua `SocketClient` và JSON protocol.
+- `server` là nơi duy nhất xử lý nghiệp vụ, kiểm tra quyền, cập nhật database và quyết định kết quả đấu giá.
+- Các DTO, enum, protocol class và model dùng chung đặt trong module `common`.
+- UI JavaFX tách theo MVC: FXML là View, Controller xử lý UI, client service gọi socket.
+- Server tách theo Controller -> Service -> DAO.
+
+---
+
+## 6. Module dependency rule
+
+```text
+common  <- không phụ thuộc module nào
+server  -> phụ thuộc common
+client  -> phụ thuộc common
+server  ✗ không phụ thuộc client
+client  ✗ không phụ thuộc server
+```
+
+Sơ đồ phụ thuộc:
+
+```text
+        common
+        /    \
+       v      v
+    server   client
+```
+
+Không được làm:
+
+```java
+// Sai trong client
+import com.auction.server.service.AuthService;
+import com.auction.server.dao.UserDao;
+
+// Sai trong server
+import com.auction.client.controller.LoginController;
+```
+
+Client chỉ gọi server qua socket:
+
+```java
+SocketClient.send(Request<?> request);
+```
+
+---
+
+## 7. Cấu trúc dự án hiện tại và dự kiến
+
+Lưu ý: README này tách rõ phần **đã có** và **dự kiến**. Một số package trong cây dưới đây là mục tiêu W7-W10, có thể chưa tồn tại ngay ở thời điểm hiện tại.
+
+```text
+online-auction-system/
+├── README.md
+├── pom.xml
+├── .gitignore
+├── .editorconfig
+├── checkstyle.xml                    # Planned / W9 nếu chưa có
+├── LICENSE                           # Optional
 │
-├─ feature/huy/project-setup
-├─ feature/huy/auction-service
-├─ feature/manh/dao-setup
-├─ feature/manh/scheduler
-├─ feature/linh/login-ui
-├─ feature/linh/dashboard
-├─ feature/haianh/auction-screens
-└─ feature/haianh/live-bidding
-```
-
-### Quy tắc bắt buộc
-
-1. **KHÔNG push thẳng lên `main` hoặc `dev`** → luôn dùng branch + PR
-2. **Commit thường xuyên** → sau mỗi tính năng nhỏ, không để cả ngày rồi commit 1 lần
-3. **PR phải được Huy review và approve** trước khi merge vào `dev`
-4. **Mọi PR phải pass CI** (GitHub Actions build + test xanh) mới được merge
-
-### Conventional Commits
-
-```bash
-# Cú pháp:  type(scope): mô tả ngắn, chữ thường
-# Các type:  feat | fix | docs | refactor | test | chore | style | ci
-
-feat(auction): add placeBid() with ReentrantLock thread-safety
-feat(ui): add LiveBidding screen with realtime countdown timer
-fix(dao): fix SQLite connection leak in SQLiteUserDAO
-fix(concurrent): resolve race condition in AuctionService
-docs(readme): add project setup and run instructions
-refactor(auth): extract password hashing to AuthService class
-test(auction): add JUnit5 tests for bid validation edge cases
-chore(ci): setup GitHub Actions Maven build workflow
-style: fix Google Java Style checkstyle violations
-ci(actions): add JaCoCo coverage upload step
-```
-
-### Quy trình làm việc hàng ngày
-
-```bash
-# 1. Cập nhật dev trước khi bắt đầu làm
-git checkout dev
-git pull origin dev
-
-# 2. Tạo branch mới từ dev
-git checkout -b feature/[ten]/[tinh-nang]
-
-# 3. Code, commit thường xuyên
-git add .
-git commit -m "feat(scope): mô tả"
-
-# 4. Push lên remote
-git push origin feature/[ten]/[tinh-nang]
-
-# 5. Tạo Pull Request trên GitHub
-#    Base: dev  ←  Compare: feature/[ten]/[tinh-nang]
-#    Assign reviewer: Huy
-
-# 6. Sau khi PR merge → dọn dẹp branch cũ
-git checkout dev
-git pull origin dev
-git branch -d feature/[ten]/[tinh-nang]
-```
-
-### Giải quyết Merge Conflict
-
-```bash
-# Khi dev đã có thay đổi mới trong khi bạn đang làm branch
-git checkout dev && git pull origin dev
-git checkout feature/[ten]/[tinh-nang]
-git merge dev                    # merge dev mới nhất vào branch của mình
-# Giải quyết conflict trong IDE → git add . → git commit
-git push origin feature/[ten]/[tinh-nang]
+├── .github/
+│   └── workflows/
+│       └── maven.yml                 # Planned / W9 nếu chưa có
+│
+├── docs/
+│   ├── class-diagram.md              # Done
+│   ├── design-patterns.md            # Done
+│   ├── protocol.md                   # Planned
+│   ├── architecture.md               # Planned
+│   ├── database-schema.md            # Planned
+│   ├── git-workflow.md               # Planned
+│   ├── test-plan.md                  # Planned
+│   ├── demo-script.md                # Planned
+│   └── ui-design.md                  # Planned
+│
+├── common/
+│   ├── pom.xml
+│   └── src/
+│       ├── main/java/com/auction/common/
+│       │   ├── enums/
+│       │   │   ├── Role.java
+│       │   │   ├── AuctionStatus.java
+│       │   │   ├── ItemType.java
+│       │   │   ├── ResponseStatus.java       # Planned nếu cần
+│       │   │   └── BidType.java              # Planned nếu cần
+│       │   │
+│       │   ├── protocol/
+│       │   │   ├── MessageType.java
+│       │   │   ├── Request.java
+│       │   │   ├── Response.java
+│       │   │   └── ErrorResponse.java        # Planned nếu cần
+│       │   │
+│       │   ├── dto/                          # Planned W8-W10
+│       │   │   ├── auth/
+│       │   │   ├── user/
+│       │   │   ├── item/
+│       │   │   ├── auction/
+│       │   │   ├── bid/
+│       │   │   └── dashboard/
+│       │   │
+│       │   ├── model/
+│       │   │   ├── Entity.java
+│       │   │   ├── User.java
+│       │   │   ├── Bidder.java
+│       │   │   ├── Seller.java
+│       │   │   ├── Admin.java
+│       │   │   ├── Item.java
+│       │   │   ├── Electronics.java
+│       │   │   ├── Art.java
+│       │   │   ├── Vehicle.java
+│       │   │   ├── Auction.java
+│       │   │   ├── BidTransaction.java
+│       │   │   └── AutoBidRule.java
+│       │   │
+│       │   ├── exception/                    # Planned W8
+│       │   └── util/                         # Planned
+│       │
+│       └── test/java/com/auction/common/
+│           ├── model/
+│           └── protocol/
+│
+├── server/
+│   ├── pom.xml
+│   └── src/
+│       ├── main/
+│       │   ├── java/com/auction/server/
+│       │   │   ├── ServerMain.java
+│       │   │   │
+│       │   │   ├── config/
+│       │   │   │   └── AppProperties.java
+│       │   │   │
+│       │   │   ├── socket/
+│       │   │   │   ├── SocketServer.java
+│       │   │   │   ├── ClientHandler.java
+│       │   │   │   └── RequestRouter.java
+│       │   │   │
+│       │   │   ├── controller/               # Planned W8-W10
+│       │   │   │   ├── AuthController.java
+│       │   │   │   ├── ItemController.java
+│       │   │   │   ├── AuctionController.java
+│       │   │   │   └── BidController.java
+│       │   │   │
+│       │   │   ├── service/                  # Planned W7-W10
+│       │   │   │   ├── AuthService.java
+│       │   │   │   ├── ItemService.java
+│       │   │   │   ├── AuctionService.java
+│       │   │   │   ├── BidService.java
+│       │   │   │   └── BroadcastService.java
+│       │   │   │
+│       │   │   ├── dao/
+│       │   │   │   ├── Database.java
+│       │   │   │   ├── SchemaInitializer.java
+│       │   │   │   ├── UserDao.java
+│       │   │   │   ├── ItemDao.java          # Planned W7
+│       │   │   │   ├── AuctionDao.java       # Planned W7
+│       │   │   │   ├── BidDao.java           # Planned W7
+│       │   │   │   └── sqlite/
+│       │   │   │       ├── SQLiteUserDao.java
+│       │   │   │       ├── SQLiteItemDao.java      # Planned W7
+│       │   │   │       ├── SQLiteAuctionDao.java   # Planned W7
+│       │   │   │       └── SQLiteBidDao.java       # Planned W7
+│       │   │   │
+│       │   │   ├── factory/
+│       │   │   │   └── ItemFactory.java
+│       │   │   │
+│       │   │   ├── observer/                 # Planned W7/W10
+│       │   │   │   ├── AuctionObserver.java
+│       │   │   │   ├── AuctionSubject.java
+│       │   │   │   └── AuctionEventType.java
+│       │   │   │
+│       │   │   ├── scheduler/                # Planned W7-W9
+│       │   │   │   └── AuctionScheduler.java
+│       │   │   │
+│       │   │   ├── security/                 # Planned W8
+│       │   │   │   ├── PasswordHasher.java
+│       │   │   │   ├── SessionManager.java
+│       │   │   │   └── PermissionChecker.java
+│       │   │   │
+│       │   │   ├── concurrency/              # Planned W7
+│       │   │   │   ├── LockRegistry.java
+│       │   │   │   └── AuctionLockManager.java
+│       │   │   │
+│       │   │   └── util/
+│       │   │       ├── JsonMapper.java
+│       │   │       └── ResponseFactory.java  # Planned
+│       │   │
+│       │   └── resources/
+│       │       ├── application.properties
+│       │       └── db/
+│       │           ├── schema.sql
+│       │           ├── seed.sql              # Planned
+│       │           └── test-seed.sql         # Planned
+│       │
+│       └── test/java/com/auction/server/
+│           ├── dao/
+│           ├── factory/
+│           ├── service/                      # Planned
+│           ├── scheduler/                    # Planned
+│           └── concurrency/                  # Planned
+│
+└── client/
+    ├── pom.xml
+    └── src/
+        ├── main/
+        │   ├── java/com/auction/client/
+        │   │   ├── ClientMain.java
+        │   │   ├── app/                      # Planned
+        │   │   ├── network/                  # Planned W9-W10
+        │   │   ├── controller/               # Planned W7-W10
+        │   │   ├── service/                  # Planned W9-W10
+        │   │   ├── viewmodel/                # Planned
+        │   │   ├── component/                # Planned
+        │   │   └── util/                     # Planned
+        │   │
+        │   └── resources/
+        │       ├── fxml/
+        │       │   ├── LoginView.fxml
+        │       │   ├── RegisterView.fxml
+        │       │   ├── AppShell.fxml
+        │       │   ├── DashboardView.fxml
+        │       │   ├── AuctionListView.fxml
+        │       │   ├── AuctionDetailView.fxml
+        │       │   ├── LiveBiddingView.fxml
+        │       │   ├── SellerCenterView.fxml
+        │       │   ├── CreateAuctionView.fxml
+        │       │   └── AdminPanelView.fxml
+        │       ├── css/
+        │       ├── images/
+        │       └── fonts/
+        │
+        └── test/java/com/auction/client/
 ```
 
 ---
 
-## 9. Lộ trình thực hiện
+## 8. OOP Model
 
-### W6 – Khởi động & Thiết kế OOP ← **Hiện tại**
+### 8.1 Class hierarchy
 
-| Thành viên | Việc cần làm |
-|---|---|
-| **Huy** | Setup Maven multimodule, .gitignore, CI workflow, class hierarchy (Entity→User→Bidder/Seller/Admin, Item→Electronics/Art/Vehicle), Singleton AuctionManager, Factory ItemFactory, protect branches |
-| **Mạnh** | DAO interfaces (UserDAO, AuctionDAO, BidDAO, ItemDAO), DatabaseConnection Singleton + SQLite schema + index, custom exceptions |
-| **Linh** | Cài JavaFX + SceneBuilder, ClientApp.java entry point, Login.fxml + LoginController, Register.fxml, global styles.css |
-| **Hải Anh** | Nghiên cứu JavaFX FXML binding, prototype AuctionList.fxml, AuctionDetail.fxml, LiveBidding.fxml skeleton, wireframe toàn bộ màn hình |
+```text
+Entity (abstract)
+├── User (abstract)
+│   ├── Bidder
+│   ├── Seller
+│   └── Admin
+│
+├── Item (abstract)
+│   ├── Electronics
+│   ├── Art
+│   └── Vehicle
+│
+├── Auction
+├── BidTransaction
+└── AutoBidRule
+```
 
-### W7 – Concurrency & Observer Pattern
+### 8.2 Relationship summary
 
-| Thành viên | Việc cần làm |
-|---|---|
-| **Huy** | `AuctionService.placeBid()` với `ReentrantLock`, Observer pattern (interface + BroadcastService), JSON protocol document, SocketServer skeleton |
-| **Mạnh** | SQLiteUserDAO/AuctionDAO/BidDAO/ItemDAO hoàn chỉnh, AuctionScheduler, state machine OPEN→RUNNING→FINISHED→PAID/CANCELED |
-| **Linh** | LoginController kết nối mock service, DashboardView, AuctionListController với ObservableList mock |
-| **Hải Anh** | AuctionDetailController với mock data, LiveBidding binding, countdown timer (JavaFX Timeline) |
+```text
+Seller 1 ---- * Item
+Seller 1 ---- * Auction
+Item   1 ---- 1 Auction
+Auction 1 --- * BidTransaction
+Bidder 1 ---- * BidTransaction
+Auction 1 --- * AutoBidRule
+Bidder 1 ---- * AutoBidRule
+```
 
-### W8 – Exception Handling & Unit Testing
+### 8.3 Tài liệu liên quan
 
-| Thành viên | Việc cần làm |
-|---|---|
-| **Huy** | AuthService (BCrypt), SocketServer hoàn chỉnh (JSON parse → route), Gson serialization, SOLID refactoring |
-| **Mạnh** | JUnit 5 tests (AuctionServiceTest, StateTransitionTest), JaCoCo setup, test với in-memory SQLite (`:memory:`) |
-| **Linh** | RegisterController validation, shared layout component, scene switching |
-| **Hải Anh** | SellerDashboard, AddItemView, EditItemView |
+```text
+docs/class-diagram.md
+```
 
-### W9 – CI/CD & Socket Integration
+---
 
-| Thành viên | Việc cần làm |
-|---|---|
-| **Huy** | Tích hợp SocketServer + real services, SocketClient module client, GitHub Actions, Maven Shade Plugin (fat JAR) |
-| **Mạnh** | Checkstyle Maven plugin, Serialization backup, unit tests mở rộng |
-| **Linh** | Login/Register kết nối SocketClient thật, xử lý lỗi kết nối (Alert dialog) |
-| **Hải Anh** | AuctionDetail/LiveBidding kết nối server thật, countdown timer đổi màu < 10s |
+## 9. Design Patterns
 
-### W10 – Realtime Full & GUI Hoàn thiện
+### 9.1 Singleton
 
-| Thành viên | Việc cần làm |
-|---|---|
-| **Huy** | BroadcastService thread-safe (`CopyOnWriteArrayList`), review tất cả PR |
-| **Mạnh** | SQLite WAL mode (`PRAGMA journal_mode=WAL`), coverage ≥ 65% |
-| **Linh** | Client nhận `BID_UPDATE` → `Platform.runLater()`, notification toast |
-| **Hải Anh** | LiveBidding nhận broadcast realtime, LineChart `<String,Number>` cập nhật mỗi bid |
+Hiện tại:
 
-### W11–12 – Tích hợp toàn bộ & E2E Testing
+```text
+Database.getInstance()
+```
 
-- Merge tất cả features, test Server + 3-4 Client đồng thời
-- Fix bugs, edge cases, CI/CD xanh hoàn toàn
+Vị trí:
 
-### W13–14 – Polish & Chức năng nâng cao
+```text
+server/src/main/java/com/auction/server/dao/Database.java
+```
 
-- Auto-Bidding: `PriorityQueue<AutoBid>`, tự tăng giá, không vượt `maxBid` (+0.5đ)
-- Anti-sniping: bid trong 60s cuối → gia hạn thêm 60s (+0.5đ)
-- LineChart realtime hoàn chỉnh với tooltip (+0.5đ)
-- Viết README đầy đủ, video demo backup
+Mục đích:
 
-### W15 – Trình bày & Chấm điểm
+- Tập trung cấu hình SQLite.
+- Bật `foreign_keys`, `busy_timeout`, WAL mode ở một nơi.
+- DAO không tự tạo database manager riêng.
+- Client không truy cập database.
 
-- Demo trực tiếp: Server + 3+ Client đồng thời
-- Mỗi thành viên giải thích phần code của mình và cross-module
-- Phân chia điểm theo đóng góp thực tế
+Lưu ý: `Database` là Singleton manager, không giữ một `Connection` global dùng chung mãi mãi. DAO lấy connection khi cần và đóng bằng try-with-resources.
+
+### 9.2 Factory Method
+
+Hiện tại:
+
+```text
+ItemFactory.create(...)
+```
+
+Vị trí:
+
+```text
+server/src/main/java/com/auction/server/factory/ItemFactory.java
+```
+
+Mapping:
+
+```text
+ItemType.ELECTRONICS -> Electronics
+ItemType.ART         -> Art
+ItemType.VEHICLE     -> Vehicle
+```
+
+Mục đích:
+
+- Tập trung logic tạo concrete `Item`.
+- Tránh lặp `if/else` trong service/controller.
+- Dễ mở rộng khi thêm loại sản phẩm mới.
+
+### 9.3 Observer
+
+Trạng thái: Planned W7/W10.
+
+Dự kiến:
+
+```text
+AuctionObserver
+AuctionSubject
+BroadcastService
+ClientConnectionRegistry
+ClientHandler
+```
+
+Flow dự kiến:
+
+```text
+BidService.placeBid()
+-> BroadcastService.broadcastBidUpdate(...)
+-> ClientHandler.sendBroadcast(...)
+-> JavaFX Client receives BID_UPDATE
+-> Platform.runLater(...) updates UI
+```
 
 ---
 
 ## 10. JSON Protocol
 
-Tất cả giao tiếp Client ↔ Server qua JSON string. Định nghĩa từ W6 để frontend có thể mock song song.
-
-### Client → Server (Request)
+### 10.1 Request format
 
 ```json
-// Đăng nhập
-{ "type": "LOGIN", "payload": { "username": "alice", "password": "hashed" } }
-
-// Đăng ký
-{ "type": "REGISTER", "payload": { "username": "bob", "email": "bob@x.com", "password": "hashed", "role": "BIDDER" } }
-
-// Đặt giá
-{ "type": "PLACE_BID", "token": "session-token-abc", "payload": { "auctionId": 1, "amount": 1500.0 } }
-
-// Lấy danh sách phiên
-{ "type": "GET_AUCTIONS", "token": "...", "payload": { "status": "RUNNING" } }
-
-// Xem realtime phiên
-{ "type": "WATCH_AUCTION",   "token": "...", "payload": { "auctionId": 1 } }
-{ "type": "UNWATCH_AUCTION", "token": "...", "payload": { "auctionId": 1 } }
-
-// Tạo item mới (Seller)
-{ "type": "CREATE_ITEM", "token": "...", "payload": { "name": "iPhone 16", "description": "...", "startPrice": 500.0, "category": "ELECTRONICS" } }
+{
+  "type": "PLACE_BID",
+  "requestId": "uuid-123",
+  "token": "session-token",
+  "data": {
+    "auctionId": 1,
+    "amount": 1500000
+  }
+}
 ```
 
-### Server → Client (Response direct)
+### 10.2 Response format
 
 ```json
-// Kết quả đăng nhập
-{ "type": "LOGIN_RESULT",  "success": true,  "payload": { "token": "session-abc", "role": "BIDDER", "userId": 3 } }
-{ "type": "LOGIN_RESULT",  "success": false, "error": "Invalid username or password" }
-
-// Kết quả đặt giá
-{ "type": "BID_RESULT",    "success": true,  "payload": { "newAmount": 1500.0, "auctionId": 1 } }
-{ "type": "BID_RESULT",    "success": false, "error": "Bid must be higher than current price $1200.00" }
+{
+  "type": "PLACE_BID",
+  "requestId": "uuid-123",
+  "success": true,
+  "message": "Bid accepted",
+  "data": {
+    "auctionId": 1,
+    "currentPrice": 1500000,
+    "highestBidderId": 2
+  }
+}
 ```
 
-### Server → ALL watching clients (Broadcast)
+### 10.3 Broadcast event format
 
 ```json
-// Có bid mới – broadcast tới tất cả đang WATCH_AUCTION auctionId=1
-{ "type": "BID_UPDATE",     "payload": { "auctionId": 1, "amount": 1500.0, "bidder": "alice", "timestamp": "2026-04-15T20:01:23" } }
+{
+  "type": "BID_UPDATE",
+  "requestId": null,
+  "success": true,
+  "message": "New bid received",
+  "data": {
+    "auctionId": 1,
+    "amount": 1500000,
+    "bidderId": 2,
+    "timestamp": "2026-05-04T10:30:00"
+  }
+}
+```
 
-// Phiên kết thúc
-{ "type": "AUCTION_CLOSED", "payload": { "auctionId": 1, "winner": "alice", "finalAmount": 1500.0 } }
+### 10.4 Message types dự kiến
 
-// Anti-sniping: gia hạn thêm
-{ "type": "TIME_EXTENDED",  "payload": { "auctionId": 1, "newEndTime": "2026-04-15T20:02:00" } }
+```text
+AUTH:
+- LOGIN
+- REGISTER
+- LOGOUT
+
+USER:
+- GET_PROFILE
+- UPDATE_PROFILE
+- ADMIN_GET_USERS
+- ADMIN_UPDATE_USER_STATUS
+
+ITEM:
+- CREATE_ITEM
+- UPDATE_ITEM
+- DELETE_ITEM
+- GET_ITEM
+- GET_SELLER_ITEMS
+
+AUCTION:
+- CREATE_AUCTION
+- UPDATE_AUCTION
+- CANCEL_AUCTION
+- GET_AUCTION
+- GET_AUCTIONS
+- GET_AUCTION_DETAIL
+- SUBSCRIBE_AUCTION
+- UNSUBSCRIBE_AUCTION
+
+BID:
+- PLACE_BID
+- GET_BID_HISTORY
+- BID_UPDATE
+
+SCHEDULER / REALTIME:
+- AUCTION_CLOSED
+- TIME_EXTENDED
+
+DASHBOARD:
+- GET_DASHBOARD
+- GET_MARKET_FEED
 ```
 
 ---
 
 ## 11. Database Schema
 
-```sql
--- Bật WAL mode khi khởi động (trong DatabaseConnection.java)
-PRAGMA journal_mode=WAL;
-PRAGMA foreign_keys=ON;
-PRAGMA busy_timeout=3000;
+SQLite database file mặc định:
 
-CREATE TABLE IF NOT EXISTS users (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    username      TEXT UNIQUE NOT NULL,
-    email         TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,        -- BCrypt hash, KHÔNG lưu password rõ
-    role          TEXT NOT NULL,        -- BIDDER | SELLER | ADMIN
-    shop_name     TEXT,                 -- chỉ dùng cho Seller
-    balance       REAL DEFAULT 0.0,    -- chỉ dùng cho Bidder
-    created_at    TEXT NOT NULL
-);
+```text
+auction.db
+```
 
-CREATE TABLE IF NOT EXISTS items (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    name         TEXT NOT NULL,
-    description  TEXT,
-    start_price  REAL NOT NULL,
-    category     TEXT NOT NULL,         -- ELECTRONICS | ART | VEHICLE | OTHER
-    seller_id    INTEGER NOT NULL REFERENCES users(id),
-    -- Electronics
-    brand        TEXT,
-    -- Art
-    artist       TEXT,
-    year_created INTEGER,
-    -- Vehicle
-    make         TEXT,
-    model        TEXT,
-    year         INTEGER,
-    created_at   TEXT NOT NULL
-);
+Cấu hình:
 
-CREATE TABLE IF NOT EXISTS auctions (
-    id                INTEGER PRIMARY KEY AUTOINCREMENT,
-    item_id           INTEGER NOT NULL REFERENCES items(id),
-    seller_id         INTEGER NOT NULL REFERENCES users(id),
-    current_price     REAL NOT NULL,
-    current_leader_id INTEGER REFERENCES users(id),   -- NULL = chưa có bid
-    status            TEXT NOT NULL DEFAULT 'OPEN',   -- OPEN|RUNNING|FINISHED|PAID|CANCELED
-    start_time        TEXT NOT NULL,
-    end_time          TEXT NOT NULL,
-    created_at        TEXT NOT NULL
-);
+```text
+server/src/main/resources/application.properties
+```
 
-CREATE TABLE IF NOT EXISTS bids (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    auction_id INTEGER NOT NULL REFERENCES auctions(id),
-    bidder_id  INTEGER NOT NULL REFERENCES users(id),
-    amount     REAL NOT NULL,
-    timestamp  TEXT NOT NULL
-);
+Ví dụ:
 
--- Indexes để tăng tốc query
-CREATE INDEX IF NOT EXISTS idx_bids_auction    ON bids(auction_id);
-CREATE INDEX IF NOT EXISTS idx_bids_bidder     ON bids(bidder_id);
-CREATE INDEX IF NOT EXISTS idx_auctions_status ON auctions(status);
-CREATE INDEX IF NOT EXISTS idx_auctions_seller ON auctions(seller_id);
-CREATE INDEX IF NOT EXISTS idx_items_seller    ON items(seller_id);
+```properties
+server.port=8080
+database.url=jdbc:sqlite:auction.db
+database.enableWal=true
+database.busyTimeoutMs=5000
+```
+
+Schema hiện tại nằm tại:
+
+```text
+server/src/main/resources/db/schema.sql
+```
+
+Các bảng chính:
+
+```text
+users
+aitems / items
+auctions
+bids
+auto_bids
+```
+
+Nếu trong `schema.sql` đang dùng `items`, giữ thống nhất là `items`. Không dùng lẫn `aitems`.
+
+Quan hệ chính:
+
+```text
+users 1 --- * items
+users 1 --- * auctions
+items 1 --- 1 auctions
+auctions 1 --- * bids
+users 1 --- * bids
+auctions 1 --- * auto_bids
+users 1 --- * auto_bids
 ```
 
 ---
 
-## 12. Thang điểm
+## 12. Hướng dẫn cài đặt và chạy
 
-| Nội dung đánh giá | Điểm | Mức | Phụ trách |
-|---|---|---|---|
-| Thiết kế lớp & cây kế thừa (User/Item hierarchy) | 0.5 | Bắt buộc | Huy + Mạnh |
-| Áp dụng OOP (Encapsulation, Inheritance, Polymorphism, Abstraction) | 1.0 | Bắt buộc | Huy + Mạnh |
-| Design Patterns (Singleton, Factory Method, Observer) | 1.0 | Bắt buộc | Huy |
-| Quản lý người dùng & sản phẩm (CRUD) | 1.0 | Bắt buộc | Huy + Mạnh + Linh |
-| Chức năng đấu giá (placeBid, kết thúc, xác định winner) | 1.0 | Bắt buộc | Huy + Mạnh + Hải Anh |
-| Xử lý lỗi & ngoại lệ (custom exceptions) | 1.0 | Bắt buộc | Mạnh |
-| Concurrent bidding an toàn (ReentrantLock, tránh lost update) | 1.0 | Bắt buộc | Huy |
-| Realtime update – Observer/Socket broadcast | 0.5 | Bắt buộc | Huy + Hải Anh |
-| Kiến trúc Client–Server rõ ràng | 0.5 | Bắt buộc | Huy |
-| MVC: JavaFX + FXML (client), Controller–Service–DAO (server) | 0.5 | Bắt buộc | Linh + Hải Anh |
-| Maven, Google Java Style Guide, mã nguồn sạch | 0.5 | Bắt buộc | Huy + Mạnh |
-| Unit Test JUnit 5 (≥ 65% line coverage) | 0.5 | Bắt buộc | Mạnh |
-| CI/CD GitHub Actions (tự động build + test khi push) | 0.5 | Bắt buộc | Huy + Mạnh |
-| **Tổng bắt buộc** | **8.5** | | |
-| Auto-Bidding (maxBid, increment, PriorityQueue) | +0.5 | Tuỳ chọn | Huy |
-| Anti-sniping (gia hạn phiên khi bid trong X giây cuối) | +0.5 | Tuỳ chọn | Huy + Mạnh |
-| Bid History Visualization (LineChart realtime) | +0.5 | Tuỳ chọn | Hải Anh |
-| **Tổng tối đa** | **10.0** | | |
+### 12.1 Yêu cầu môi trường
+
+- JDK 21.
+- Maven 3.9+.
+- Git.
+- JavaFX 21 qua Maven plugin.
+- SceneBuilder nếu chỉnh FXML.
+
+### 12.2 Clone repo
+
+```bash
+git clone https://github.com/cecon123/online-auction-system.git
+cd online-auction-system
+```
+
+### 12.3 Build toàn bộ project
+
+```bash
+mvn clean install
+```
+
+### 12.4 Chạy server
+
+```bash
+mvn -pl server exec:java
+```
+
+Server mặc định chạy ở port:
+
+```text
+8080
+```
+
+### 12.5 Chạy client
+
+Mở terminal khác:
+
+```bash
+mvn -pl client javafx:run
+```
+
+### 12.6 Chạy test
+
+```bash
+mvn test
+```
+
+Chạy riêng server test:
+
+```bash
+mvn -pl server test
+```
+
+Chạy riêng common test:
+
+```bash
+mvn -pl common test
+```
 
 ---
 
-## Tài liệu tham khảo
+## 13. Git Workflow
 
-### JavaFX
-- Cài đặt: https://openjfx.io/openjfx-docs/
-- Playlist cơ bản: https://www.youtube.com/watch?v=_7OM-cMYWbQ&list=PLZPZq0r_RZOM-8vJA3NQFZB7JroDcMwev
-- Setup SceneBuilder + IntelliJ: https://www.youtube.com/watch?v=IZCwawKILsk
-- MVC trong JavaFX: https://www.pragmaticcoding.ca/javafx/MVC_In_JavaFX
-- Realtime LineChart: https://www.youtube.com/watch?v=HWfZPiPu1sI
+### 13.1 Branch strategy
 
-### Lập trình mạng (Socket)
-- Cơ bản Socket Java: https://www.youtube.com/watch?v=plh_cIEQ1Jo
-- Baeldung guide: https://www.baeldung.com/a-guide-to-java-sockets
-- Chat app JavaFX + Socket: https://www.youtube.com/watch?v=_1nqY-DKP9A
+```text
+main          <- stable/release
+dev           <- branch tích hợp chính
 
-### Design Patterns
-- Refactoring Guru: https://refactoring.guru/design-patterns
-- Video playlist: https://www.youtube.com/watch?v=mE3qTp1TEbg&list=PLlsmxlJgn1HJpa28yHzkBmUY-Ty71ZUGc
+feature/project-skeleton-huy
+feature/protocol-router-huy
+feature/sqlite-userdao-manh
+feature/common-model-class-diagram-huy
+feature/item-factory-huy
+feature/sqlite-item-auction-bid-dao-manh
+feature/auction-locking-huy
+feature/app-shell-dashboard-linh
+feature/auction-detail-live-seller-ui-haianh
+```
 
-### Testing & CI
-- JUnit 5 User Guide: https://docs.junit.org/5.5.0/user-guide/
-- GitHub Actions + Maven: https://www.youtube.com/watch?v=UTb3nNbH7M4
-- Checkstyle + Maven: https://medium.com/@sruthiganesh/integrating-checkstyle-in-java-projects-with-maven-b1ac2cafd016
+### 13.2 Quy tắc làm việc
 
-### Dự án tham khảo trên GitHub
-- https://github.com/nlintas/Auction-System-in-Java
-- https://github.com/gangulwar/socket-programming-auction-system
-- https://github.com/Prasanna-icefire/AuctionSystem
+- Không push trực tiếp vào `main`.
+- Không push trực tiếp vào `dev` nếu chưa thống nhất.
+- Mỗi tính năng làm trên một branch riêng.
+- Pull `dev` trước khi tạo branch mới.
+- Commit nhỏ, rõ nghĩa.
+- PR cần được review trước khi merge.
+- Sau khi merge phải chạy lại:
+
+```bash
+mvn clean install
+```
+
+### 13.3 Tạo branch mới
+
+```bash
+git checkout dev
+git pull origin dev
+git checkout -b feature/<ten-tinh-nang>-<ten-nguoi-lam>
+```
+
+Ví dụ:
+
+```bash
+git checkout -b feature/sqlite-item-auction-bid-dao-manh
+```
+
+### 13.4 Commit
+
+```bash
+git status
+git add .
+git commit -m "feat: add sqlite auction and bid dao"
+git push -u origin feature/sqlite-item-auction-bid-dao-manh
+```
+
+### 13.5 Merge vào dev
+
+```bash
+git checkout dev
+git pull origin dev
+git merge feature/sqlite-item-auction-bid-dao-manh
+mvn clean install
+git push origin dev
+```
+
+### 13.6 Conventional Commits
+
+```text
+feat: thêm chức năng mới
+fix: sửa lỗi
+refactor: tái cấu trúc không đổi hành vi
+test: thêm/sửa test
+docs: sửa tài liệu
+chore: cấu hình, build, công việc phụ
+style: format code
+```
+
+Ví dụ:
+
+```bash
+git commit -m "feat: add item factory method"
+git commit -m "test: add sqlite user dao tests"
+git commit -m "docs: update class diagram"
+```
 
 ---
 
-*Last updated: W6 – May 2026 | Nhóm dự án UET.CS2043*
+## 14. Roadmap cập nhật
+
+## W6 - Khởi động & Thiết kế OOP - Done
+
+| Thành viên | Kết quả |
+|---|---|
+| Huy | Maven multi-module, server/client skeleton, socket JSON protocol mock, common model, class diagram, ItemFactory |
+| Mạnh | SQLite schema, Database, SchemaInitializer, AppProperties, UserDao, SQLiteUserDao, DAO test |
+| Linh | JavaFX client chạy được, chuẩn bị Login/Register/AppShell |
+| Hải Anh | Nghiên cứu UI, chuẩn bị AuctionDetail/LiveBidding/Seller screens |
+
+W6 đã hoàn thành đủ để chuyển sang W7. Các phần đã vượt trước W6 gồm SQLite foundation và socket JSON mock.
+
+## W7 - Concurrency & Observer Pattern - Current
+
+| Thành viên | Việc cần làm |
+|---|---|
+| Huy | `AuctionService.placeBid()` dùng `ReentrantLock`, `LockRegistry`, `AuctionLockManager`, Observer skeleton, `BroadcastService` |
+| Mạnh | `ItemDao`, `AuctionDao`, `BidDao`, `SQLiteItemDao`, `SQLiteAuctionDao`, `SQLiteBidDao`, `AuctionScheduler` skeleton |
+| Linh | `AppShell`, `Sidebar`, `TopBar`, `DashboardView`, `AuctionListView`, mock data |
+| Hải Anh | `AuctionDetailView`, `LiveBiddingView`, `SellerCenterView`, `CreateAuctionView`, countdown mock |
+
+Branch đề xuất:
+
+```text
+feature/sqlite-item-auction-bid-dao-manh
+feature/auction-locking-huy
+feature/app-shell-dashboard-linh
+feature/auction-detail-live-seller-ui-haianh
+```
+
+## W8 - Exception Handling & Unit Testing
+
+| Thành viên | Việc cần làm |
+|---|---|
+| Huy | AuthService thật, PasswordHasher, SessionManager, AuthController, router LOGIN/REGISTER thật |
+| Mạnh | Custom exceptions, AuctionServiceTest, BidServiceTest, DAO tests với edge cases |
+| Linh | Login/Register validation, error state, shared CSS |
+| Hải Anh | Seller screens hoàn chỉnh, form create/edit auction validation |
+
+Custom exceptions dự kiến:
+
+```text
+AuctionException
+InvalidBidException
+AuctionClosedException
+AuthenticationException
+AuthorizationException
+NotFoundException
+ValidationException
+DataAccessException
+```
+
+## W9 - CI/CD & Socket Integration
+
+| Thành viên | Việc cần làm |
+|---|---|
+| Huy | RequestRouter gọi controller/service thật, ClientHandler session-aware, error response chuẩn JSON |
+| Mạnh | Checkstyle Maven, GitHub Actions, seed.sql, serialization hoặc data persistence polish |
+| Linh | SocketClient thật cho Login/Register, xử lý lỗi kết nối |
+| Hải Anh | AuctionDetail/LiveBidding gọi server thật, PLACE_BID response update UI |
+
+## W10 - Full realtime & GUI hoàn thiện
+
+| Thành viên | Việc cần làm |
+|---|---|
+| Huy | BroadcastService, subscribe/unsubscribe auction, thread-safe client registry |
+| Mạnh | AuctionScheduler thật, OPEN -> RUNNING -> FINISHED, broadcast AUCTION_CLOSED |
+| Linh | AuctionList realtime update, dashboard thật |
+| Hải Anh | LiveBidding nhận BID_UPDATE, `Platform.runLater()`, LineChart realtime nếu kịp |
+
+## W11-W12 - Tích hợp toàn bộ & E2E Testing
+
+- Chạy Server + 3-4 Client đồng thời.
+- Test flow Bidder:
+
+```text
+register -> login -> browse auctions -> bid -> receive realtime update -> win/lose result
+```
+
+- Test flow Seller:
+
+```text
+login -> create item -> create auction -> watch bids -> auction finished -> view result
+```
+
+- Fix bug tích hợp.
+- Đảm bảo CI xanh.
+- Đảm bảo restart server không mất dữ liệu quan trọng.
+
+## W13-W14 - Polish & Chức năng nâng cao
+
+Ưu tiên:
+
+1. Bid History Visualization bằng JavaFX LineChart.
+2. Anti-sniping.
+3. Auto-Bidding.
+
+Chỉ làm nâng cao khi core system đã ổn.
+
+## W15 - Demo & Chấm điểm
+
+- Chuẩn bị slide.
+- Chuẩn bị demo script.
+- Mỗi thành viên giải thích được:
+  - phần mình code,
+  - phần người khác code,
+  - kiến trúc tổng thể,
+  - concurrency,
+  - Observer realtime,
+  - DAO/database,
+  - JavaFX MVC.
+
+---
+
+## 15. W7 immediate action plan
+
+### 15.1 Mạnh - DAO tiếp theo
+
+Branch:
+
+```bash
+git checkout dev
+git pull origin dev
+git checkout -b feature/sqlite-item-auction-bid-dao-manh
+```
+
+Files:
+
+```text
+server/src/main/java/com/auction/server/dao/ItemDao.java
+server/src/main/java/com/auction/server/dao/AuctionDao.java
+server/src/main/java/com/auction/server/dao/BidDao.java
+server/src/main/java/com/auction/server/dao/sqlite/SQLiteItemDao.java
+server/src/main/java/com/auction/server/dao/sqlite/SQLiteAuctionDao.java
+server/src/main/java/com/auction/server/dao/sqlite/SQLiteBidDao.java
+server/src/test/java/com/auction/server/dao/sqlite/SQLiteItemDaoTest.java
+server/src/test/java/com/auction/server/dao/sqlite/SQLiteAuctionDaoTest.java
+server/src/test/java/com/auction/server/dao/sqlite/SQLiteBidDaoTest.java
+```
+
+### 15.2 Huy - Concurrency skeleton
+
+Branch:
+
+```bash
+git checkout dev
+git pull origin dev
+git checkout -b feature/auction-locking-huy
+```
+
+Files:
+
+```text
+server/src/main/java/com/auction/server/concurrency/LockRegistry.java
+server/src/main/java/com/auction/server/concurrency/AuctionLockManager.java
+server/src/main/java/com/auction/server/service/AuctionService.java
+```
+
+Mục tiêu:
+
+```text
+- Mỗi auction có một ReentrantLock riêng.
+- Không dùng synchronized toàn bộ placeBid().
+- Có tryLock timeout để tránh treo server.
+- Chuẩn bị cho scheduler chạy song song với bidding.
+```
+
+### 15.3 Linh - AppShell + Dashboard + AuctionList mock
+
+Branch:
+
+```bash
+git checkout dev
+git pull origin dev
+git checkout -b feature/app-shell-dashboard-linh
+```
+
+Files:
+
+```text
+client/src/main/resources/fxml/AppShell.fxml
+client/src/main/resources/fxml/DashboardView.fxml
+client/src/main/resources/fxml/AuctionListView.fxml
+client/src/main/resources/fxml/components/Sidebar.fxml
+client/src/main/resources/fxml/components/TopBar.fxml
+client/src/main/java/com/auction/client/controller/AppShellController.java
+client/src/main/java/com/auction/client/controller/DashboardController.java
+client/src/main/java/com/auction/client/controller/AuctionListController.java
+client/src/main/java/com/auction/client/util/SceneManager.java
+```
+
+### 15.4 Hải Anh - Detail + Live + Seller UI mock
+
+Branch:
+
+```bash
+git checkout dev
+git pull origin dev
+git checkout -b feature/auction-detail-live-seller-ui-haianh
+```
+
+Files:
+
+```text
+client/src/main/resources/fxml/AuctionDetailView.fxml
+client/src/main/resources/fxml/LiveBiddingView.fxml
+client/src/main/resources/fxml/SellerCenterView.fxml
+client/src/main/resources/fxml/CreateAuctionView.fxml
+client/src/main/java/com/auction/client/controller/AuctionDetailController.java
+client/src/main/java/com/auction/client/controller/LiveBiddingController.java
+client/src/main/java/com/auction/client/controller/SellerCenterController.java
+client/src/main/java/com/auction/client/controller/CreateAuctionController.java
+```
+
+---
+
+## 16. Testing checklist
+
+Trước khi merge bất kỳ branch nào vào `dev`:
+
+```bash
+mvn clean install
+```
+
+Nếu branch chỉ sửa common:
+
+```bash
+mvn -pl common test
+```
+
+Nếu branch sửa server:
+
+```bash
+mvn -pl server test
+```
+
+Nếu branch sửa client:
+
+```bash
+mvn -pl client javafx:run
+```
+
+Manual socket test ví dụ:
+
+```bash
+ncat localhost 8080
+```
+
+Gửi:
+
+```json
+{"type":"LOGIN","requestId":"req-001","token":null,"data":{"username":"huy","password":"123456"}}
+```
+
+Kỳ vọng server trả JSON response hợp lệ.
+
+---
+
+## 17. Coding conventions
+
+- Java class: `PascalCase`.
+- Method/variable: `camelCase`.
+- Constants: `UPPER_SNAKE_CASE`.
+- DAO naming thống nhất dùng `Dao`, không dùng lẫn `DAO`:
+  - `UserDao`
+  - `SQLiteUserDao`
+  - `AuctionDao`
+  - `SQLiteAuctionDao`
+- Không để magic string cho message type; dùng `MessageType` enum.
+- Không để business logic trong JavaFX Controller.
+- Không để SQL trong Service.
+- Không để client import server package.
+- Không commit file runtime database:
+  - `auction.db`
+  - `*.db`
+  - `*.sqlite`
+
+---
+
+## 18. Presentation notes
+
+Khi bảo vệ, nhóm cần giải thích được:
+
+### Huy
+
+- Kiến trúc Client-Server.
+- Maven multi-module.
+- JSON protocol.
+- SocketServer / ClientHandler / RequestRouter.
+- Singleton / Factory / Observer.
+- ReentrantLock trong `placeBid()`.
+
+### Mạnh
+
+- SQLite schema.
+- DAO layer.
+- WAL mode.
+- Scheduler.
+- Unit test backend.
+- Exception handling.
+
+### Linh
+
+- JavaFX MVC.
+- FXML Controller.
+- Login/Register.
+- AppShell / Dashboard / AuctionList.
+- Client service gọi socket.
+
+### Hải Anh
+
+- AuctionDetail.
+- LiveBidding.
+- Realtime update UI bằng `Platform.runLater()`.
+- Seller screens.
+- LineChart nếu có.
+
+---
+
+## 19. Definition of Done
+
+Một task chỉ được coi là xong khi:
+
+- Code build pass.
+- Test liên quan pass.
+- Không phá module khác.
+- Không import sai dependency rule.
+- Có commit rõ nghĩa.
+- Có PR hoặc merge được review.
+- Nếu thêm file quan trọng, README/docs được cập nhật.
+- Người làm giải thích được code của mình.
+- Ít nhất một thành viên khác đọc và hiểu phần đó.
+
