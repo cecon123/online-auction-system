@@ -14,7 +14,7 @@
            fx:controller="com.auction.client.controller.LoginController"
            styleClass="login-root">
 
-    <VBox styleClass="login-card" spacing="16" maxWidth="420" maxHeight="500">
+    <VBox styleClass="login-card" spacing="16" maxWidth="420"  maxHeight="500">
         <padding>
             <Insets top="32" right="32" bottom="32" left="32"/>
         </padding>

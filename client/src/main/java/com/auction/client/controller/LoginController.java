@@ -1,5 +1,6 @@
 package com.auction.client.controller;
 
+import com.auction.client.util.SceneManager;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
@@ -34,12 +35,13 @@ public class LoginController {
             return;
         }
 
-        showError("Mock login only. Socket integration will be added in W9.");
+        // W6 mock login. Real socket login will be implemented in W9.
+        SceneManager.showAppShell();
     }
 
     @FXML
     private void handleCreateAccount() {
-        showError("Register screen will be connected next.");
+        SceneManager.showRegister();
     }
 
     private void showError(String message) {

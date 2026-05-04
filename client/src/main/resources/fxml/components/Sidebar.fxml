@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.controller.SidebarController"
+      styleClass="sidebar"
+      spacing="10"
+      prefWidth="260">
+
+    <padding>
+        <Insets top="28" right="18" bottom="28" left="18"/>
+    </padding>
+
+    <Label text="AuctionPro" styleClass="sidebar-title"/>
+    <Label text="Premium Bidding" styleClass="sidebar-subtitle"/>
+
+    <Region prefHeight="32"/>
+
+    <Button text="▦  Dashboard" onAction="#showDashboard" maxWidth="Infinity" styleClass="nav-button"/>
+    <Button text="⚖  Auctions" onAction="#showAuctions" maxWidth="Infinity" styleClass="nav-button"/>
+    <Button text="⏱  Live Bidding" onAction="#showLiveBidding" maxWidth="Infinity" styleClass="nav-button"/>
+    <Button text="▣  Seller Center" onAction="#showSellerCenter" maxWidth="Infinity" styleClass="nav-button"/>
+
+    <Region VBox.vgrow="ALWAYS"/>
+
+    <Button text="↩  Logout" onAction="#logout" maxWidth="Infinity" styleClass="nav-button"/>
+</VBox>
