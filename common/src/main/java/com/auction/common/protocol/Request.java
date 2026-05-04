@@ -1,13 +1,18 @@
 package com.auction.common.protocol;
 
+/**
+ * Generic request wrapper used by the socket JSON protocol.
+ *
+ * @param <T> type of request payload
+ */
 public class Request<T> {
+
     private MessageType type;
     private String requestId;
     private String token;
     private T data;
 
-    public Request() {
-    }
+    public Request() {}
 
     public Request(MessageType type, String requestId, String token, T data) {
         this.type = type;

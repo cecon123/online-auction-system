@@ -2,8 +2,7 @@ package com.auction.common.dto.bid;
 
 import java.math.BigDecimal;
 
-public record PlaceBidRequest(
-        long auctionId,
-        BigDecimal amount
-) {
-}
+/**
+ * Payload for PLACE_BID request.
+ */
+public record PlaceBidRequest(long auctionId, BigDecimal amount) {}
