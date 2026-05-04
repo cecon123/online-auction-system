@@ -35,9 +35,12 @@
     </HBox>
 
     <TilePane hgap="16" vgap="16" prefColumns="3">
-        <VBox styleClass="card" spacing="8" prefWidth="280">
+        <VBox styleClass="card" spacing="8" prefWidth="290">
+            <VBox styleClass="image-placeholder" prefHeight="140">
+                <Label text="WATCH IMAGE" styleClass="image-placeholder-text" />
+            </VBox>
             <padding>
-                <Insets top="18" right="18" bottom="18" left="18" />
+                <Insets top="0" right="18" bottom="18" left="18" />
             </padding>
             <Label text="Fine Art &amp; Antiques" styleClass="form-label" />
             <Label
@@ -58,9 +61,12 @@
             />
         </VBox>
 
-        <VBox styleClass="card" spacing="8" prefWidth="280">
+        <VBox styleClass="card" spacing="8" prefWidth="290">
+            <VBox styleClass="image-placeholder" prefHeight="140">
+                <Label text="CAR IMAGE" styleClass="image-placeholder-text" />
+            </VBox>
             <padding>
-                <Insets top="18" right="18" bottom="18" left="18" />
+                <Insets top="0" right="18" bottom="18" left="18" />
             </padding>
             <Label text="Classic Vehicles" styleClass="form-label" />
             <Label text="1965 Vintage Roadster" styleClass="card-title" />
@@ -78,9 +84,15 @@
             />
         </VBox>
 
-        <VBox styleClass="card" spacing="8" prefWidth="280">
+        <VBox styleClass="card" spacing="8" prefWidth="290">
+            <VBox styleClass="image-placeholder" prefHeight="140">
+                <Label
+                    text="JEWELRY IMAGE"
+                    styleClass="image-placeholder-text"
+                />
+            </VBox>
             <padding>
-                <Insets top="18" right="18" bottom="18" left="18" />
+                <Insets top="0" right="18" bottom="18" left="18" />
             </padding>
             <Label text="Jewelry &amp; Watches" styleClass="form-label" />
             <Label text="Kashmir Sapphire Ring 12ct" styleClass="card-title" />

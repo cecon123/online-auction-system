@@ -1,70 +1,244 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
+<?xml version="1.0" encoding="UTF-8" ?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<ScrollPane
+    xmlns="http://javafx.com/javafx"
+    xmlns:fx="http://javafx.com/fxml"
+    fx:controller="com.auction.client.controller.CreateAuctionController"
+    fitToWidth="true"
+    hbarPolicy="NEVER"
+    vbarPolicy="AS_NEEDED"
+    styleClass="page-scroll"
+>
 
-<VBox xmlns="http://javafx.com/javafx"
-      xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.auction.client.controller.CreateAuctionController"
-      spacing="24"
-      styleClass="page">
-
-    <padding>
-        <Insets top="32" right="32" bottom="32" left="32"/>
-    </padding>
-
-    <VBox spacing="6">
-        <Label text="Create New Auction" styleClass="page-title"/>
-        <Label text="Fill in the details below to list a new item in the Seller Center."
-               styleClass="page-subtitle"/>
-    </VBox>
-
-    <VBox styleClass="card" spacing="18">
+    <VBox spacing="12" styleClass="create-page">
         <padding>
-            <Insets top="24" right="24" bottom="24" left="24"/>
+            <Insets top="16" right="28" bottom="20" left="28" />
         </padding>
 
-        <Label text="Item Details" styleClass="section-title"/>
+        <VBox spacing="2">
+            <Label text="Create New Auction" styleClass="create-page-title" />
+            <Label
+                text="Fill in the details below to list a new item in the Seller Center."
+                styleClass="create-page-subtitle"
+            />
+        </VBox>
 
-        <GridPane hgap="16" vgap="14">
-            <Label text="Product Name" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-            <TextField fx:id="productNameField" promptText="e.g. Vintage Rolex Submariner"
-                       GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <VBox styleClass="create-auction-card" spacing="0">
 
-            <Label text="Category" styleClass="form-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-            <ComboBox fx:id="categoryComboBox" promptText="Select category"
-                      GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+            <HBox
+                styleClass="create-auction-card-header"
+                alignment="CENTER_LEFT"
+            >
+                <padding>
+                    <Insets top="12" right="20" bottom="12" left="20" />
+                </padding>
 
-            <Label text="Starting Price" styleClass="form-label" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
-            <TextField fx:id="startingPriceField" promptText="0.00"
-                       GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+                <Label text="Item Details" styleClass="create-section-title" />
+            </HBox>
 
-            <Label text="Start Time" styleClass="form-label" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
-            <TextField fx:id="startTimeField" promptText="2026-05-04T09:00"
-                       GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+            <GridPane hgap="22" vgap="12" styleClass="create-auction-body">
+                <padding>
+                    <Insets top="16" right="20" bottom="14" left="20" />
+                </padding>
 
-            <Label text="End Time" styleClass="form-label" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
-            <TextField fx:id="endTimeField" promptText="2026-05-05T09:00"
-                       GridPane.rowIndex="5" GridPane.columnIndex="1"/>
-        </GridPane>
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="58" />
+                    <ColumnConstraints percentWidth="42" />
+                </columnConstraints>
 
-        <Label text="Description" styleClass="form-label"/>
-        <TextArea fx:id="descriptionArea"
-                  promptText="Provide detailed information about the item..."
-                  prefRowCount="5"/>
+                <VBox spacing="10" GridPane.columnIndex="0">
 
-        <Label fx:id="messageLabel" styleClass="error-text"/>
+                    <VBox spacing="4">
+                        <Label
+                            text="PRODUCT NAME"
+                            styleClass="create-form-label"
+                        />
+                        <TextField
+                            fx:id="productNameField"
+                            promptText="e.g. Vintage Rolex Submariner"
+                            styleClass="create-input"
+                        />
+                    </VBox>
 
-        <HBox spacing="12">
-            <Button text="Cancel" onAction="#handleCancel" styleClass="secondary-button"/>
-            <Button text="Save Auction" onAction="#handleSaveAuction" styleClass="primary-button"/>
-        </HBox>
+                    <HBox spacing="14">
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label
+                                text="CATEGORY"
+                                styleClass="create-form-label"
+                            />
+                            <ComboBox
+                                fx:id="categoryComboBox"
+                                promptText="Select category..."
+                                maxWidth="Infinity"
+                                styleClass="create-combo"
+                            />
+                        </VBox>
+
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label
+                                text="CONDITION"
+                                styleClass="create-form-label"
+                            />
+                            <ComboBox
+                                fx:id="conditionComboBox"
+                                promptText="Brand New"
+                                maxWidth="Infinity"
+                                styleClass="create-combo"
+                            />
+                        </VBox>
+                    </HBox>
+
+                    <VBox spacing="4">
+                        <Label
+                            text="DESCRIPTION"
+                            styleClass="create-form-label"
+                        />
+                        <TextArea
+                            fx:id="descriptionArea"
+                            promptText="Provide detailed information about the item..."
+                            prefRowCount="5"
+                            wrapText="true"
+                            styleClass="create-description"
+                        />
+                    </VBox>
+                </VBox>
+
+                <VBox spacing="9" GridPane.columnIndex="1">
+
+                    <VBox spacing="4">
+                        <Label
+                            text="PRODUCT IMAGE"
+                            styleClass="create-form-label"
+                        />
+
+                        <VBox
+                            styleClass="upload-box"
+                            spacing="5"
+                            alignment="CENTER"
+                        >
+                            <Label text="☁" styleClass="upload-icon" />
+                            <Label
+                                text="Choose item image"
+                                styleClass="upload-title"
+                            />
+                            <Label
+                                text="PNG, JPG, JPEG, GIF"
+                                styleClass="upload-subtitle"
+                            />
+
+                            <Button
+                                text="Browse Image"
+                                onAction="#handleChooseImage"
+                                styleClass="create-secondary-small-button"
+                            />
+                        </VBox>
+
+                        <Label
+                            fx:id="selectedImageLabel"
+                            text="No image selected"
+                            styleClass="create-page-subtitle"
+                        />
+                    </VBox>
+
+                    <VBox styleClass="auction-mechanics-card" spacing="8">
+                        <padding>
+                            <Insets top="13" right="14" bottom="13" left="14" />
+                        </padding>
+
+                        <Label
+                            text="Auction Mechanics"
+                            styleClass="create-card-title"
+                        />
+
+                        <VBox spacing="4">
+                            <Label
+                                text="STARTING PRICE"
+                                styleClass="create-form-label"
+                            />
+                            <TextField
+                                fx:id="startingPriceField"
+                                promptText="USD 0.00"
+                                styleClass="create-input"
+                            />
+                        </VBox>
+
+                        <HBox spacing="10">
+                            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                <Label
+                                    text="START TIME"
+                                    styleClass="create-form-label"
+                                />
+                                <TextField
+                                    fx:id="startTimeField"
+                                    promptText="2026-05-04 09:30"
+                                    styleClass="create-input"
+                                />
+                            </VBox>
+
+                            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                <Label
+                                    text="END TIME"
+                                    styleClass="create-form-label"
+                                />
+                                <TextField
+                                    fx:id="endTimeField"
+                                    promptText="2026-05-05 17:00"
+                                    styleClass="create-input"
+                                />
+                            </VBox>
+                        </HBox>
+
+                        <Label
+                            text="Format: yyyy-MM-dd HH:mm, 24-hour time."
+                            styleClass="create-help-text"
+                        />
+                    </VBox>
+                </VBox>
+            </GridPane>
+
+            <HBox
+                spacing="10"
+                alignment="CENTER_RIGHT"
+                styleClass="create-auction-footer"
+            >
+                <padding>
+                    <Insets top="11" right="20" bottom="11" left="20" />
+                </padding>
+
+                <Label
+                    fx:id="messageLabel"
+                    HBox.hgrow="ALWAYS"
+                    wrapText="true"
+                    styleClass="create-page-subtitle"
+                />
+
+                <Region HBox.hgrow="ALWAYS" />
+
+                <Button
+                    text="Cancel"
+                    onAction="#handleCancel"
+                    styleClass="create-secondary-footer-button"
+                    prefWidth="110"
+                />
+
+                <Button
+                    text="Save Auction"
+                    onAction="#handleSaveAuction"
+                    styleClass="create-primary-footer-button"
+                    prefWidth="155"
+                />
+            </HBox>
+        </VBox>
     </VBox>
-</VBox>
+</ScrollPane>

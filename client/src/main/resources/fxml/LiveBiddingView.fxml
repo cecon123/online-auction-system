@@ -4,94 +4,377 @@
 <?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
-<VBox
+<ScrollPane
     xmlns="http://javafx.com/javafx"
     xmlns:fx="http://javafx.com/fxml"
     fx:controller="com.auction.client.controller.LiveBiddingController"
-    spacing="20"
-    styleClass="page"
+    fitToWidth="true"
+    hbarPolicy="NEVER"
+    vbarPolicy="AS_NEEDED"
+    styleClass="page-scroll"
 >
 
-    <padding>
-        <Insets top="28" right="32" bottom="32" left="32" />
-    </padding>
-
-    <HBox spacing="16" styleClass="card">
+    <VBox spacing="12" styleClass="live-page-compact">
         <padding>
-            <Insets top="18" right="18" bottom="18" left="18" />
+            <Insets top="18" right="24" bottom="24" left="24" />
         </padding>
 
-        <VBox spacing="4" HBox.hgrow="ALWAYS">
-            <Label text="LIVE AUCTION" styleClass="status-running" />
-            <Label
-                text="Vintage 1969 Omega Speedmaster Professional"
-                styleClass="page-title"
-            />
-            <Label text="Lot #4092-A" styleClass="page-subtitle" />
-        </VBox>
-
-        <VBox spacing="4">
-            <Label text="TIME REMAINING" styleClass="form-label" />
-            <Label fx:id="countdownLabel" styleClass="money-large" />
-        </VBox>
-    </HBox>
-
-    <HBox spacing="24">
-        <VBox spacing="16" HBox.hgrow="ALWAYS">
-            <VBox styleClass="card" spacing="10">
-                <padding>
-                    <Insets top="20" right="20" bottom="20" left="20" />
-                </padding>
-
-                <Label text="CURRENT HIGHEST BID" styleClass="form-label" />
-                <Label fx:id="currentPriceLabel" styleClass="money-large" />
-                <Label text="Highest Bidder" styleClass="form-label" />
-                <Label fx:id="highestBidderLabel" styleClass="card-title" />
-
-                <HBox spacing="10">
-                    <TextField
-                        fx:id="bidAmountField"
-                        promptText="Enter bid amount"
-                        prefWidth="200"
-                    />
-                    <Button
-                        text="Confirm Bid"
-                        onAction="#handlePlaceBid"
-                        styleClass="primary-button"
-                    />
-                </HBox>
-            </VBox>
-
-            <VBox styleClass="card" spacing="10">
-                <padding>
-                    <Insets top="20" right="20" bottom="20" left="20" />
-                </padding>
-
-                <Label text="Realtime Price Curve" styleClass="section-title" />
-
-                <LineChart fx:id="priceChart" animated="false" prefHeight="300">
-                    <xAxis>
-                        <CategoryAxis label="Time" />
-                    </xAxis>
-                    <yAxis>
-                        <NumberAxis label="Price" />
-                    </yAxis>
-                </LineChart>
-            </VBox>
-        </VBox>
-
-        <VBox styleClass="card" spacing="10" prefWidth="380">
+        <HBox spacing="12" styleClass="live-card live-header-compact">
             <padding>
-                <Insets top="20" right="20" bottom="20" left="20" />
+                <Insets top="14" right="16" bottom="14" left="16" />
             </padding>
 
-            <Label text="Live History" styleClass="section-title" />
-            <ListView fx:id="bidHistoryList" prefHeight="500" />
-        </VBox>
-    </HBox>
-</VBox>
+            <VBox spacing="3" HBox.hgrow="ALWAYS">
+                <Label text="LIVE AUCTION" styleClass="live-status-running" />
+                <Label
+                    text="Vintage 1969 Omega Speedmaster Professional"
+                    styleClass="live-title-compact"
+                />
+                <Label
+                    text="Lot #4092-A · Watches · Running auction"
+                    styleClass="live-subtitle"
+                />
+            </VBox>
+
+            <VBox spacing="3" minWidth="140">
+                <Label text="TIME REMAINING" styleClass="live-form-label" />
+                <Label
+                    fx:id="countdownLabel"
+                    text="02:14:05"
+                    styleClass="live-countdown-compact"
+                />
+            </VBox>
+        </HBox>
+
+        <HBox spacing="14">
+            <VBox spacing="12" HBox.hgrow="ALWAYS">
+
+                <VBox styleClass="live-card" spacing="10">
+                    <padding>
+                        <Insets top="14" right="16" bottom="14" left="16" />
+                    </padding>
+
+                    <HBox alignment="CENTER_LEFT">
+                        <VBox spacing="3" HBox.hgrow="ALWAYS">
+                            <Label
+                                text="CURRENT HIGHEST BID"
+                                styleClass="live-form-label"
+                            />
+                            <Label
+                                fx:id="currentPriceLabel"
+                                text="USD 0.00"
+                                styleClass="live-money-compact"
+                            />
+                        </VBox>
+
+                        <VBox spacing="3" minWidth="150">
+                            <Label
+                                text="HIGHEST BIDDER"
+                                styleClass="live-form-label"
+                            />
+                            <Label
+                                fx:id="highestBidderLabel"
+                                text="-"
+                                styleClass="live-bidder-name-compact"
+                            />
+                        </VBox>
+                    </HBox>
+
+                    <VBox spacing="6">
+                        <Label
+                            text="Place Your Bid"
+                            styleClass="live-section-title-compact"
+                        />
+
+                        <HBox spacing="8">
+                            <TextField
+                                fx:id="bidAmountField"
+                                promptText="Enter bid amount"
+                                HBox.hgrow="ALWAYS"
+                                styleClass="live-input"
+                            />
+
+                            <Button
+                                text="Confirm Bid"
+                                onAction="#handlePlaceBid"
+                                minWidth="130"
+                                styleClass="live-primary-button"
+                            />
+                        </HBox>
+
+                        <Label
+                            fx:id="manualBidMessageLabel"
+                            text=""
+                            wrapText="true"
+                            styleClass="live-message-text"
+                        />
+                    </VBox>
+                </VBox>
+
+                <VBox styleClass="auto-bid-card" spacing="9">
+                    <padding>
+                        <Insets top="14" right="16" bottom="14" left="16" />
+                    </padding>
+
+                    <HBox alignment="CENTER_LEFT" spacing="12">
+                        <VBox spacing="2" HBox.hgrow="ALWAYS">
+                            <Label
+                                text="AUTO BIDDING"
+                                styleClass="live-section-title-compact"
+                            />
+                            <Label
+                                text="Automatically increases your bid by the selected step when someone outbids you."
+                                wrapText="true"
+                                styleClass="live-subtitle"
+                            />
+                        </VBox>
+
+                        <Label
+                            fx:id="autoBidStatusLabel"
+                            text="ON"
+                            minWidth="72"
+                            prefWidth="72"
+                            alignment="CENTER"
+                            styleClass="auto-status-active"
+                        />
+                    </HBox>
+
+                    <HBox spacing="10">
+                        <VBox
+                            styleClass="auto-context-box-compact"
+                            spacing="2"
+                            HBox.hgrow="ALWAYS"
+                        >
+                            <Label
+                                text="CURRENT PRICE"
+                                styleClass="auto-info-label"
+                            />
+                            <Label
+                                fx:id="autoCurrentPriceLabel"
+                                text="USD 0.00"
+                                styleClass="auto-info-value"
+                            />
+                        </VBox>
+
+                        <VBox
+                            styleClass="auto-context-box-compact"
+                            spacing="2"
+                            HBox.hgrow="ALWAYS"
+                        >
+                            <Label
+                                text="YOUR STATUS"
+                                styleClass="auto-info-label"
+                            />
+                            <Label
+                                fx:id="autoUserPositionLabel"
+                                text="Leading"
+                                styleClass="auto-position-leading"
+                            />
+                        </VBox>
+                    </HBox>
+
+                    <HBox spacing="10">
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label
+                                text="YOUR MAXIMUM BUDGET"
+                                styleClass="live-form-label"
+                            />
+                            <TextField
+                                fx:id="autoMaxBudgetField"
+                                promptText="20000"
+                                styleClass="live-input"
+                            />
+                        </VBox>
+
+                        <VBox spacing="4" prefWidth="170">
+                            <Label
+                                text="BID STEP"
+                                styleClass="live-form-label"
+                            />
+                            <ComboBox
+                                fx:id="autoStepComboBox"
+                                maxWidth="Infinity"
+                                styleClass="live-combo"
+                            />
+                        </VBox>
+                    </HBox>
+
+                    <HBox spacing="10">
+                        <VBox
+                            styleClass="auto-info-box-compact"
+                            spacing="2"
+                            HBox.hgrow="ALWAYS"
+                        >
+                            <Label
+                                text="MAX BUDGET"
+                                styleClass="auto-info-label"
+                            />
+                            <Label
+                                fx:id="autoMaxBudgetLabel"
+                                text="-"
+                                styleClass="auto-info-value"
+                            />
+                        </VBox>
+
+                        <VBox
+                            styleClass="auto-info-box-compact"
+                            spacing="2"
+                            HBox.hgrow="ALWAYS"
+                        >
+                            <Label
+                                text="SYSTEM NEXT BID"
+                                styleClass="auto-info-label"
+                            />
+                            <Label
+                                fx:id="autoNextBidLabel"
+                                text="-"
+                                styleClass="auto-info-value"
+                            />
+                        </VBox>
+
+                        <VBox
+                            styleClass="auto-info-box-compact"
+                            spacing="2"
+                            HBox.hgrow="ALWAYS"
+                        >
+                            <Label
+                                text="REMAINING BUDGET"
+                                styleClass="auto-info-label"
+                            />
+                            <Label
+                                fx:id="autoRemainingBudgetLabel"
+                                text="-"
+                                styleClass="auto-info-value"
+                            />
+                        </VBox>
+                    </HBox>
+
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <Button
+                            fx:id="enableAutoBidButton"
+                            text="Enable Auto Bid"
+                            onAction="#handleEnableAutoBid"
+                            styleClass="auto-primary-button"
+                        />
+
+                        <Button
+                            fx:id="updateAutoBidButton"
+                            text="Update Limit"
+                            onAction="#handleUpdateAutoBid"
+                            styleClass="auto-primary-button"
+                        />
+
+                        <Button
+                            fx:id="disableAutoBidButton"
+                            text="Disable"
+                            onAction="#handleDisableAutoBid"
+                            styleClass="auto-danger-button"
+                        />
+
+                        <Region HBox.hgrow="ALWAYS" />
+
+                        <Button
+                            fx:id="simulateOutbidButton"
+                            text="Simulate Outbid"
+                            onAction="#handleSimulateOutbid"
+                            styleClass="auto-ghost-button"
+                        />
+                    </HBox>
+
+                    <Label
+                        fx:id="autoBidMessageLabel"
+                        text=""
+                        wrapText="true"
+                        styleClass="live-message-text"
+                    />
+
+                    <Label
+                        fx:id="autoLastActionLabel"
+                        text="Auto bidding is active and watching this auction."
+                        wrapText="true"
+                        styleClass="auto-last-action-text"
+                    />
+                </VBox>
+
+                <VBox styleClass="live-card price-card-compact" spacing="6">
+                    <padding>
+                        <Insets top="14" right="16" bottom="12" left="16" />
+                    </padding>
+
+                    <Label
+                        text="Realtime Price Curve"
+                        styleClass="live-section-title-compact"
+                    />
+
+                    <LineChart
+                        fx:id="priceChart"
+                        animated="false"
+                        createSymbols="true"
+                        legendVisible="false"
+                        prefHeight="235"
+                        minHeight="235"
+                        maxHeight="235"
+                        styleClass="price-chart"
+                    >
+                        <xAxis>
+                            <CategoryAxis fx:id="timeAxis" label="Time" />
+                        </xAxis>
+                        <yAxis>
+                            <NumberAxis fx:id="priceAxis" label="Price" />
+                        </yAxis>
+                    </LineChart>
+                </VBox>
+            </VBox>
+
+            <VBox styleClass="live-card bid-history-card-compact" spacing="9">
+                <padding>
+                    <Insets top="14" right="14" bottom="14" left="14" />
+                </padding>
+
+                <VBox spacing="2">
+                    <Label
+                        text="Live Bid History"
+                        styleClass="live-section-title-compact"
+                    />
+                    <Label
+                        text="Latest bids"
+                        styleClass="bid-history-subtitle"
+                    />
+                </VBox>
+
+                <HBox spacing="8" styleClass="bid-history-header-row">
+                    <Label
+                        text="TIME"
+                        prefWidth="48"
+                        styleClass="bid-history-header-text"
+                    />
+                    <Label
+                        text="BIDDER"
+                        prefWidth="92"
+                        styleClass="bid-history-header-text"
+                    />
+                    <Label
+                        text="AMOUNT"
+                        prefWidth="72"
+                        styleClass="bid-history-header-text"
+                    />
+                </HBox>
+
+                <ListView
+                    fx:id="bidHistoryList"
+                    prefHeight="300"
+                    maxHeight="300"
+                    styleClass="bid-history-list"
+                />
+            </VBox>
+        </HBox>
+    </VBox>
+</ScrollPane>

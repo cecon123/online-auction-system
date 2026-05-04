@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<ScrollPane xmlns="http://javafx.com/javafx"
+            fitToWidth="true"
+            hbarPolicy="NEVER"
+            vbarPolicy="AS_NEEDED"
+            styleClass="page-scroll">
+
+    <VBox spacing="24" styleClass="page">
+        <padding>
+            <Insets top="32" right="32" bottom="40" left="32"/>
+        </padding>
+
+        <VBox spacing="6">
+            <Label text="My Bids" styleClass="page-title"/>
+            <Label text="Track auctions you joined, your bid status, and your bidding history."
+                   styleClass="page-subtitle"/>
+        </VBox>
+
+        <HBox spacing="16">
+            <VBox styleClass="card" spacing="8" prefWidth="260">
+                <padding>
+                    <Insets top="18" right="18" bottom="18" left="18"/>
+                </padding>
+
+                <Label text="ACTIVE BIDS" styleClass="form-label"/>
+                <Label text="18" styleClass="stat-number"/>
+                <Label text="Across 5 categories" styleClass="page-subtitle"/>
+            </VBox>
+
+            <VBox styleClass="card" spacing="8" prefWidth="260">
+                <padding>
+                    <Insets top="18" right="18" bottom="18" left="18"/>
+                </padding>
+
+                <Label text="CURRENTLY WINNING" styleClass="form-label"/>
+                <Label text="7" styleClass="stat-number"/>
+                <Label text="You are leading these auctions" styleClass="success-text"/>
+            </VBox>
+
+            <VBox styleClass="card" spacing="8" prefWidth="260">
+                <padding>
+                    <Insets top="18" right="18" bottom="18" left="18"/>
+                </padding>
+
+                <Label text="OUTBID" styleClass="form-label"/>
+                <Label text="2" styleClass="stat-number"/>
+                <Label text="Need a higher bid to win" styleClass="error-text"/>
+            </VBox>
+
+            <VBox styleClass="card" spacing="8" prefWidth="260">
+                <padding>
+                    <Insets top="18" right="18" bottom="18" left="18"/>
+                </padding>
+
+                <Label text="WATCHLIST" styleClass="form-label"/>
+                <Label text="5" styleClass="stat-number"/>
+                <Label text="Auctions you follow" styleClass="page-subtitle"/>
+            </VBox>
+        </HBox>
+
+        <VBox spacing="14">
+            <HBox alignment="CENTER_LEFT">
+                <Label text="Participating Auctions" styleClass="section-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Refresh" styleClass="secondary-button"/>
+            </HBox>
+
+            <VBox styleClass="card" spacing="0">
+                <GridPane hgap="20" styleClass="admin-table-header">
+                    <padding>
+                        <Insets top="12" right="18" bottom="12" left="18"/>
+                    </padding>
+
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="28"/>
+                        <ColumnConstraints percentWidth="15"/>
+                        <ColumnConstraints percentWidth="15"/>
+                        <ColumnConstraints percentWidth="15"/>
+                        <ColumnConstraints percentWidth="15"/>
+                        <ColumnConstraints percentWidth="12"/>
+                    </columnConstraints>
+
+                    <Label text="AUCTION" styleClass="admin-table-header-text" GridPane.columnIndex="0"/>
+                    <Label text="YOUR BID" styleClass="admin-table-header-text" GridPane.columnIndex="1"/>
+                    <Label text="CURRENT BID" styleClass="admin-table-header-text" GridPane.columnIndex="2"/>
+                    <Label text="STATUS" styleClass="admin-table-header-text" GridPane.columnIndex="3"/>
+                    <Label text="ENDS IN" styleClass="admin-table-header-text" GridPane.columnIndex="4"/>
+                    <Label text="ACTION" styleClass="admin-table-header-text" GridPane.columnIndex="5"/>
+                </GridPane>
+
+                <GridPane hgap="20" styleClass="admin-table-row">
+                    <padding>
+                        <Insets top="14" right="18" bottom="14" left="18"/>
+                    </padding>
+
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="28"/>
+                        <ColumnConstraints percentWidth="15"/>
+                        <ColumnConstraints percentWidth="15"/>
+                        <ColumnConstraints percentWidth="15"/>
+                        <ColumnConstraints percentWidth="15"/>
+                        <ColumnConstraints percentWidth="12"/>
+                    </columnConstraints>
+
+                    <Label text="Patek Philippe Nautilus" GridPane.columnIndex="0"/>
+                    <Label text="\$125,000" styleClass="money" GridPane.columnIndex="1"/>
+                    <Label text="\$125,000" styleClass="money" GridPane.columnIndex="2"/>
+                    <Label text="Winning" styleClass="success-text" GridPane.columnIndex="3"/>
+                    <Label text="02:14:05" GridPane.columnIndex="4"/>
+                    <Button text="Bid More" styleClass="secondary-button" GridPane.columnIndex="5"/>
+                </GridPane>
+
+                <GridPane hgap="20" styleClass="admin-table-row-alt">
+                    <padding>
+                        <Insets top="14" right="18" bottom="14" left="18"/>
+                    </padding>
+
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="28"/>
+                        <ColumnConstraints percentWidth="15"/>
+                        <ColumnConstraints percentWidth="15"/>
+                        <ColumnConstraints percentWidth="15"/>
+                        <ColumnConstraints percentWidth="15"/>
+                        <ColumnConstraints percentWidth="12"/>
+                    </columnConstraints>
+
+                    <Label text="1964 Aston Martin DB5" GridPane.columnIndex="0"/>
+                    <Label text="\$820,000" styleClass="money" GridPane.columnIndex="1"/>
+                    <Label text="\$850,000" styleClass="money" GridPane.columnIndex="2"/>
+                    <Label text="Outbid" styleClass="error-text" GridPane.columnIndex="3"/>
+                    <Label text="14:00:00" GridPane.columnIndex="4"/>
+                    <Button text="Bid Again" styleClass="secondary-button" GridPane.columnIndex="5"/>
+                </GridPane>
+
+                <GridPane hgap="20" styleClass="admin-table-row">
+                    <padding>
+                        <Insets top="14" right="18" bottom="14" left="18"/>
+                    </padding>
+
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="28"/>
+                        <ColumnConstraints percentWidth="15"/>
+                        <ColumnConstraints percentWidth="15"/>
+                        <ColumnConstraints percentWidth="15"/>
+                        <ColumnConstraints percentWidth="15"/>
+                        <ColumnConstraints percentWidth="12"/>
+                    </columnConstraints>
+
+                    <Label text="Untitled Composition II" GridPane.columnIndex="0"/>
+                    <Label text="\$32,000" styleClass="money" GridPane.columnIndex="1"/>
+                    <Label text="\$32,000" styleClass="money" GridPane.columnIndex="2"/>
+                    <Label text="Winning" styleClass="success-text" GridPane.columnIndex="3"/>
+                    <Label text="1d 04h" GridPane.columnIndex="4"/>
+                    <Button text="View" styleClass="secondary-button" GridPane.columnIndex="5"/>
+                </GridPane>
+            </VBox>
+        </VBox>
+
+        <VBox spacing="14">
+            <Label text="Recent Bid History" styleClass="section-title"/>
+
+            <VBox styleClass="card" spacing="0">
+                <GridPane hgap="20" styleClass="admin-table-header">
+                    <padding>
+                        <Insets top="12" right="18" bottom="12" left="18"/>
+                    </padding>
+
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="18"/>
+                        <ColumnConstraints percentWidth="37"/>
+                        <ColumnConstraints percentWidth="20"/>
+                        <ColumnConstraints percentWidth="25"/>
+                    </columnConstraints>
+
+                    <Label text="TIME" styleClass="admin-table-header-text" GridPane.columnIndex="0"/>
+                    <Label text="AUCTION" styleClass="admin-table-header-text" GridPane.columnIndex="1"/>
+                    <Label text="AMOUNT" styleClass="admin-table-header-text" GridPane.columnIndex="2"/>
+                    <Label text="RESULT" styleClass="admin-table-header-text" GridPane.columnIndex="3"/>
+                </GridPane>
+
+                <GridPane hgap="20" styleClass="admin-table-row">
+                    <padding>
+                        <Insets top="14" right="18" bottom="14" left="18"/>
+                    </padding>
+
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="18"/>
+                        <ColumnConstraints percentWidth="37"/>
+                        <ColumnConstraints percentWidth="20"/>
+                        <ColumnConstraints percentWidth="25"/>
+                    </columnConstraints>
+
+                    <Label text="10:24:12" GridPane.columnIndex="0"/>
+                    <Label text="Patek Philippe Nautilus" GridPane.columnIndex="1"/>
+                    <Label text="\$125,000" styleClass="money" GridPane.columnIndex="2"/>
+                    <Label text="Highest bid" styleClass="success-text" GridPane.columnIndex="3"/>
+                </GridPane>
+
+                <GridPane hgap="20" styleClass="admin-table-row-alt">
+                    <padding>
+                        <Insets top="14" right="18" bottom="14" left="18"/>
+                    </padding>
+
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="18"/>
+                        <ColumnConstraints percentWidth="37"/>
+                        <ColumnConstraints percentWidth="20"/>
+                        <ColumnConstraints percentWidth="25"/>
+                    </columnConstraints>
+
+                    <Label text="10:18:44" GridPane.columnIndex="0"/>
+                    <Label text="1964 Aston Martin DB5" GridPane.columnIndex="1"/>
+                    <Label text="\$820,000" styleClass="money" GridPane.columnIndex="2"/>
+                    <Label text="Outbid later" styleClass="error-text" GridPane.columnIndex="3"/>
+                </GridPane>
+
+                <GridPane hgap="20" styleClass="admin-table-row">
+                    <padding>
+                        <Insets top="14" right="18" bottom="14" left="18"/>
+                    </padding>
+
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="18"/>
+                        <ColumnConstraints percentWidth="37"/>
+                        <ColumnConstraints percentWidth="20"/>
+                        <ColumnConstraints percentWidth="25"/>
+                    </columnConstraints>
+
+                    <Label text="09:52:01" GridPane.columnIndex="0"/>
+                    <Label text="Untitled Composition II" GridPane.columnIndex="1"/>
+                    <Label text="\$32,000" styleClass="money" GridPane.columnIndex="2"/>
+                    <Label text="Highest bid" styleClass="success-text" GridPane.columnIndex="3"/>
+                </GridPane>
+            </VBox>
+        </VBox>
+    </VBox>
+</ScrollPane>

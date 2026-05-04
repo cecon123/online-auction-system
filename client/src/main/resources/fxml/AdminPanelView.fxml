@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<ScrollPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.auction.client.controller.AdminPanelController"
+            fitToWidth="true"
+            hbarPolicy="NEVER"
+            styleClass="page-scroll">
+
+    <VBox spacing="28" styleClass="page">
+        <padding>
+            <Insets top="32" right="32" bottom="40" left="32"/>
+        </padding>
+
+        <!-- Header -->
+        <HBox spacing="16" alignment="CENTER_LEFT">
+            <VBox spacing="6" HBox.hgrow="ALWAYS">
+                <Label text="Admin Panel" styleClass="page-title"/>
+                <Label text="System overview and management console." styleClass="page-subtitle"/>
+            </VBox>
+
+            <Button text="⇩  Export Report"
+                    onAction="#handleExportReport"
+                    styleClass="admin-export-button"/>
+        </HBox>
+
+        <!-- Stat cards -->
+        <HBox spacing="16">
+            <VBox styleClass="admin-stat-card" spacing="14" HBox.hgrow="ALWAYS">
+                <padding>
+                    <Insets top="20" right="20" bottom="20" left="20"/>
+                </padding>
+
+                <HBox alignment="CENTER_LEFT">
+                    <Label text="Total Users" styleClass="admin-stat-title"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label text="👥" styleClass="admin-stat-icon-purple"/>
+                </HBox>
+
+                <HBox spacing="10" alignment="BOTTOM_LEFT">
+                    <Label text="12,450" styleClass="admin-stat-number"/>
+                    <Label text="↗ +5.2%" styleClass="admin-stat-change"/>
+                </HBox>
+            </VBox>
+
+            <VBox styleClass="admin-stat-card" spacing="14" HBox.hgrow="ALWAYS">
+                <padding>
+                    <Insets top="20" right="20" bottom="20" left="20"/>
+                </padding>
+
+                <HBox alignment="CENTER_LEFT">
+                    <Label text="Total Auctions" styleClass="admin-stat-title"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label text="▣" styleClass="admin-stat-icon-blue"/>
+                </HBox>
+
+                <HBox spacing="10" alignment="BOTTOM_LEFT">
+                    <Label text="3,890" styleClass="admin-stat-number"/>
+                    <Label text="↗ +1.8%" styleClass="admin-stat-change"/>
+                </HBox>
+            </VBox>
+
+            <VBox styleClass="admin-stat-card" spacing="14" HBox.hgrow="ALWAYS">
+                <padding>
+                    <Insets top="20" right="20" bottom="20" left="20"/>
+                </padding>
+
+                <HBox alignment="CENTER_LEFT">
+                    <Label text="Running" styleClass="admin-stat-title"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label text="▶" styleClass="admin-stat-icon-orange"/>
+                </HBox>
+
+                <Label text="1,204" styleClass="admin-stat-number"/>
+            </VBox>
+
+            <VBox styleClass="admin-stat-card" spacing="14" HBox.hgrow="ALWAYS">
+                <padding>
+                    <Insets top="20" right="20" bottom="20" left="20"/>
+                </padding>
+
+                <HBox alignment="CENTER_LEFT">
+                    <Label text="Finished" styleClass="admin-stat-title"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label text="✓" styleClass="admin-stat-icon-gray"/>
+                </HBox>
+
+                <Label text="2,686" styleClass="admin-stat-number"/>
+            </VBox>
+        </HBox>
+
+        <!-- User Management -->
+        <VBox spacing="14">
+            <Label text="User Management" styleClass="admin-section-title"/>
+
+            <VBox styleClass="admin-table">
+                <GridPane styleClass="admin-table-header" hgap="16">
+                    <padding>
+                        <Insets top="12" right="16" bottom="12" left="16"/>
+                    </padding>
+
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="16"/>
+                        <ColumnConstraints percentWidth="24"/>
+                        <ColumnConstraints percentWidth="12"/>
+                        <ColumnConstraints percentWidth="14"/>
+                        <ColumnConstraints percentWidth="18"/>
+                        <ColumnConstraints percentWidth="16"/>
+                    </columnConstraints>
+
+                    <Label text="USER" styleClass="admin-table-header-text" GridPane.columnIndex="0"/>
+                    <Label text="EMAIL" styleClass="admin-table-header-text" GridPane.columnIndex="1"/>
+                    <Label text="ROLE" styleClass="admin-table-header-text" GridPane.columnIndex="2"/>
+                    <Label text="STATUS" styleClass="admin-table-header-text" GridPane.columnIndex="3"/>
+                    <Label text="JOINED DATE" styleClass="admin-table-header-text" GridPane.columnIndex="4"/>
+                    <Label text="ACTIONS" styleClass="admin-table-header-text" GridPane.columnIndex="5"/>
+                </GridPane>
+
+                <GridPane styleClass="admin-table-row" hgap="16">
+                    <padding>
+                        <Insets top="12" right="16" bottom="12" left="16"/>
+                    </padding>
+
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="16"/>
+                        <ColumnConstraints percentWidth="24"/>
+                        <ColumnConstraints percentWidth="12"/>
+                        <ColumnConstraints percentWidth="14"/>
+                        <ColumnConstraints percentWidth="18"/>
+                        <ColumnConstraints percentWidth="16"/>
+                    </columnConstraints>
+
+                    <Label text="Alice Smith" styleClass="admin-table-cell" GridPane.columnIndex="0"/>
+                    <Label text="alice@example.com" styleClass="admin-table-cell" GridPane.columnIndex="1"/>
+                    <Label text="Seller" styleClass="admin-table-cell" GridPane.columnIndex="2"/>
+                    <Label text="Active" styleClass="admin-status-active" GridPane.columnIndex="3"/>
+                    <Label text="Oct 12, 2023" styleClass="admin-table-cell" GridPane.columnIndex="4"/>
+
+                    <HBox spacing="16" GridPane.columnIndex="5">
+                        <Button text="View" onAction="#handleViewUser" styleClass="admin-link-button"/>
+                        <Button text="Disable" onAction="#handleDisableUser" styleClass="admin-danger-link-button"/>
+                    </HBox>
+                </GridPane>
+
+                <GridPane styleClass="admin-table-row-alt" hgap="16">
+                    <padding>
+                        <Insets top="12" right="16" bottom="12" left="16"/>
+                    </padding>
+
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="16"/>
+                        <ColumnConstraints percentWidth="24"/>
+                        <ColumnConstraints percentWidth="12"/>
+                        <ColumnConstraints percentWidth="14"/>
+                        <ColumnConstraints percentWidth="18"/>
+                        <ColumnConstraints percentWidth="16"/>
+                    </columnConstraints>
+
+                    <Label text="Bob Jones" styleClass="admin-table-cell" GridPane.columnIndex="0"/>
+                    <Label text="bob.j@example.com" styleClass="admin-table-cell" GridPane.columnIndex="1"/>
+                    <Label text="Bidder" styleClass="admin-table-cell" GridPane.columnIndex="2"/>
+                    <Label text="Suspended" styleClass="admin-status-suspended" GridPane.columnIndex="3"/>
+                    <Label text="Jan 05, 2024" styleClass="admin-table-cell" GridPane.columnIndex="4"/>
+
+                    <HBox spacing="16" GridPane.columnIndex="5">
+                        <Button text="View" onAction="#handleViewUser" styleClass="admin-link-button"/>
+                        <Button text="Disable" disable="true" styleClass="admin-disabled-link-button"/>
+                    </HBox>
+                </GridPane>
+
+                <GridPane styleClass="admin-table-row" hgap="16">
+                    <padding>
+                        <Insets top="12" right="16" bottom="12" left="16"/>
+                    </padding>
+
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="16"/>
+                        <ColumnConstraints percentWidth="24"/>
+                        <ColumnConstraints percentWidth="12"/>
+                        <ColumnConstraints percentWidth="14"/>
+                        <ColumnConstraints percentWidth="18"/>
+                        <ColumnConstraints percentWidth="16"/>
+                    </columnConstraints>
+
+                    <Label text="Charlie Brown" styleClass="admin-table-cell" GridPane.columnIndex="0"/>
+                    <Label text="charlie.b@example.com" styleClass="admin-table-cell" GridPane.columnIndex="1"/>
+                    <Label text="Admin" styleClass="admin-table-cell" GridPane.columnIndex="2"/>
+                    <Label text="Active" styleClass="admin-status-active" GridPane.columnIndex="3"/>
+                    <Label text="Jun 22, 2023" styleClass="admin-table-cell" GridPane.columnIndex="4"/>
+
+                    <HBox spacing="16" GridPane.columnIndex="5">
+                        <Button text="View" onAction="#handleViewUser" styleClass="admin-link-button"/>
+                        <Button text="Disable" onAction="#handleDisableUser" styleClass="admin-danger-link-button"/>
+                    </HBox>
+                </GridPane>
+            </VBox>
+        </VBox>
+
+        <!-- Auction Management -->
+        <VBox spacing="14">
+            <Label text="Auction Management" styleClass="admin-section-title"/>
+
+            <VBox styleClass="admin-table">
+                <GridPane styleClass="admin-table-header" hgap="14">
+                    <padding>
+                        <Insets top="12" right="16" bottom="12" left="16"/>
+                    </padding>
+
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="20"/>
+                        <ColumnConstraints percentWidth="12"/>
+                        <ColumnConstraints percentWidth="12"/>
+                        <ColumnConstraints percentWidth="14"/>
+                        <ColumnConstraints percentWidth="14"/>
+                        <ColumnConstraints percentWidth="10"/>
+                        <ColumnConstraints percentWidth="10"/>
+                        <ColumnConstraints percentWidth="8"/>
+                    </columnConstraints>
+
+                    <Label text="ITEM" styleClass="admin-table-header-text" GridPane.columnIndex="0"/>
+                    <Label text="CATEGORY" styleClass="admin-table-header-text" GridPane.columnIndex="1"/>
+                    <Label text="SELLER" styleClass="admin-table-header-text" GridPane.columnIndex="2"/>
+                    <Label text="STARTING BID" styleClass="admin-table-header-text" GridPane.columnIndex="3"/>
+                    <Label text="CURRENT BID" styleClass="admin-table-header-text" GridPane.columnIndex="4"/>
+                    <Label text="STATUS" styleClass="admin-table-header-text" GridPane.columnIndex="5"/>
+                    <Label text="END TIME" styleClass="admin-table-header-text" GridPane.columnIndex="6"/>
+                    <Label text="ACTIONS" styleClass="admin-table-header-text" GridPane.columnIndex="7"/>
+                </GridPane>
+
+                <GridPane styleClass="admin-table-row" hgap="14">
+                    <padding>
+                        <Insets top="10" right="16" bottom="10" left="16"/>
+                    </padding>
+
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="20"/>
+                        <ColumnConstraints percentWidth="12"/>
+                        <ColumnConstraints percentWidth="12"/>
+                        <ColumnConstraints percentWidth="14"/>
+                        <ColumnConstraints percentWidth="14"/>
+                        <ColumnConstraints percentWidth="10"/>
+                        <ColumnConstraints percentWidth="10"/>
+                        <ColumnConstraints percentWidth="8"/>
+                    </columnConstraints>
+
+                    <HBox spacing="10" alignment="CENTER_LEFT" GridPane.columnIndex="0">
+                        <VBox styleClass="admin-item-thumb"/>
+                        <Label text="Rolex Submariner" styleClass="admin-table-cell"/>
+                    </HBox>
+
+                    <Label text="Watches" styleClass="admin-table-cell" GridPane.columnIndex="1"/>
+                    <Label text="Alice Smith" styleClass="admin-table-cell" GridPane.columnIndex="2"/>
+                    <Label text="USD 2,000.00" styleClass="admin-table-cell" GridPane.columnIndex="3"/>
+                    <Label text="USD 5,400.00" styleClass="admin-money-cell" GridPane.columnIndex="4"/>
+                    <Label text="Running" styleClass="admin-status-running" GridPane.columnIndex="5"/>
+                    <Label text="2h 45m" styleClass="admin-table-cell" GridPane.columnIndex="6"/>
+
+                    <HBox spacing="12" GridPane.columnIndex="7">
+                        <Button text="View" onAction="#handleViewAuction" styleClass="admin-link-button"/>
+                        <Button text="Cancel" onAction="#handleCancelAuction" styleClass="admin-danger-link-button"/>
+                    </HBox>
+                </GridPane>
+
+                <GridPane styleClass="admin-table-row-alt" hgap="14">
+                    <padding>
+                        <Insets top="10" right="16" bottom="10" left="16"/>
+                    </padding>
+
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="20"/>
+                        <ColumnConstraints percentWidth="12"/>
+                        <ColumnConstraints percentWidth="12"/>
+                        <ColumnConstraints percentWidth="14"/>
+                        <ColumnConstraints percentWidth="14"/>
+                        <ColumnConstraints percentWidth="10"/>
+                        <ColumnConstraints percentWidth="10"/>
+                        <ColumnConstraints percentWidth="8"/>
+                    </columnConstraints>
+
+                    <HBox spacing="10" alignment="CENTER_LEFT" GridPane.columnIndex="0">
+                        <VBox styleClass="admin-empty-thumb"/>
+                        <Label text="1969 Fender Strat" styleClass="admin-table-cell"/>
+                    </HBox>
+
+                    <Label text="Instruments" styleClass="admin-table-cell" GridPane.columnIndex="1"/>
+                    <Label text="Charlie Brown" styleClass="admin-table-cell" GridPane.columnIndex="2"/>
+                    <Label text="USD 8,000.00" styleClass="admin-table-cell" GridPane.columnIndex="3"/>
+                    <Label text="USD 12,050.00" styleClass="admin-money-cell" GridPane.columnIndex="4"/>
+                    <Label text="Finished" styleClass="admin-status-finished" GridPane.columnIndex="5"/>
+                    <Label text="Ended" styleClass="admin-table-cell" GridPane.columnIndex="6"/>
+
+                    <HBox spacing="12" GridPane.columnIndex="7">
+                        <Button text="View" onAction="#handleViewAuction" styleClass="admin-link-button"/>
+                        <Button text="Cancel" disable="true" styleClass="admin-disabled-link-button"/>
+                    </HBox>
+                </GridPane>
+
+                <GridPane styleClass="admin-table-row" hgap="14">
+                    <padding>
+                        <Insets top="10" right="16" bottom="10" left="16"/>
+                    </padding>
+
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="20"/>
+                        <ColumnConstraints percentWidth="12"/>
+                        <ColumnConstraints percentWidth="12"/>
+                        <ColumnConstraints percentWidth="14"/>
+                        <ColumnConstraints percentWidth="14"/>
+                        <ColumnConstraints percentWidth="10"/>
+                        <ColumnConstraints percentWidth="10"/>
+                        <ColumnConstraints percentWidth="8"/>
+                    </columnConstraints>
+
+                    <HBox spacing="10" alignment="CENTER_LEFT" GridPane.columnIndex="0">
+                        <VBox styleClass="admin-empty-thumb"/>
+                        <Label text="Teak Sideboard" styleClass="admin-table-cell"/>
+                    </HBox>
+
+                    <Label text="Furniture" styleClass="admin-table-cell" GridPane.columnIndex="1"/>
+                    <Label text="Diana Prince" styleClass="admin-table-cell" GridPane.columnIndex="2"/>
+                    <Label text="USD 500.00" styleClass="admin-table-cell" GridPane.columnIndex="3"/>
+                    <Label text="USD 850.00" styleClass="admin-money-cell" GridPane.columnIndex="4"/>
+                    <Label text="Running" styleClass="admin-status-running" GridPane.columnIndex="5"/>
+                    <Label text="5h 12m" styleClass="admin-table-cell" GridPane.columnIndex="6"/>
+
+                    <HBox spacing="12" GridPane.columnIndex="7">
+                        <Button text="View" onAction="#handleViewAuction" styleClass="admin-link-button"/>
+                        <Button text="Cancel" onAction="#handleCancelAuction" styleClass="admin-danger-link-button"/>
+                    </HBox>
+                </GridPane>
+            </VBox>
+        </VBox>
+
+        <Label fx:id="messageLabel" styleClass="admin-message-label"/>
+    </VBox>
+</ScrollPane>
