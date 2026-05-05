@@ -62,6 +62,7 @@ Item
 ├── itemType
 ├── name
 ├── description
+├── condition      # Added in W6 sync
 ├── startingPrice
 ├── imagePath
 └── createdAt
@@ -101,7 +102,7 @@ Auction
 ├── startTime
 ├── endTime
 ├── status
-├── version
+├── version        # For optimistic locking if needed
 └── createdAt
 ```
 
@@ -121,7 +122,17 @@ OPEN → RUNNING → FINISHED → PAID
                     └──────→ CANCELED
 ```
 
-## 5. BidTransaction
+## 5. Service & Concurrency Layer (Planned W7)
+
+To handle concurrent bidding and complex business logic, the server uses a Service Layer:
+
+- **AuctionLockManager**: Manages `ReentrantLock` instances per `auctionId` to ensure thread-safety during bidding.
+- **LockRegistry**: A registry to track and reuse locks efficiently.
+- **BidService**: Processes placing bids, validating rules, updating auction state, and recording transactions.
+- **AuctionService**: Manages auction lifecycle (opening, closing, anti-sniping).
+- **AuthService**: Handles registration, login (BCrypt), and session management.
+
+## 6. BidTransaction
 
 ```text
 BidTransaction
@@ -258,6 +269,7 @@ classDiagram
         -ItemType itemType
         -String name
         -String description
+        -String condition
         -BigDecimal startingPrice
         -String imagePath
         +String getName()

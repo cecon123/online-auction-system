@@ -35,4 +35,17 @@ Chào mừng các thành viên đội phát triển. Đây là hướng dẫn ph
 - **Naming:** CamelCase cho class, camelCase cho method/variable.
 - **OOP:** Ưu tiên Composition hơn Inheritance trừ các Model cốt lõi đã định nghĩa.
 - **Patterns:** Sử dụng Singleton cho Database Manager, Factory cho Item creation, Observer cho Realtime update.
-- **Concurrency:** Sử dụng `ReentrantLock` trong `AuctionLockManager` để bảo vệ các thao tác đấu giá.
+## 6. Quy trình Kiểm thử bắt buộc (Mandatory Verification)
+Trước khi `commit` và `push`, mỗi thành viên (và Agent của họ) PHẢI thực hiện các bước sau:
+1.  **Build toàn bộ:** `mvn clean install` (Để đảm bảo không làm gãy dependency của các module khác).
+2.  **Chạy Server:** `mvn -pl server exec:java` (Kiểm tra xem server có khởi động lỗi không).
+3.  **Chạy Client:** `mvn -pl client javafx:run` (Kiểm tra giao diện và kết nối mock/thật).
+4.  **Chạy Test:** `mvn test` (Đảm bảo không làm gãy các logic cũ).
+
+> **Lưu ý:** Agent chỉ được coi là hoàn thành task khi đã báo cáo kết quả chạy các lệnh trên cho người dùng.
+
+## 7. Cập nhật Tiến độ (Progress Tracking)
+Để Lead (Huy) nắm bắt được tình hình, sau mỗi task hoàn thành:
+1.  Agent phải cập nhật trạng thái [x] vào mục tương ứng trong `README.md`.
+2.  Nếu là tính năng mới chưa có trong danh sách, Agent phải thêm một dòng vào phần **"16. Immediate action plan"** hoặc **"21. Trạng thái demo hiện tại"** trong `README.md`.
+3.  Mô tả ngắn gọn thay đổi trong nội dung commit (theo Conventional Commits).

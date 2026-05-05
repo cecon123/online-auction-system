@@ -21,29 +21,30 @@ Command
 
 ## 1. Singleton
 
-### Current implementation
+### Current implementations
 
 ```text
 Database.getInstance()
+JsonMapper.getInstance()
 ```
 
-### Location
+### Locations
 
 ```text
 server/src/main/java/com/auction/server/dao/Database.java
+server/src/main/java/com/auction/server/util/JsonMapper.java
 ```
 
 ### Purpose
 
-The `Database` class is responsible for creating SQLite connections. It is implemented as a Singleton so the server has a centralized place for database connection configuration.
+- **Database**: Centralized SQLite connection manager. DAO classes use it to obtain connections with consistent PRAGMA settings.
+- **JsonMapper**: Centralized Gson instance with custom type adapters (e.g., for `LocalDateTime`). Ensures all JSON serialization follows the same rules (no pretty print, consistent date format).
 
 ### Why Singleton is appropriate here
 
-- SQLite configuration should be consistent.
-- PRAGMA settings are applied in one place.
-- DAOs do not need to create their own database manager.
-- The client module never accesses this class directly.
-- It helps enforce the rule that only the server accesses the database.
+- Configuration consistency (SQLite and Gson).
+- Resource efficiency (reuse one Gson instance, one database manager).
+- Shared utility access across different server modules.
 
 ### Important note
 

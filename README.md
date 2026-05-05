@@ -1145,96 +1145,37 @@ Chỉ làm nâng cao khi core system đã ổn.
 
 ---
 
-## 16. Immediate action plan
+## 16. Immediate action plan (Task Board)
 
-### 16.1 Branch 1 - Đồng bộ UI/common/server mock contract
+Dưới đây là danh sách các task cần thực hiện ngay. Các thành viên (hoặc Agent) hãy đánh dấu `[x]` khi hoàn thành và ghi rõ branch.
 
-Branch:
+### 16.1 Tầng Dữ liệu & Cấu trúc (Mạnh phụ trách)
+- [x] Triển khai `UserDao` & `SQLiteUserDao` (Done - feature/sqlite-userdao-manh)
+- [ ] Triển khai `ItemDao` & `SQLiteItemDao` (Pending)
+- [ ] Triển khai `AuctionDao` & `SQLiteAuctionDao` (Pending)
+- [ ] Triển khai `BidDao` & `SQLiteBidDao` (Pending)
+- [ ] Viết Unit Test cho toàn bộ DAO (In Progress)
 
-```bash
-git checkout dev
-git pull origin dev
-git checkout -b feature/sync-ui-common-server-contract
-```
+### 16.2 Tầng Nghiệp vụ & Concurrency (Huy phụ trách)
+- [ ] Triển khai `AuctionLockManager` (Pending)
+- [ ] Triển khai `BidService` xử lý đặt giá (Pending)
+- [ ] Triển khai `AuthService` (Password hashing, Session) (Pending)
+- [ ] Triển khai `AuctionService` (Quản lý vòng đời đấu giá) (Pending)
 
-Mục tiêu:
-
-```text
-- Sửa JsonMapper không pretty-print JSON.
-- Thêm LocalDateTime adapter nếu cần.
-- RequestRouter mock parse data đúng DTO.
-- Đồng bộ CreateAuctionRequest với CreateAuction UI.
-- Thêm AuctionDetailDto nếu cần.
-- Sửa TopBar admin không hiện Balance/System.
-- Đồng bộ schema.sql với model hiện tại.
-```
-
-### 16.2 Branch 2 - Đồng bộ domain model với CreateAuction UI
-
-Branch:
-
-```bash
-git checkout dev
-git pull origin dev
-git checkout -b feature/sync-domain-model-condition
-```
-
-Mục tiêu:
-
-```text
-- Thêm condition vào Item model nếu branch này được chọn.
-- Cập nhật Electronics/Art/Vehicle constructors.
-- Cập nhật ItemFactory.CreateItemData.
-- Cập nhật ModelInheritanceTest và ItemFactoryTest.
-```
-
-### 16.3 Branch 3 - DAO thật cho item/auction/bid
-
-Branch:
-
-```bash
-git checkout dev
-git pull origin dev
-git checkout -b feature/sqlite-item-auction-bid-dao-manh
-```
-
-Files dự kiến:
-
-```text
-server/src/main/java/com/auction/server/dao/ItemDao.java
-server/src/main/java/com/auction/server/dao/AuctionDao.java
-server/src/main/java/com/auction/server/dao/BidDao.java
-server/src/main/java/com/auction/server/dao/sqlite/SQLiteItemDao.java
-server/src/main/java/com/auction/server/dao/sqlite/SQLiteAuctionDao.java
-server/src/main/java/com/auction/server/dao/sqlite/SQLiteBidDao.java
-server/src/test/java/com/auction/server/dao/sqlite/SQLiteItemDaoTest.java
-server/src/test/java/com/auction/server/dao/sqlite/SQLiteAuctionDaoTest.java
-server/src/test/java/com/auction/server/dao/sqlite/SQLiteBidDaoTest.java
-```
-
-### 16.4 Branch 4 - BidService + Concurrency
-
-Branch:
-
-```bash
-git checkout dev
-git pull origin dev
-git checkout -b feature/auction-locking-bid-service-huy
-```
-
-Files dự kiến:
-
-```text
-server/src/main/java/com/auction/server/concurrency/LockRegistry.java
-server/src/main/java/com/auction/server/concurrency/AuctionLockManager.java
-server/src/main/java/com/auction/server/service/BidService.java
-server/src/main/java/com/auction/server/service/AuctionService.java
-server/src/test/java/com/auction/server/service/BidServiceConcurrencyTest.java
-```
+### 16.3 Tầng Giao tiếp & Client (Linh & Hải Anh phụ trách)
+- [x] Đồng bộ UI contract với Server Mock (Done - feature/sync-ui-common-server-contract-huy)
+- [ ] Triển khai `SocketClient` chạy nền (Pending)
+- [ ] Nối màn hình Login/Register với Server thật (Pending)
+- [ ] Nối màn hình Live Bidding với Server thật (Pending)
+- [ ] Realtime Update UI bằng `Platform.runLater()` (Pending)
 
 ---
 
-## 17. Testing checklist
+## 17. Testing checklist trước khi Commit
+Hành động bắt buộc cho mọi thành viên:
+1. `mvn clean install` -> Pass build.
+2. `mvn test` -> Pass all unit tests.
+3. Chạy Server và Client đồng thời -> Kiểm tra không lỗi Runtime.
 
 Trước khi merge bất kỳ branch nào vào `dev`:
 
