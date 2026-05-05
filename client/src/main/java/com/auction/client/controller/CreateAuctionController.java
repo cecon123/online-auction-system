@@ -1,10 +1,13 @@
 package com.auction.client.controller;
 
 import com.auction.client.util.SceneManager;
+import com.auction.common.enums.ItemType;
 import java.io.File;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -22,7 +25,7 @@ public class CreateAuctionController {
     private TextField productNameField;
 
     @FXML
-    private ComboBox<String> categoryComboBox;
+    private ComboBox<ItemType> categoryComboBox;
 
     @FXML
     private ComboBox<String> conditionComboBox;
@@ -49,17 +52,10 @@ public class CreateAuctionController {
 
     @FXML
     private void initialize() {
-        categoryComboBox
-            .getItems()
-            .setAll(
-                "ELECTRONICS",
-                "ART",
-                "VEHICLE",
-                "WATCHES",
-                "JEWELRY",
-                "INSTRUMENTS",
-                "ANTIQUES"
-            );
+        categoryComboBox.setItems(
+            FXCollections.observableArrayList(ItemType.values())
+        );
+        categoryComboBox.setValue(ItemType.ELECTRONICS);
 
         conditionComboBox
             .getItems()
@@ -110,7 +106,7 @@ public class CreateAuctionController {
     private void handleSaveAuction() {
         String productName = getText(productNameField);
         String description = getText(descriptionArea);
-        String startingPrice = getText(startingPriceField);
+        String startingPriceText = getText(startingPriceField);
         String startTimeText = getText(startTimeField);
         String endTimeText = getText(endTimeField);
 
@@ -134,7 +130,8 @@ public class CreateAuctionController {
             return;
         }
 
-        if (!isPositiveNumber(startingPrice)) {
+        BigDecimal startingPrice = parsePositiveMoney(startingPriceText);
+        if (startingPrice == null) {
             showError("Starting price must be a positive number.");
             return;
         }
@@ -159,8 +156,19 @@ public class CreateAuctionController {
             return;
         }
 
+        /*
+         * Current phase:
+         * This is still a mock UI action.
+         *
+         * Next phase:
+         * Build CreateAuctionRequest and send it through AuctionClientService.
+         */
         showSuccess(
             "Mock auction saved successfully: " +
+                categoryComboBox.getValue() +
+                " / " +
+                startingPrice.toPlainString() +
+                " / " +
                 startTime.format(DATE_TIME_FORMATTER) +
                 " -> " +
                 endTime.format(DATE_TIME_FORMATTER)
@@ -180,11 +188,21 @@ public class CreateAuctionController {
         return area.getText() == null ? "" : area.getText().trim();
     }
 
-    private boolean isPositiveNumber(String value) {
+    private BigDecimal parsePositiveMoney(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
         try {
-            return Double.parseDouble(value.replace(",", "")) > 0;
+            BigDecimal parsed = new BigDecimal(value.replace(",", ""));
+
+            if (parsed.compareTo(BigDecimal.ZERO) <= 0) {
+                return null;
+            }
+
+            return parsed;
         } catch (NumberFormatException e) {
-            return false;
+            return null;
         }
     }
 
