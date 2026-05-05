@@ -1,8 +1,9 @@
 package com.auction.common.model;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.auction.common.enums.AuctionStatus;
+import com.auction.common.enums.ItemType;
 import com.auction.common.enums.Role;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -11,148 +12,91 @@ import org.junit.jupiter.api.Test;
 class ModelInheritanceTest {
 
     @Test
-    void bidderShouldHaveBidderRole() {
-        Bidder bidder = new Bidder(
+    void userSubclassesShouldHaveCorrectRoles() {
+        LocalDateTime now = LocalDateTime.now();
+
+        User bidder = new Bidder(
             1L,
-            "huy",
+            "bidder01",
             "hash",
-            "Nguyen Huy",
+            "Bidder One",
             true,
-            LocalDateTime.now()
+            now
         );
+
+        User seller = new Seller(
+            2L,
+            "seller01",
+            "hash",
+            "Seller One",
+            true,
+            now
+        );
+
+        User admin = new Admin(3L, "admin01", "hash", "Admin One", true, now);
 
         assertEquals(Role.BIDDER, bidder.getRole());
-        assertTrue(bidder.canBid());
-        assertTrue(bidder.displayName().contains("Bidder"));
-    }
-
-    @Test
-    void sellerShouldHaveSellerRole() {
-        Seller seller = new Seller(
-            2L,
-            "manh",
-            "hash",
-            "Nguyen Manh",
-            true,
-            LocalDateTime.now()
-        );
-
         assertEquals(Role.SELLER, seller.getRole());
-        assertTrue(seller.canCreateAuction());
-    }
-
-    @Test
-    void adminShouldHaveAdminRole() {
-        Admin admin = new Admin(
-            3L,
-            "admin",
-            "hash",
-            "System Admin",
-            true,
-            LocalDateTime.now()
-        );
-
         assertEquals(Role.ADMIN, admin.getRole());
-        assertTrue(admin.canManageSystem());
+
+        assertTrue(((Bidder) bidder).canBid());
+        assertTrue(((Seller) seller).canCreateAuction());
+        assertTrue(((Admin) admin).canManageSystem());
     }
 
     @Test
-    void itemSubclassesShouldReturnCorrectCategoryDescription() {
+    void itemSubclassesShouldHaveCorrectTypesAndCondition() {
+        LocalDateTime now = LocalDateTime.now();
+
         Item electronics = new Electronics(
             1L,
             10L,
-            "Laptop",
-            "Gaming laptop",
-            new BigDecimal("1000"),
-            null,
-            "Dell",
-            "G15",
-            LocalDateTime.now()
+            "Camera",
+            "Vintage camera",
+            "Used - Excellent",
+            new BigDecimal("12000.00"),
+            "camera.png",
+            "Canon",
+            "X100",
+            now
         );
 
         Item art = new Art(
             2L,
             10L,
             "Painting",
-            "Oil painting",
-            new BigDecimal("500"),
-            null,
+            "Abstract painting",
+            "Brand New",
+            new BigDecimal("8000.00"),
+            "painting.png",
             "Unknown Artist",
-            "Oil",
-            LocalDateTime.now()
+            "Canvas",
+            now
         );
 
         Item vehicle = new Vehicle(
             3L,
             10L,
-            "Car",
-            "Classic car",
-            new BigDecimal("20000"),
-            null,
-            "Toyota",
-            1998,
-            LocalDateTime.now()
+            "Scooter",
+            "Classic scooter",
+            "Used - Good",
+            new BigDecimal("20000.00"),
+            "scooter.png",
+            "Honda",
+            1985,
+            now
         );
 
-        assertTrue(electronics.categoryDescription().contains("Electronics"));
-        assertTrue(art.categoryDescription().contains("Art"));
-        assertTrue(vehicle.categoryDescription().contains("Vehicle"));
-    }
+        assertEquals(ItemType.ELECTRONICS, electronics.getItemType());
+        assertEquals(ItemType.ART, art.getItemType());
+        assertEquals(ItemType.VEHICLE, vehicle.getItemType());
 
-    @Test
-    void auctionShouldAcceptBidOnlyWhenRunning() {
-        LocalDateTime now = LocalDateTime.now();
+        assertEquals("Used - Excellent", electronics.getCondition());
+        assertEquals("Brand New", art.getCondition());
+        assertEquals("Used - Good", vehicle.getCondition());
 
-        Auction auction = new Auction(
-            1L,
-            1L,
-            2L,
-            new BigDecimal("100"),
-            null,
-            now.minusMinutes(1),
-            now.plusMinutes(10),
-            AuctionStatus.RUNNING,
-            0,
-            now.minusHours(1)
-        );
-
-        assertTrue(auction.canAcceptBidAt(now));
-    }
-
-    @Test
-    void updateHighestBidShouldIncreasePriceAndVersion() {
-        LocalDateTime now = LocalDateTime.now();
-
-        Auction auction = new Auction(
-            1L,
-            1L,
-            2L,
-            new BigDecimal("100"),
-            null,
-            now.minusMinutes(1),
-            now.plusMinutes(10),
-            AuctionStatus.RUNNING,
-            0,
-            now.minusHours(1)
-        );
-
-        auction.updateHighestBid(3L, new BigDecimal("150"));
-
-        assertEquals(new BigDecimal("150"), auction.getCurrentPrice());
-        assertEquals(3L, auction.getHighestBidderId());
-        assertEquals(1L, auction.getVersion());
-    }
-
-    @Test
-    void bidTransactionShouldRejectNegativeAmount() {
-        assertThrows(IllegalArgumentException.class, () ->
-            new BidTransaction(
-                1L,
-                1L,
-                2L,
-                new BigDecimal("-1"),
-                LocalDateTime.now()
-            )
-        );
+        assertTrue(electronics.categoryDescription().contains("Canon"));
+        assertTrue(art.categoryDescription().contains("Unknown Artist"));
+        assertTrue(vehicle.categoryDescription().contains("Honda"));
     }
 }

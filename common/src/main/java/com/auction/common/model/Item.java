@@ -16,6 +16,7 @@ public abstract class Item extends Entity {
     private ItemType itemType;
     private String name;
     private String description;
+    private String condition;
     private BigDecimal startingPrice;
     private String imagePath;
 
@@ -25,6 +26,7 @@ public abstract class Item extends Entity {
         ItemType itemType,
         String name,
         String description,
+        String condition,
         BigDecimal startingPrice,
         String imagePath,
         LocalDateTime createdAt
@@ -37,6 +39,7 @@ public abstract class Item extends Entity {
         );
         setName(name);
         setDescription(description);
+        setCondition(condition);
         setStartingPrice(startingPrice);
         this.imagePath = imagePath;
     }
@@ -77,6 +80,19 @@ public abstract class Item extends Entity {
 
     public void setDescription(String description) {
         this.description = description == null ? "" : description.trim();
+    }
+
+    public String getCondition() {
+        return condition;
+    }
+
+    public void setCondition(String condition) {
+        if (condition == null || condition.isBlank()) {
+            this.condition = "Brand New";
+            return;
+        }
+
+        this.condition = condition.trim();
     }
 
     public BigDecimal getStartingPrice() {

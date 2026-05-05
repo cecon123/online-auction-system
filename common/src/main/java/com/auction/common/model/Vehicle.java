@@ -17,6 +17,7 @@ public class Vehicle extends Item {
         long sellerId,
         String name,
         String description,
+        String condition,
         BigDecimal startingPrice,
         String imagePath,
         String manufacturer,
@@ -29,12 +30,13 @@ public class Vehicle extends Item {
             ItemType.VEHICLE,
             name,
             description,
+            condition,
             startingPrice,
             imagePath,
             createdAt
         );
-        this.manufacturer = manufacturer;
-        this.year = year;
+        this.manufacturer = normalizeOptionalText(manufacturer);
+        setYear(year);
     }
 
     public String getManufacturer() {
@@ -42,7 +44,7 @@ public class Vehicle extends Item {
     }
 
     public void setManufacturer(String manufacturer) {
-        this.manufacturer = manufacturer;
+        this.manufacturer = normalizeOptionalText(manufacturer);
     }
 
     public int getYear() {
@@ -50,7 +52,7 @@ public class Vehicle extends Item {
     }
 
     public void setYear(int year) {
-        if (year < 1800) {
+        if (year != 0 && year < 1800) {
             throw new IllegalArgumentException("Vehicle year is invalid.");
         }
         this.year = year;
@@ -58,10 +60,22 @@ public class Vehicle extends Item {
 
     @Override
     public String categoryDescription() {
-        if (manufacturer == null || manufacturer.isBlank()) {
+        if (manufacturer.isBlank() && year == 0) {
             return "Vehicle item";
         }
 
+        if (manufacturer.isBlank()) {
+            return "Vehicle item - " + year;
+        }
+
+        if (year == 0) {
+            return "Vehicle item - " + manufacturer;
+        }
+
         return "Vehicle item - " + manufacturer + " " + year;
+    }
+
+    private String normalizeOptionalText(String value) {
+        return value == null ? "" : value.trim();
     }
 }

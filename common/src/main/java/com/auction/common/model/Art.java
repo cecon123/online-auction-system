@@ -17,6 +17,7 @@ public class Art extends Item {
         long sellerId,
         String name,
         String description,
+        String condition,
         BigDecimal startingPrice,
         String imagePath,
         String artist,
@@ -29,12 +30,13 @@ public class Art extends Item {
             ItemType.ART,
             name,
             description,
+            condition,
             startingPrice,
             imagePath,
             createdAt
         );
-        this.artist = artist;
-        this.material = material;
+        this.artist = normalizeOptionalText(artist);
+        this.material = normalizeOptionalText(material);
     }
 
     public String getArtist() {
@@ -42,7 +44,7 @@ public class Art extends Item {
     }
 
     public void setArtist(String artist) {
-        this.artist = artist;
+        this.artist = normalizeOptionalText(artist);
     }
 
     public String getMaterial() {
@@ -50,15 +52,27 @@ public class Art extends Item {
     }
 
     public void setMaterial(String material) {
-        this.material = material;
+        this.material = normalizeOptionalText(material);
     }
 
     @Override
     public String categoryDescription() {
-        if (artist == null || artist.isBlank()) {
+        if (artist.isBlank() && material.isBlank()) {
             return "Art item";
         }
 
-        return "Art item by " + artist;
+        if (artist.isBlank()) {
+            return "Art item - " + material;
+        }
+
+        if (material.isBlank()) {
+            return "Art item by " + artist;
+        }
+
+        return "Art item by " + artist + " - " + material;
+    }
+
+    private String normalizeOptionalText(String value) {
+        return value == null ? "" : value.trim();
     }
 }

@@ -37,6 +37,7 @@ public class ItemFactory {
             data.sellerId(),
             data.name(),
             data.description(),
+            data.condition(),
             data.startingPrice(),
             data.imagePath(),
             data.brand(),
@@ -51,6 +52,7 @@ public class ItemFactory {
             data.sellerId(),
             data.name(),
             data.description(),
+            data.condition(),
             data.startingPrice(),
             data.imagePath(),
             data.artist(),
@@ -65,6 +67,7 @@ public class ItemFactory {
             data.sellerId(),
             data.name(),
             data.description(),
+            data.condition(),
             data.startingPrice(),
             data.imagePath(),
             data.manufacturer(),
@@ -87,6 +90,7 @@ public class ItemFactory {
         ItemType itemType,
         String name,
         String description,
+        String condition,
         BigDecimal startingPrice,
         String imagePath,
         String brand,
@@ -104,6 +108,12 @@ public class ItemFactory {
                 );
             }
 
+            if (itemType == null) {
+                throw new IllegalArgumentException(
+                    "itemType must not be null."
+                );
+            }
+
             if (name == null || name.isBlank()) {
                 throw new IllegalArgumentException("name must not be blank.");
             }
@@ -115,6 +125,12 @@ public class ItemFactory {
                 throw new IllegalArgumentException(
                     "startingPrice must be non-negative."
                 );
+            }
+
+            if (condition == null || condition.isBlank()) {
+                condition = "Brand New";
+            } else {
+                condition = condition.trim();
             }
 
             if (createdAt == null) {

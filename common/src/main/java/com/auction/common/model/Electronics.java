@@ -17,6 +17,7 @@ public class Electronics extends Item {
         long sellerId,
         String name,
         String description,
+        String condition,
         BigDecimal startingPrice,
         String imagePath,
         String brand,
@@ -29,12 +30,13 @@ public class Electronics extends Item {
             ItemType.ELECTRONICS,
             name,
             description,
+            condition,
             startingPrice,
             imagePath,
             createdAt
         );
-        this.brand = brand;
-        this.model = model;
+        this.brand = normalizeOptionalText(brand);
+        this.model = normalizeOptionalText(model);
     }
 
     public String getBrand() {
@@ -42,7 +44,7 @@ public class Electronics extends Item {
     }
 
     public void setBrand(String brand) {
-        this.brand = brand;
+        this.brand = normalizeOptionalText(brand);
     }
 
     public String getModel() {
@@ -50,26 +52,26 @@ public class Electronics extends Item {
     }
 
     public void setModel(String model) {
-        this.model = model;
+        this.model = normalizeOptionalText(model);
     }
 
     @Override
     public String categoryDescription() {
-        return "Electronics item" + formatOptionalDetails();
+        String details = formatOptionalDetails();
+
+        if (details.isBlank()) {
+            return "Electronics item";
+        }
+
+        return "Electronics item - " + details;
     }
 
     private String formatOptionalDetails() {
-        if (
-            (brand == null || brand.isBlank()) &&
-            (model == null || model.isBlank())
-        ) {
-            return "";
-        }
-
-        return " - " + nullToEmpty(brand) + " " + nullToEmpty(model);
+        String combined = (brand + " " + model).trim();
+        return combined;
     }
 
-    private String nullToEmpty(String value) {
+    private String normalizeOptionalText(String value) {
         return value == null ? "" : value.trim();
     }
 }
