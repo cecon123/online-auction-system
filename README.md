@@ -105,9 +105,9 @@ Dự án hiện đang tập trung vào **Tuần 7: Concurrency & Realtime Founda
 
 #### 🟡 ƯU TIÊN 3: Tầng Kết nối Socket (Linh)
 *Hải Anh cần SocketClient để gửi/nhận dữ liệu thật từ các màn hình.*
-- [ ] `SocketClient` chạy nền (Background Thread) (Pending)
-- [ ] `AuthClientService` (Nối Login/Register với socket thật) (Chờ Huy)
-- [ ] Cập nhật UI Client không dùng mock logic (Pending)
+- [x] `SocketClient` chạy nền (Background Thread) (Done - feature/linh/client-socket-foundation)
+- [x] `AuthClientService` (Nối Login/Register với socket thật) (Done - feature/linh/client-socket-foundation)
+- [x] Cập nhật UI Client không dùng mock logic (Done - feature/linh/client-socket-foundation)
 
 #### 🟠 ƯU TIÊN 4: Tầng Tích hợp UI & Realtime (Hải Anh)
 - [ ] Validation cho các form Create Auction (Pending)

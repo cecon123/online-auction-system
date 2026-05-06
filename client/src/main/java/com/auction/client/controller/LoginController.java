@@ -1,14 +1,22 @@
 package com.auction.client.controller;
 
+import com.auction.client.service.AuthClientService;
 import com.auction.client.util.SceneManager;
+import com.auction.common.dto.auth.LoginResponse;
 import com.auction.common.enums.Role;
+import com.auction.common.protocol.Response;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LoginController {
+    private static final Logger logger = LoggerFactory.getLogger(LoginController.class);
+    private final AuthClientService authService = new AuthClientService();
 
     @FXML
     private TextField usernameField;
@@ -41,27 +49,25 @@ public class LoginController {
             return;
         }
 
-        Role mockRole = detectMockRole(username);
-        SceneManager.showAppShell(mockRole, username);
+        authService.login(username, password).thenAccept(response -> {
+            Platform.runLater(() -> {
+                if (response.isSuccess()) {
+                    LoginResponse data = response.getData();
+                    SceneManager.showAppShell(data.role(), data.username());
+                } else {
+                    showError(response.getMessage());
+                }
+            });
+        }).exceptionally(ex -> {
+            logger.error("Login request failed", ex);
+            Platform.runLater(() -> showError("Connection error. Please try again later."));
+            return null;
+        });
     }
 
     @FXML
     private void handleCreateAccount() {
         SceneManager.showRegister();
-    }
-
-    private Role detectMockRole(String username) {
-        String normalized = username.toLowerCase();
-
-        if (normalized.contains("admin")) {
-            return Role.ADMIN;
-        }
-
-        if (normalized.contains("seller")) {
-            return Role.SELLER;
-        }
-
-        return Role.BIDDER;
     }
 
     private void showError(String message) {
