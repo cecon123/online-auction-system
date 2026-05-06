@@ -15,6 +15,10 @@ import com.auction.common.enums.Role;
 import com.auction.common.protocol.MessageType;
 import com.auction.common.protocol.Request;
 import com.auction.common.protocol.Response;
+import com.auction.server.dao.UserDao;
+import com.auction.server.dao.sqlite.SQLiteUserDao;
+import com.auction.server.service.AuthService;
+import com.auction.server.service.SessionManager;
 import com.auction.server.util.JsonMapper;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -22,24 +26,20 @@ import java.util.List;
 
 /**
  * Routes socket requests to the correct controller/service.
- *
- * Current phase:
- * This router is still a mock router, but it now parses request.data into
- * the correct DTO classes. This keeps the server contract synchronized with
- * the current JavaFX UI and common DTOs.
- *
- * Later phase:
- * Replace mock handlers with:
- * - AuthController
- * - AuctionController
- * - BidController
  */
 public class RequestRouter {
 
     private final JsonMapper jsonMapper;
+    private final AuthService authService;
+    private final SessionManager sessionManager;
 
     public RequestRouter() {
         this.jsonMapper = JsonMapper.getInstance();
+
+        // Khởi tạo các Service thật
+        UserDao userDao = new SQLiteUserDao();
+        this.authService = new AuthService(userDao);
+        this.sessionManager = SessionManager.getInstance();
     }
 
     public Response<?> route(Request<?> request) {
@@ -56,17 +56,45 @@ public class RequestRouter {
         }
 
         MessageType type = request.getType();
+        System.out.println(
+            "[Request] Type: " + type + ", ID: " + request.getRequestId()
+        );
 
         try {
             return switch (type) {
-                case LOGIN -> handleLoginMock(request);
-                case REGISTER -> handleRegisterMock(request);
-                case LOGOUT -> Response.ok(
+                case LOGIN -> Response.ok(
                     type,
                     request.getRequestId(),
-                    "Mock logout successful",
-                    null
+                    "Đăng nhập thành công",
+                    authService.login(
+                        requireData(
+                            request,
+                            LoginRequest.class,
+                            "Dữ liệu đăng nhập thiếu"
+                        )
+                    )
                 );
+                case REGISTER -> Response.ok(
+                    type,
+                    request.getRequestId(),
+                    "Đăng ký thành công",
+                    authService.register(
+                        requireData(
+                            request,
+                            RegisterRequest.class,
+                            "Dữ liệu đăng ký thiếu"
+                        )
+                    )
+                );
+                case LOGOUT -> {
+                    sessionManager.invalidateSession(request.getToken());
+                    yield Response.ok(
+                        type,
+                        request.getRequestId(),
+                        "Đã đăng xuất",
+                        null
+                    );
+                }
                 case GET_AUCTIONS -> handleGetAuctionsMock(request);
                 case GET_AUCTION_DETAIL -> handleGetAuctionDetailMock(request);
                 case CREATE_AUCTION -> handleCreateAuctionMock(request);
