@@ -101,7 +101,7 @@ Dự án hiện đang tập trung vào **Tuần 7: Concurrency & Realtime Founda
 - [x] `AuctionLockManager` & `BidService` skeleton (Done - feature/huy/auction-locking)
 - [x] `AuthService` với BCrypt hashing (Done - feature/huy/auth-service-security)
 - [x] Hoàn thiện `BidService` logic với DAO thật (Done - feature/huy/bid-service-real-integration)
-- [ ] `AuctionService` (Quản lý trạng thái OPEN/RUNNING/FINISHED) (Pending)
+- [x] `AuctionService` (Quản lý trạng thái OPEN/RUNNING/FINISHED) (Done - feature/huy/server-real-data-routes)
 
 #### 🟡 ƯU TIÊN 3: Tầng Kết nối Socket (Linh)
 *Hải Anh cần SocketClient để gửi/nhận dữ liệu thật từ các màn hình.*

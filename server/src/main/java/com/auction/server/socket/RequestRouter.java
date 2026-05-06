@@ -9,24 +9,22 @@ import com.auction.common.dto.auth.RegisterRequest;
 import com.auction.common.dto.auth.RegisterResponse;
 import com.auction.common.dto.bid.PlaceBidRequest;
 import com.auction.common.dto.bid.PlaceBidResponse;
-import com.auction.common.enums.AuctionStatus;
-import com.auction.common.enums.ItemType;
-import com.auction.common.enums.Role;
 import com.auction.common.protocol.MessageType;
 import com.auction.common.protocol.Request;
 import com.auction.common.protocol.Response;
 import com.auction.server.dao.AuctionDao;
 import com.auction.server.dao.BidDao;
+import com.auction.server.dao.ItemDao;
 import com.auction.server.dao.UserDao;
 import com.auction.server.dao.sqlite.SQLiteAuctionDao;
 import com.auction.server.dao.sqlite.SQLiteBidDao;
+import com.auction.server.dao.sqlite.SQLiteItemDao;
 import com.auction.server.dao.sqlite.SQLiteUserDao;
+import com.auction.server.service.AuctionService;
 import com.auction.server.service.AuthService;
 import com.auction.server.service.BidService;
 import com.auction.server.service.SessionManager;
 import com.auction.server.util.JsonMapper;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,13 +34,12 @@ import org.slf4j.LoggerFactory;
  */
 public class RequestRouter {
 
-    private static final Logger logger = LoggerFactory.getLogger(
-        RequestRouter.class
-    );
+    private static final Logger logger = LoggerFactory.getLogger(RequestRouter.class);
 
     private final JsonMapper jsonMapper;
     private final AuthService authService;
     private final BidService bidService;
+    private final AuctionService auctionService;
     private final SessionManager sessionManager;
 
     public RequestRouter() {
@@ -52,10 +49,12 @@ public class RequestRouter {
         UserDao userDao = new SQLiteUserDao();
         AuctionDao auctionDao = new SQLiteAuctionDao();
         BidDao bidDao = new SQLiteBidDao();
+        ItemDao itemDao = new SQLiteItemDao();
 
         // Initialize real services
         this.authService = new AuthService(userDao);
         this.bidService = new BidService(auctionDao, bidDao);
+        this.auctionService = new AuctionService(auctionDao, itemDao, userDao);
         this.sessionManager = SessionManager.getInstance();
     }
 
@@ -82,11 +81,7 @@ public class RequestRouter {
                     request.getRequestId(),
                     "Login successful",
                     authService.login(
-                        requireData(
-                            request,
-                            LoginRequest.class,
-                            "Missing login data"
-                        )
+                        requireData(request, LoginRequest.class, "Missing login data")
                     )
                 );
                 case REGISTER -> Response.ok(
@@ -94,19 +89,12 @@ public class RequestRouter {
                     request.getRequestId(),
                     "Registration successful",
                     authService.register(
-                        requireData(
-                            request,
-                            RegisterRequest.class,
-                            "Missing registration data"
-                        )
+                        requireData(request, RegisterRequest.class, "Missing registration data")
                     )
                 );
                 case LOGOUT -> {
                     sessionManager.invalidateSession(request.getToken());
-                    logger.info(
-                        "Logout successful for token: {}",
-                        request.getToken()
-                    );
+                    logger.info("Logout successful for token: {}", request.getToken());
                     yield Response.ok(
                         type,
                         request.getRequestId(),
@@ -117,17 +105,9 @@ public class RequestRouter {
                 case PLACE_BID -> {
                     Long userId = sessionManager.getUserId(request.getToken());
                     if (userId == null) {
-                        yield Response.fail(
-                            type,
-                            request.getRequestId(),
-                            "Unauthorized. Please login."
-                        );
+                        yield Response.fail(type, request.getRequestId(), "Unauthorized. Please login.");
                     }
-                    PlaceBidRequest bidData = requireData(
-                        request,
-                        PlaceBidRequest.class,
-                        "Missing bid data"
-                    );
+                    PlaceBidRequest bidData = requireData(request, PlaceBidRequest.class, "Missing bid data");
                     yield Response.ok(
                         type,
                         request.getRequestId(),
@@ -135,9 +115,34 @@ public class RequestRouter {
                         bidService.placeBid(userId, bidData)
                     );
                 }
-                case GET_AUCTIONS -> handleGetAuctionsMock(request);
-                case GET_AUCTION_DETAIL -> handleGetAuctionDetailMock(request);
-                case CREATE_AUCTION -> handleCreateAuctionMock(request);
+                case GET_AUCTIONS -> Response.ok(
+                    type,
+                    request.getRequestId(),
+                    "Auctions loaded",
+                    auctionService.getAllAuctions()
+                );
+                case GET_AUCTION_DETAIL -> {
+                    Long auctionId = requireData(request, Long.class, "Missing auctionId");
+                    yield Response.ok(
+                        type,
+                        request.getRequestId(),
+                        "Auction detail loaded",
+                        auctionService.getAuctionDetail(auctionId)
+                    );
+                }
+                case CREATE_AUCTION -> {
+                    Long userId = sessionManager.getUserId(request.getToken());
+                    if (userId == null) {
+                        yield Response.fail(type, request.getRequestId(), "Unauthorized. Please login.");
+                    }
+                    CreateAuctionRequest data = requireData(request, CreateAuctionRequest.class, "Missing auction data");
+                    yield Response.ok(
+                        type,
+                        request.getRequestId(),
+                        "Auction created successfully",
+                        auctionService.createAuction(userId, data)
+                    );
+                }
                 case GET_BID_HISTORY -> Response.ok(
                     type,
                     request.getRequestId(),
@@ -159,7 +164,7 @@ public class RequestRouter {
                 default -> Response.fail(
                     type,
                     request.getRequestId(),
-                    "Unsupported message type in mock router: " + type
+                    "Unsupported message type: " + type
                 );
             };
         } catch (IllegalArgumentException | IllegalStateException e) {
@@ -170,158 +175,6 @@ public class RequestRouter {
                 type,
                 request.getRequestId(),
                 "Server internal error: " + e.getMessage()
-            );
-        }
-    }
-
-    private Response<List<AuctionSummaryDto>> handleGetAuctionsMock(
-        Request<?> request
-    ) {
-        LocalDateTime now = LocalDateTime.now();
-
-        List<AuctionSummaryDto> auctions = List.of(
-            new AuctionSummaryDto(
-                1L,
-                "Vintage Camera X100",
-                ItemType.ELECTRONICS,
-                new BigDecimal("12000.00"),
-                new BigDecimal("14500.00"),
-                now.minusHours(1),
-                now.plusHours(2),
-                AuctionStatus.RUNNING,
-                "/images/mock-camera.png"
-            ),
-            new AuctionSummaryDto(
-                2L,
-                "Modern Abstract Painting",
-                ItemType.ART,
-                new BigDecimal("8000.00"),
-                new BigDecimal("9500.00"),
-                now.minusMinutes(30),
-                now.plusHours(4),
-                AuctionStatus.RUNNING,
-                "/images/mock-art.png"
-            ),
-            new AuctionSummaryDto(
-                3L,
-                "Classic Scooter 1985",
-                ItemType.VEHICLE,
-                new BigDecimal("20000.00"),
-                new BigDecimal("22500.00"),
-                now.plusHours(1),
-                now.plusDays(1),
-                AuctionStatus.OPEN,
-                "/images/mock-vehicle.png"
-            )
-        );
-
-        return Response.ok(
-            MessageType.GET_AUCTIONS,
-            request.getRequestId(),
-            "Mock auctions loaded",
-            auctions
-        );
-    }
-
-    private Response<AuctionDetailDto> handleGetAuctionDetailMock(
-        Request<?> request
-    ) {
-        LocalDateTime now = LocalDateTime.now();
-
-        AuctionDetailDto detail = new AuctionDetailDto(
-            1L,
-            10L,
-            2L,
-            "seller-demo",
-            "Vintage Camera X100",
-            ItemType.ELECTRONICS,
-            "Used - Excellent",
-            "A collectible vintage camera prepared for live bidding demo.",
-            new BigDecimal("12000.00"),
-            new BigDecimal("14500.00"),
-            "mock-user",
-            now.minusHours(1),
-            now.plusHours(2),
-            AuctionStatus.RUNNING,
-            "/images/mock-camera.png"
-        );
-
-        return Response.ok(
-            MessageType.GET_AUCTION_DETAIL,
-            request.getRequestId(),
-            "Mock auction detail loaded",
-            detail
-        );
-    }
-
-    private Response<AuctionSummaryDto> handleCreateAuctionMock(
-        Request<?> request
-    ) {
-        CreateAuctionRequest data = requireData(
-            request,
-            CreateAuctionRequest.class,
-            "CREATE_AUCTION requires auction payload"
-        );
-
-        validateCreateAuctionRequest(data);
-
-        AuctionSummaryDto response = new AuctionSummaryDto(
-            999L,
-            data.itemName().trim(),
-            data.itemType(),
-            data.startingPrice(),
-            data.startingPrice(),
-            data.startTime(),
-            data.endTime(),
-            AuctionStatus.OPEN,
-            data.imagePath()
-        );
-
-        return Response.ok(
-            MessageType.CREATE_AUCTION,
-            request.getRequestId(),
-            "Mock auction created successfully",
-            response
-        );
-    }
-
-    private void validateCreateAuctionRequest(CreateAuctionRequest data) {
-        if (isBlank(data.itemName())) {
-            throw new IllegalArgumentException("Item name is required.");
-        }
-
-        if (data.itemType() == null) {
-            throw new IllegalArgumentException("Item type is required.");
-        }
-
-        if (isBlank(data.condition())) {
-            throw new IllegalArgumentException("Condition is required.");
-        }
-
-        if (isBlank(data.description())) {
-            throw new IllegalArgumentException("Description is required.");
-        }
-
-        if (
-            data.startingPrice() == null ||
-            data.startingPrice().compareTo(BigDecimal.ZERO) <= 0
-        ) {
-            throw new IllegalArgumentException(
-                "Starting price must be positive."
-            );
-        }
-
-        if (data.startTime() == null) {
-            throw new IllegalArgumentException("Start time is required.");
-        }
-
-        if (data.endTime() == null) {
-            throw new IllegalArgumentException("End time is required.");
-        }
-
-        if (!data.endTime().isAfter(data.startTime())) {
-            throw new IllegalArgumentException(
-                "End time must be after start time."
             );
         }
     }
@@ -338,9 +191,5 @@ public class RequestRouter {
         }
 
         return data;
-    }
-
-    private boolean isBlank(String value) {
-        return value == null || value.isBlank();
     }
 }
