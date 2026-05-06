@@ -2,7 +2,11 @@
 
 Chào mừng các thành viên đội phát triển. Đây là hướng dẫn phối hợp công việc thông qua Gemini CLI.
 
-## 1. Vai trò & Phân công
+## 1. Ngôn ngữ & Giao tiếp
+- **Ngôn ngữ làm việc:** Sử dụng **Tiếng Việt** làm ngôn ngữ chính trong toàn bộ quá trình trao đổi, giải thích code, viết báo cáo tiến độ và comment trong code (trừ các từ chuyên ngành kỹ thuật).
+- **Phản hồi của AI:** Mọi phản hồi từ Gemini CLI phải sử dụng Tiếng Việt chuyên nghiệp, súc tích và tập trung vào kỹ thuật.
+
+## 2. Vai trò & Phân công
 - **Huy (Lead):** Kiến trúc tổng thể, Protocol, Socket Server, Concurrency, Realtime.
 - **Mạnh:** SQLite DAO/Repository, Unit Test Backend, CI/CD.
 - **Linh:** Login/Register UI, Dashboard, AppShell, Socket Client.
