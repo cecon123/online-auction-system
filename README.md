@@ -100,7 +100,7 @@ Dự án hiện đang tập trung vào **Tuần 7: Concurrency & Realtime Founda
 *Linh cần AuthService thật để nối giao diện Login/Register.*
 - [x] `AuctionLockManager` & `BidService` skeleton (Done - feature/huy/auction-locking)
 - [x] `AuthService` với BCrypt hashing (Done - feature/huy/auth-service-security)
-- [ ] Hoàn thiện `BidService` logic với DAO thật (In Progress)
+- [x] Hoàn thiện `BidService` logic với DAO thật (Done - feature/huy/bid-service-real-integration)
 - [ ] `AuctionService` (Quản lý trạng thái OPEN/RUNNING/FINISHED) (Pending)
 
 #### 🟡 ƯU TIÊN 3: Tầng Kết nối Socket (Linh)

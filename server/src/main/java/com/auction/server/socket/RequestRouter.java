@@ -15,9 +15,14 @@ import com.auction.common.enums.Role;
 import com.auction.common.protocol.MessageType;
 import com.auction.common.protocol.Request;
 import com.auction.common.protocol.Response;
+import com.auction.server.dao.AuctionDao;
+import com.auction.server.dao.BidDao;
 import com.auction.server.dao.UserDao;
+import com.auction.server.dao.sqlite.SQLiteAuctionDao;
+import com.auction.server.dao.sqlite.SQLiteBidDao;
 import com.auction.server.dao.sqlite.SQLiteUserDao;
 import com.auction.server.service.AuthService;
+import com.auction.server.service.BidService;
 import com.auction.server.service.SessionManager;
 import com.auction.server.util.JsonMapper;
 import java.math.BigDecimal;
@@ -37,14 +42,20 @@ public class RequestRouter {
 
     private final JsonMapper jsonMapper;
     private final AuthService authService;
+    private final BidService bidService;
     private final SessionManager sessionManager;
 
     public RequestRouter() {
         this.jsonMapper = JsonMapper.getInstance();
 
-        // Initialize real services
+        // Initialize real DAOs
         UserDao userDao = new SQLiteUserDao();
+        AuctionDao auctionDao = new SQLiteAuctionDao();
+        BidDao bidDao = new SQLiteBidDao();
+
+        // Initialize real services
         this.authService = new AuthService(userDao);
+        this.bidService = new BidService(auctionDao, bidDao);
         this.sessionManager = SessionManager.getInstance();
     }
 
@@ -103,10 +114,30 @@ public class RequestRouter {
                         null
                     );
                 }
+                case PLACE_BID -> {
+                    Long userId = sessionManager.getUserId(request.getToken());
+                    if (userId == null) {
+                        yield Response.fail(
+                            type,
+                            request.getRequestId(),
+                            "Unauthorized. Please login."
+                        );
+                    }
+                    PlaceBidRequest bidData = requireData(
+                        request,
+                        PlaceBidRequest.class,
+                        "Missing bid data"
+                    );
+                    yield Response.ok(
+                        type,
+                        request.getRequestId(),
+                        "Bid accepted",
+                        bidService.placeBid(userId, bidData)
+                    );
+                }
                 case GET_AUCTIONS -> handleGetAuctionsMock(request);
                 case GET_AUCTION_DETAIL -> handleGetAuctionDetailMock(request);
                 case CREATE_AUCTION -> handleCreateAuctionMock(request);
-                case PLACE_BID -> handlePlaceBidMock(request);
                 case GET_BID_HISTORY -> Response.ok(
                     type,
                     request.getRequestId(),
@@ -131,7 +162,7 @@ public class RequestRouter {
                     "Unsupported message type in mock router: " + type
                 );
             };
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.fail(type, request.getRequestId(), e.getMessage());
         } catch (RuntimeException e) {
             logger.error("Error processing request: {}", type, e);
@@ -250,39 +281,6 @@ public class RequestRouter {
             MessageType.CREATE_AUCTION,
             request.getRequestId(),
             "Mock auction created successfully",
-            response
-        );
-    }
-
-    private Response<PlaceBidResponse> handlePlaceBidMock(Request<?> request) {
-        PlaceBidRequest data = requireData(
-            request,
-            PlaceBidRequest.class,
-            "PLACE_BID requires auctionId and amount"
-        );
-
-        if (data.auctionId() <= 0) {
-            throw new IllegalArgumentException("auctionId must be positive.");
-        }
-
-        if (
-            data.amount() == null ||
-            data.amount().compareTo(BigDecimal.ZERO) <= 0
-        ) {
-            throw new IllegalArgumentException("Bid amount must be positive.");
-        }
-
-        PlaceBidResponse response = new PlaceBidResponse(
-            data.auctionId(),
-            data.amount(),
-            "mock-user",
-            LocalDateTime.now()
-        );
-
-        return Response.ok(
-            MessageType.PLACE_BID,
-            request.getRequestId(),
-            "Mock bid accepted",
             response
         );
     }
