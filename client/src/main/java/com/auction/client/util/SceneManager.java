@@ -114,21 +114,55 @@ public final class SceneManager {
     }
 
     public static void showAuctionDetail() {
+        showAuctionDetail(null);
+    }
+
+    public static void showAuctionDetail(Long auctionId) {
         if (currentRole != Role.BIDDER) {
             showDashboard();
             return;
         }
 
-        showCenter("/fxml/AuctionDetailView.fxml");
+        try {
+            URL resource = SceneManager.class.getResource("/fxml/AuctionDetailView.fxml");
+            FXMLLoader loader = new FXMLLoader(resource);
+            Parent content = loader.load();
+            
+            if (auctionId != null) {
+                com.auction.client.controller.AuctionDetailController controller = loader.getController();
+                controller.setAuctionId(auctionId);
+            }
+            
+            contentRoot.setCenter(content);
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not load AuctionDetailView", e);
+        }
     }
 
     public static void showLiveBidding() {
+        showLiveBidding(null);
+    }
+
+    public static void showLiveBidding(Long auctionId) {
         if (currentRole != Role.BIDDER) {
             showDashboard();
             return;
         }
 
-        showCenter("/fxml/LiveBiddingView.fxml");
+        try {
+            URL resource = SceneManager.class.getResource("/fxml/LiveBiddingView.fxml");
+            FXMLLoader loader = new FXMLLoader(resource);
+            Parent content = loader.load();
+            
+            if (auctionId != null) {
+                com.auction.client.controller.LiveBiddingController controller = loader.getController();
+                controller.setAuctionId(auctionId);
+            }
+            
+            contentRoot.setCenter(content);
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not load LiveBiddingView", e);
+        }
     }
 
     public static void showMyBids() {

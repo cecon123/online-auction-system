@@ -111,8 +111,8 @@ Dự án hiện đang tập trung vào **Tuần 7: Concurrency & Realtime Founda
 
 #### 🟠 ƯU TIÊN 4: Tầng Tích hợp UI & Realtime (Hải Anh)
 - [ ] Validation cho các form Create Auction (Pending)
-- [ ] Tích hợp `AuctionClientService` cho màn hình đấu giá (Chờ Linh)
-- [ ] Cơ chế `Platform.runLater()` cho Realtime Update UI (Pending)
+- [x] Tích hợp `AuctionClientService` cho màn hình đấu giá (Done - feature/haianh/ui-real-integration)
+- [x] Cơ chế `Platform.runLater()` cho Realtime Update UI (Done - feature/haianh/ui-real-integration)
 
 ---
 

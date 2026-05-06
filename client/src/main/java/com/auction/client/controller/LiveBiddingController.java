@@ -1,10 +1,20 @@
 package com.auction.client.controller;
 
+import com.auction.client.service.AuctionClientService;
+import com.auction.client.socket.SocketClient;
+import com.auction.client.util.JsonMapper;
+import com.auction.client.util.SceneManager;
+import com.auction.common.dto.auction.AuctionDetailDto;
+import com.auction.common.dto.bid.BidUpdateEvent;
+import com.auction.common.protocol.MessageType;
+import com.auction.common.protocol.Response;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.chart.CategoryAxis;
@@ -16,8 +26,11 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LiveBiddingController {
+    private static final Logger logger = LoggerFactory.getLogger(LiveBiddingController.class);
 
     private static final NumberFormat USD_FORMAT =
         NumberFormat.getCurrencyInstance(Locale.US);
@@ -91,21 +104,34 @@ public class LiveBiddingController {
     @FXML
     private Button simulateOutbidButton;
 
+    private final AuctionClientService auctionService = new AuctionClientService();
+    private final Consumer<Response<?>> bidUpdateListener = this::handleBidUpdate;
+    
+    private Long auctionId;
     private final BigDecimal minimumIncrement = new BigDecimal("500");
-    private final BigDecimal walletBalance = new BigDecimal("45000");
+    private final BigDecimal walletBalance = SceneManager.getCurrentBalance();
 
-    private BigDecimal currentPrice = new BigDecimal("14500");
+    private BigDecimal currentPrice = new BigDecimal("0");
     private BigDecimal autoMaxBudget = new BigDecimal("20000");
     private BigDecimal autoStep = new BigDecimal("500");
 
-    private boolean autoBidEnabled = true;
+    private boolean autoBidEnabled = false;
     private XYChart.Series<String, Number> priceSeries;
+
+    public void setAuctionId(Long auctionId) {
+        this.auctionId = auctionId;
+        loadAuctionData();
+        subscribeToUpdates();
+    }
+
+    private void subscribeToUpdates() {
+        if (auctionId == null) return;
+        auctionService.subscribeAuction(auctionId);
+        SocketClient.getInstance().addEventListener(MessageType.BID_UPDATE, bidUpdateListener);
+    }
 
     @FXML
     private void initialize() {
-        countdownLabel.setText("02:14:05");
-        highestBidderLabel.setText("You");
-
         autoMaxBudgetField.setText(autoMaxBudget.toPlainString());
 
         autoStepComboBox.setItems(
@@ -113,37 +139,53 @@ public class LiveBiddingController {
         );
         autoStepComboBox.setValue("500");
 
-        bidHistoryList.setItems(
-            FXCollections.observableArrayList(
-                formatHistoryRow("10:24", "You", new BigDecimal("14500")),
-                formatHistoryRow(
-                    "10:20",
-                    "Bidder_2810",
-                    new BigDecimal("14000")
-                ),
-                formatHistoryRow(
-                    "10:16",
-                    "Bidder_1142",
-                    new BigDecimal("13500")
-                ),
-                formatHistoryRow(
-                    "10:10",
-                    "Bidder_7001",
-                    new BigDecimal("12500")
-                )
-            )
-        );
-
         setupChart();
-        refreshCurrentPrice();
         refreshAutoBidPanel();
 
         manualBidMessageLabel.setText("");
-        autoBidMessageLabel.setText("Auto bidding is active.");
-        autoLastActionLabel.setText("Watching this auction.");
+        autoBidMessageLabel.setText("Connect to server...");
+        autoLastActionLabel.setText("Waiting for auction data.");
 
         simulateOutbidButton.setVisible(false);
         simulateOutbidButton.setManaged(false);
+    }
+
+    private void loadAuctionData() {
+        if (auctionId == null) return;
+
+        auctionService.getAuctionDetail(auctionId).thenAccept(response -> {
+            if (response.isSuccess()) {
+                AuctionDetailDto detail = response.getData();
+                Platform.runLater(() -> {
+                    this.currentPrice = detail.currentPrice();
+                    this.highestBidderLabel.setText(detail.highestBidderUsername() != null ? detail.highestBidderUsername() : "No bids");
+                    refreshCurrentPrice();
+                    refreshAutoBidPanel();
+                    autoBidMessageLabel.setText("Realtime updates active.");
+                    autoLastActionLabel.setText("Watching: " + detail.title());
+                });
+            }
+        });
+    }
+
+    private void handleBidUpdate(Response<?> response) {
+        BidUpdateEvent event = JsonMapper.getInstance().convertData(response.getData(), BidUpdateEvent.class);
+        if (event.auctionId() == auctionId) {
+            Platform.runLater(() -> {
+                this.currentPrice = event.amount();
+                this.highestBidderLabel.setText(event.bidderUsername());
+                
+                bidHistoryList.getItems().add(0, formatHistoryRow("Now", event.bidderUsername(), this.currentPrice));
+                addPricePoint("Now", this.currentPrice);
+                
+                refreshCurrentPrice();
+                refreshAutoBidPanel();
+                
+                if (autoBidEnabled && !event.bidderUsername().equals(SceneManager.getCurrentUsername())) {
+                    triggerAutoBidIfPossible();
+                }
+            });
+        }
     }
 
     @FXML
@@ -164,26 +206,16 @@ public class LiveBiddingController {
             return;
         }
 
-        if (manualBid.compareTo(walletBalance) > 0) {
-            showManualMessage(
-                "Your wallet balance is not enough for this bid."
-            );
-            return;
-        }
-
-        currentPrice = manualBid;
-        highestBidderLabel.setText("You");
-
-        bidHistoryList
-            .getItems()
-            .add(0, formatHistoryRow("Now", "You", manualBid));
-        bidAmountField.clear();
-
-        addPricePoint("Now", currentPrice);
-        refreshCurrentPrice();
-        refreshAutoBidPanel();
-
-        showManualMessage("Manual bid placed successfully.");
+        auctionService.placeBid(auctionId, manualBid).thenAccept(response -> {
+            Platform.runLater(() -> {
+                if (response.isSuccess()) {
+                    showManualMessage("Bid placed successfully!");
+                    bidAmountField.clear();
+                } else {
+                    showManualMessage("Error: " + response.getMessage());
+                }
+            });
+        });
     }
 
     @FXML

@@ -58,6 +58,18 @@ public final class JsonMapper {
         return fromJson(toJson(data), clazz);
     }
 
+    /**
+     * Converts generic data into a list of the expected DTO class.
+     */
+    public <T> java.util.List<T> convertList(Object data, Class<T> clazz) {
+        if (data == null) {
+            return java.util.Collections.emptyList();
+        }
+        String json = toJson(data);
+        Type listType = com.google.gson.reflect.TypeToken.getParameterized(java.util.List.class, clazz).getType();
+        return gson.fromJson(json, listType);
+    }
+
     private static final class LocalDateTimeAdapter
         implements
             JsonSerializer<LocalDateTime>,

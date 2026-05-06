@@ -37,10 +37,30 @@ public final class SocketClient {
     // Maps requestId to its pending CompletableFuture
     private final Map<String, CompletableFuture<Response<?>>> pendingRequests = new ConcurrentHashMap<>();
 
+    // Listeners for realtime events (requestId is null)
+    private final Map<com.auction.common.protocol.MessageType, java.util.List<java.util.function.Consumer<Response<?>>>> eventListeners = new ConcurrentHashMap<>();
+
     private SocketClient() {}
 
     public static SocketClient getInstance() {
         return INSTANCE;
+    }
+
+    /**
+     * Registers a listener for a specific message type (realtime events).
+     */
+    public void addEventListener(com.auction.common.protocol.MessageType type, java.util.function.Consumer<Response<?>> listener) {
+        eventListeners.computeIfAbsent(type, k -> new java.util.concurrent.CopyOnWriteArrayList<>()).add(listener);
+    }
+
+    /**
+     * Removes a listener.
+     */
+    public void removeEventListener(com.auction.common.protocol.MessageType type, java.util.function.Consumer<Response<?>> listener) {
+        java.util.List<java.util.function.Consumer<Response<?>>> listeners = eventListeners.get(type);
+        if (listeners != null) {
+            listeners.remove(listener);
+        }
     }
 
     /**
