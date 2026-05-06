@@ -4,7 +4,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
 /**
- * Quản lý locking cho các thao tác đấu giá cấp cao.
+ * Manages locking for high-level auction operations.
  */
 public class AuctionLockManager {
 
@@ -18,7 +18,7 @@ public class AuctionLockManager {
     }
 
     /**
-     * Thực thi một task bên trong lock của auctionId cụ thể.
+     * Executes a task within a lock for a specific auctionId.
      */
     public <T> T executeLocked(long auctionId, Supplier<T> task) {
         ReentrantLock lock = registry.getLock(auctionId);
@@ -31,7 +31,7 @@ public class AuctionLockManager {
     }
 
     /**
-     * Thực thi một runnable task không có giá trị trả về bên trong lock.
+     * Executes a runnable task (no return value) within a lock.
      */
     public void executeLocked(long auctionId, Runnable task) {
         executeLocked(auctionId, () -> {

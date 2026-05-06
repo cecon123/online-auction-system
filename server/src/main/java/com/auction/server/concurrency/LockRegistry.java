@@ -4,7 +4,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Registry quản lý và tái sử dụng ReentrantLock theo auctionId.
+ * Registry to manage and reuse ReentrantLocks per auctionId.
  */
 public class LockRegistry {
 
@@ -12,14 +12,14 @@ public class LockRegistry {
         new ConcurrentHashMap<>();
 
     /**
-     * Lấy lock cho một ID cụ thể. Nếu chưa có, lock mới sẽ được tạo.
+     * Retrieves a lock for a specific ID. Creates a new one if it doesn't exist.
      */
     public ReentrantLock getLock(long id) {
         return locks.computeIfAbsent(id, k -> new ReentrantLock());
     }
 
     /**
-     * Xóa lock khi không còn cần thiết.
+     * Removes a lock when no longer needed.
      */
     public void removeLock(long id) {
         locks.remove(id);

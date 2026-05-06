@@ -4,16 +4,21 @@ import com.auction.common.dto.auth.LoginRequest;
 import com.auction.common.dto.auth.LoginResponse;
 import com.auction.common.dto.auth.RegisterRequest;
 import com.auction.common.dto.auth.RegisterResponse;
-import com.auction.common.enums.Role;
 import com.auction.server.dao.UserDao;
 import java.util.Optional;
 import org.mindrot.jbcrypt.BCrypt;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Service xử lý các nghiệp vụ liên quan đến xác thực (Authentication).
- * Sử dụng BCrypt để bảo mật mật khẩu.
+ * Service for authentication-related operations.
+ * Uses BCrypt for password security.
  */
 public class AuthService {
+
+    private static final Logger logger = LoggerFactory.getLogger(
+        AuthService.class
+    );
 
     private final UserDao userDao;
     private final SessionManager sessionManager;
@@ -24,20 +29,20 @@ public class AuthService {
     }
 
     /**
-     * Đăng ký người dùng mới.
-     * Băm mật khẩu bằng BCrypt trước khi lưu vào DB.
+     * Registers a new user.
+     * Hashes password using BCrypt before storing in DB.
      */
     public RegisterResponse register(RegisterRequest request) {
-        // 1. Kiểm tra username tồn tại
+        // 1. Check if username exists
         if (userDao.findByUsername(request.username()).isPresent()) {
-            throw new IllegalArgumentException("Tên đăng nhập đã tồn tại.");
+            throw new IllegalArgumentException("Username already exists.");
         }
 
-        // 2. Băm mật khẩu
+        // 2. Hash password
         String salt = BCrypt.gensalt(12);
         String hashed = BCrypt.hashpw(request.password(), salt);
 
-        // 3. Lưu vào DB
+        // 3. Store in DB
         long id = userDao.create(
             request.username(),
             hashed,
@@ -45,48 +50,48 @@ public class AuthService {
             request.role()
         );
 
-        System.out.println(
-            "[AuthService] Đã tạo người dùng mới: " +
-                request.username() +
-                " với ID: " +
-                id
+        logger.info(
+            "Successfully registered new user: {} with ID: {}",
+            request.username(),
+            id
         );
 
         return new RegisterResponse(id, request.username(), request.role());
     }
 
     /**
-     * Đăng nhập người dùng.
-     * Kiểm tra hash mật khẩu và cấp token.
+     * Authenticates a user.
+     * Verifies password hash and issues a session token.
      */
     public LoginResponse login(LoginRequest request) {
-        // 1. Tìm user
+        // 1. Find user
         Optional<UserDao.UserRecord> userOpt = userDao.findByUsername(
             request.username()
         );
 
         if (userOpt.isEmpty()) {
-            throw new IllegalArgumentException(
-                "Tên đăng nhập hoặc mật khẩu không chính xác."
-            );
+            throw new IllegalArgumentException("Invalid username or password.");
         }
 
         UserDao.UserRecord user = userOpt.get();
 
-        // 2. Kiểm tra trạng thái active
+        // 2. Check active status
         if (!user.active()) {
-            throw new IllegalStateException("Tài khoản của bạn đã bị khóa.");
+            throw new IllegalStateException("Your account has been suspended.");
         }
 
-        // 3. Kiểm tra mật khẩu
+        // 3. Verify password
         if (!BCrypt.checkpw(request.password(), user.passwordHash())) {
-            throw new IllegalArgumentException(
-                "Tên đăng nhập hoặc mật khẩu không chính xác."
-            );
+            throw new IllegalArgumentException("Invalid username or password.");
         }
 
-        // 4. Cấp token
+        // 4. Issue token
         String token = sessionManager.createSession(user.id());
+        logger.info(
+            "User {} logged in successfully. Issued token: {}",
+            user.username(),
+            token
+        );
 
         return new LoginResponse(
             user.id(),

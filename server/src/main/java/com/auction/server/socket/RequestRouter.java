@@ -23,11 +23,17 @@ import com.auction.server.util.JsonMapper;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Routes socket requests to the correct controller/service.
  */
 public class RequestRouter {
+
+    private static final Logger logger = LoggerFactory.getLogger(
+        RequestRouter.class
+    );
 
     private final JsonMapper jsonMapper;
     private final AuthService authService;
@@ -36,7 +42,7 @@ public class RequestRouter {
     public RequestRouter() {
         this.jsonMapper = JsonMapper.getInstance();
 
-        // Khởi tạo các Service thật
+        // Initialize real services
         UserDao userDao = new SQLiteUserDao();
         this.authService = new AuthService(userDao);
         this.sessionManager = SessionManager.getInstance();
@@ -56,42 +62,44 @@ public class RequestRouter {
         }
 
         MessageType type = request.getType();
-        System.out.println(
-            "[Request] Type: " + type + ", ID: " + request.getRequestId()
-        );
+        logger.info("[Request] Type: {}, ID: {}", type, request.getRequestId());
 
         try {
             return switch (type) {
                 case LOGIN -> Response.ok(
                     type,
                     request.getRequestId(),
-                    "Đăng nhập thành công",
+                    "Login successful",
                     authService.login(
                         requireData(
                             request,
                             LoginRequest.class,
-                            "Dữ liệu đăng nhập thiếu"
+                            "Missing login data"
                         )
                     )
                 );
                 case REGISTER -> Response.ok(
                     type,
                     request.getRequestId(),
-                    "Đăng ký thành công",
+                    "Registration successful",
                     authService.register(
                         requireData(
                             request,
                             RegisterRequest.class,
-                            "Dữ liệu đăng ký thiếu"
+                            "Missing registration data"
                         )
                     )
                 );
                 case LOGOUT -> {
                     sessionManager.invalidateSession(request.getToken());
+                    logger.info(
+                        "Logout successful for token: {}",
+                        request.getToken()
+                    );
                     yield Response.ok(
                         type,
                         request.getRequestId(),
-                        "Đã đăng xuất",
+                        "Logged out successfully",
                         null
                     );
                 }
@@ -126,80 +134,13 @@ public class RequestRouter {
         } catch (IllegalArgumentException e) {
             return Response.fail(type, request.getRequestId(), e.getMessage());
         } catch (RuntimeException e) {
+            logger.error("Error processing request: {}", type, e);
             return Response.fail(
                 type,
                 request.getRequestId(),
-                "Server mock router error: " + e.getMessage()
+                "Server internal error: " + e.getMessage()
             );
         }
-    }
-
-    private Response<LoginResponse> handleLoginMock(Request<?> request) {
-        LoginRequest data = requireData(
-            request,
-            LoginRequest.class,
-            "LOGIN requires username and password"
-        );
-
-        if (isBlank(data.username()) || isBlank(data.password())) {
-            throw new IllegalArgumentException(
-                "Username and password are required."
-            );
-        }
-
-        Role role = detectMockRole(data.username());
-
-        LoginResponse response = new LoginResponse(
-            1L,
-            data.username().trim(),
-            role,
-            "mock-session-token-" + role.name().toLowerCase()
-        );
-
-        return Response.ok(
-            MessageType.LOGIN,
-            request.getRequestId(),
-            "Mock login successful",
-            response
-        );
-    }
-
-    private Response<RegisterResponse> handleRegisterMock(Request<?> request) {
-        RegisterRequest data = requireData(
-            request,
-            RegisterRequest.class,
-            "REGISTER requires fullName, username, password and role"
-        );
-
-        if (
-            isBlank(data.fullName()) ||
-            isBlank(data.username()) ||
-            isBlank(data.password()) ||
-            data.role() == null
-        ) {
-            throw new IllegalArgumentException(
-                "Full name, username, password and role are required."
-            );
-        }
-
-        if (data.role() == Role.ADMIN) {
-            throw new IllegalArgumentException(
-                "Admin accounts cannot be registered from the public UI."
-            );
-        }
-
-        RegisterResponse response = new RegisterResponse(
-            100L,
-            data.username().trim(),
-            data.role()
-        );
-
-        return Response.ok(
-            MessageType.REGISTER,
-            request.getRequestId(),
-            "Mock register successful",
-            response
-        );
     }
 
     private Response<List<AuctionSummaryDto>> handleGetAuctionsMock(
@@ -385,20 +326,6 @@ public class RequestRouter {
                 "End time must be after start time."
             );
         }
-    }
-
-    private Role detectMockRole(String username) {
-        String normalized = username.toLowerCase();
-
-        if (normalized.contains("admin")) {
-            return Role.ADMIN;
-        }
-
-        if (normalized.contains("seller")) {
-            return Role.SELLER;
-        }
-
-        return Role.BIDDER;
     }
 
     private <T> T requireData(
