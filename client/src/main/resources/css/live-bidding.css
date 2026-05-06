@@ -1,0 +1,389 @@
+/* =========================================================
+   Live Bidding + Auto Bidding Styles
+   ========================================================= */
+
+.live-page,
+.live-page-compact {
+    -fx-background-color: #fcf8ff;
+}
+
+.live-card,
+.auto-bid-card {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: #c7c4d8;
+    -fx-border-radius: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 5, 0, 0, 1);
+}
+
+.auto-bid-card {
+    -fx-background-color: #fbfaff;
+}
+
+.live-header-compact {
+    -fx-min-height: 92px;
+    -fx-pref-height: 92px;
+    -fx-max-height: 92px;
+}
+
+.live-status-running {
+    -fx-background-color: #dcfce7;
+    -fx-text-fill: #166534;
+    -fx-background-radius: 999;
+    -fx-padding: 3 9 3 9;
+    -fx-font-size: 10px;
+    -fx-font-weight: 800;
+}
+
+.live-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #111827;
+}
+
+.live-title-compact {
+    -fx-font-size: 22px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #111827;
+}
+
+.live-countdown {
+    -fx-font-size: 24px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #3525cd;
+}
+
+.live-countdown-compact {
+    -fx-font-size: 22px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #3525cd;
+}
+
+.live-form-label {
+    -fx-font-size: 10px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #2f2a3c;
+}
+
+.live-section-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #111827;
+}
+
+.live-section-title-compact {
+    -fx-font-size: 19px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #111827;
+}
+
+.live-subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: #4b445c;
+}
+
+.live-money-large {
+    -fx-font-size: 32px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #3525cd;
+}
+
+.live-money-compact {
+    -fx-font-size: 30px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #3525cd;
+}
+
+.live-bidder-name {
+    -fx-font-size: 18px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #111827;
+}
+
+.live-bidder-name-compact {
+    -fx-font-size: 17px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #111827;
+}
+
+.live-input {
+    -fx-background-color: white;
+    -fx-border-color: #c7c4d8;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 7 11 7 11;
+    -fx-font-size: 13px;
+    -fx-pref-height: 36px;
+    -fx-text-fill: #111827;
+    -fx-prompt-text-fill: #9ca3af;
+}
+
+.live-input:focused {
+    -fx-border-color: #3525cd;
+    -fx-border-width: 2;
+}
+
+.live-combo {
+    -fx-background-color: white;
+    -fx-border-color: #c7c4d8;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-pref-height: 36px;
+    -fx-font-size: 13px;
+}
+
+.live-primary-button {
+    -fx-background-color: #3525cd;
+    -fx-text-fill: white;
+    -fx-border-color: transparent;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 8 14 8 14;
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-cursor: hand;
+}
+
+.live-primary-button:hover {
+    -fx-background-color: #4f46e5;
+}
+
+.live-message-text {
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #35225d;
+}
+
+.auto-status-off,
+.auto-status-active,
+.auto-status-max {
+    -fx-background-radius: 999;
+    -fx-padding: 4 9 4 9;
+    -fx-font-size: 10px;
+    -fx-font-weight: 800;
+    -fx-alignment: center;
+}
+
+.auto-status-off {
+    -fx-background-color: #e5e7eb;
+    -fx-text-fill: #374151;
+}
+
+.auto-status-active {
+    -fx-background-color: #dcfce7;
+    -fx-text-fill: #166534;
+}
+
+.auto-status-max {
+    -fx-background-color: #ffedd5;
+    -fx-text-fill: #c2410c;
+}
+
+.auto-context-box,
+.auto-info-box,
+.auto-context-box-compact,
+.auto-info-box-compact {
+    -fx-background-color: white;
+    -fx-border-color: #d8d3ef;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+.auto-context-box,
+.auto-info-box {
+    -fx-padding: 10;
+}
+
+.auto-context-box-compact,
+.auto-info-box-compact {
+    -fx-padding: 8 9 8 9;
+}
+
+.auto-context-box,
+.auto-context-box-compact {
+    -fx-background-color: #f7f4ff;
+}
+
+.auto-info-label {
+    -fx-font-size: 9px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #6b7280;
+}
+
+.auto-info-value {
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #3525cd;
+}
+
+.auto-position-leading {
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #059669;
+}
+
+.auto-position-outbid {
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #ba1a1a;
+}
+
+.auto-primary-button {
+    -fx-background-color: #3525cd;
+    -fx-text-fill: white;
+    -fx-border-color: transparent;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 7 13 7 13;
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-cursor: hand;
+}
+
+.auto-primary-button:hover {
+    -fx-background-color: #4f46e5;
+}
+
+.auto-danger-button {
+    -fx-background-color: white;
+    -fx-text-fill: #ba1a1a;
+    -fx-border-color: #f3b1aa;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 7 13 7 13;
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-cursor: hand;
+}
+
+.auto-danger-button:hover {
+    -fx-background-color: #fff1f0;
+}
+
+.auto-ghost-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #6b7280;
+    -fx-border-color: #d1d5db;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 7 13 7 13;
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-cursor: hand;
+}
+
+.auto-last-action-text {
+    -fx-font-size: 11px;
+    -fx-text-fill: #4b445c;
+    -fx-font-weight: 600;
+}
+
+/* Live Bid History */
+.bid-history-card-compact {
+    -fx-min-width: 260px;
+    -fx-pref-width: 260px;
+    -fx-max-width: 260px;
+    -fx-min-height: 390px;
+    -fx-pref-height: 390px;
+    -fx-max-height: 390px;
+}
+
+.bid-history-subtitle {
+    -fx-font-size: 11px;
+    -fx-text-fill: #6b7280;
+}
+
+.bid-history-header-row {
+    -fx-background-color: #f0edf8;
+    -fx-background-radius: 6;
+    -fx-border-color: #d8d3ef;
+    -fx-border-radius: 6;
+    -fx-padding: 7 8 7 8;
+}
+
+.bid-history-header-text {
+    -fx-font-size: 9px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #4b445c;
+}
+
+.bid-history-list {
+    -fx-background-color: white;
+    -fx-border-color: #d8d3ef;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 0;
+}
+
+.bid-history-list .list-cell {
+    -fx-font-family: "Consolas", "Courier New", monospace;
+    -fx-font-size: 11px;
+    -fx-padding: 8 8 8 8;
+    -fx-text-fill: #1f1b2d;
+    -fx-background-color: white;
+}
+
+.bid-history-list .list-cell:odd {
+    -fx-background-color: #fbfaff;
+}
+
+.bid-history-list .list-cell:selected {
+    -fx-background-color: #ede9fe;
+    -fx-text-fill: #3525cd;
+}
+
+.bid-history-list .scroll-bar:horizontal {
+    -fx-opacity: 0;
+    -fx-max-height: 0;
+    -fx-pref-height: 0;
+    -fx-min-height: 0;
+}
+
+/* Realtime Price Curve */
+.price-card-compact {
+    -fx-max-height: 315px;
+}
+
+.price-chart {
+    -fx-background-color: transparent;
+    -fx-padding: 0 8 0 0;
+}
+
+.price-chart .chart-content {
+    -fx-padding: 0;
+}
+
+.price-chart .chart-plot-background {
+    -fx-background-color: #fafafa;
+}
+
+.price-chart .chart-horizontal-grid-lines {
+    -fx-stroke: #dedbe8;
+    -fx-stroke-dash-array: 4 4;
+}
+
+.price-chart .chart-vertical-grid-lines {
+    -fx-stroke: #e7e2f2;
+    -fx-stroke-dash-array: 4 4;
+}
+
+.price-chart .axis {
+    -fx-tick-label-fill: #5f5a6e;
+    -fx-font-size: 10px;
+}
+
+.price-chart .axis-label {
+    -fx-text-fill: #111827;
+    -fx-font-size: 11px;
+}
+
+.price-chart .chart-series-line {
+    -fx-stroke: #ff5a2a;
+    -fx-stroke-width: 3px;
+}
+
+.price-chart .chart-line-symbol {
+    -fx-background-color: white, #ff5a2a;
+    -fx-background-radius: 6px;
+    -fx-padding: 4px;
+}

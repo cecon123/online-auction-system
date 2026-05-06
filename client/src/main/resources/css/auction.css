@@ -1,0 +1,208 @@
+/* =========================================================
+   Create Auction Screen Styles
+   ========================================================= */
+
+.create-page {
+    -fx-background-color: #fcf8ff;
+}
+
+.create-page-title {
+    -fx-font-size: 26px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #111827;
+}
+
+.create-page-subtitle {
+    -fx-font-size: 13px;
+    -fx-text-fill: #4b445c;
+}
+
+.create-section-title {
+    -fx-font-size: 23px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #111827;
+}
+
+.create-form-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #2f2a3c;
+}
+
+.create-auction-card {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: #c7c4d8;
+    -fx-border-radius: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 5, 0, 0, 1);
+}
+
+.create-auction-card-header {
+    -fx-background-color: white;
+    -fx-background-radius: 8 8 0 0;
+    -fx-border-color: transparent transparent #d8d3ef transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.create-auction-body {
+    -fx-background-color: #fcf8ff;
+}
+
+.create-auction-footer {
+    -fx-background-color: white;
+    -fx-background-radius: 0 0 8 8;
+    -fx-border-color: #d8d3ef transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.create-card-title {
+    -fx-font-size: 19px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #111827;
+}
+
+.create-input {
+    -fx-background-color: white;
+    -fx-border-color: #c7c4d8;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 7 11 7 11;
+    -fx-font-size: 13px;
+    -fx-pref-height: 36px;
+    -fx-text-fill: #111827;
+    -fx-prompt-text-fill: #9ca3af;
+}
+
+.create-input:focused {
+    -fx-border-color: #3525cd;
+    -fx-border-width: 2;
+}
+
+.create-combo {
+    -fx-background-color: white;
+    -fx-border-color: #c7c4d8;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-pref-height: 36px;
+    -fx-font-size: 13px;
+}
+
+.create-combo:focused {
+    -fx-border-color: #3525cd;
+    -fx-border-width: 2;
+}
+
+.create-description {
+    -fx-background-color: white;
+    -fx-border-color: #c7c4d8;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-font-size: 13px;
+    -fx-text-fill: #111827;
+    -fx-prompt-text-fill: #9ca3af;
+    -fx-pref-height: 128px;
+    -fx-max-height: 128px;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.create-description:focused {
+    -fx-border-color: #c7c4d8;
+    -fx-border-width: 1;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.create-description .content {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: transparent;
+}
+
+.upload-box {
+    -fx-background-color: white;
+    -fx-border-color: #c7c4d8;
+    -fx-border-style: segments(8, 6);
+    -fx-border-width: 2;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-min-height: 110px;
+    -fx-pref-height: 110px;
+    -fx-max-height: 110px;
+}
+
+.upload-icon {
+    -fx-font-size: 23px;
+    -fx-text-fill: #7c7794;
+}
+
+.upload-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #2f2a3c;
+}
+
+.upload-subtitle {
+    -fx-font-size: 11px;
+    -fx-text-fill: #6b7280;
+}
+
+.auction-mechanics-card {
+    -fx-background-color: #f1edf8;
+    -fx-background-radius: 8;
+    -fx-border-color: #c7c4d8;
+    -fx-border-radius: 8;
+}
+
+.create-help-text {
+    -fx-font-size: 11px;
+    -fx-text-fill: #6b7280;
+}
+
+.create-secondary-small-button {
+    -fx-background-color: white;
+    -fx-text-fill: #3525cd;
+    -fx-border-color: #c7c4d8;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 6 13 6 13;
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-cursor: hand;
+}
+
+.create-secondary-small-button:hover {
+    -fx-background-color: #f5f2ff;
+}
+
+.create-secondary-footer-button {
+    -fx-background-color: white;
+    -fx-text-fill: #3525cd;
+    -fx-border-color: #c7c4d8;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 8 14 8 14;
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-cursor: hand;
+}
+
+.create-secondary-footer-button:hover {
+    -fx-background-color: #f5f2ff;
+}
+
+.create-primary-footer-button {
+    -fx-background-color: #3525cd;
+    -fx-text-fill: white;
+    -fx-border-color: transparent;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 8 14 8 14;
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-cursor: hand;
+}
+
+.create-primary-footer-button:hover {
+    -fx-background-color: #4f46e5;
+}
