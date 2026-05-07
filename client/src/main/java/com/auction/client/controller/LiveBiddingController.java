@@ -6,11 +6,14 @@ import com.auction.client.util.JsonMapper;
 import com.auction.client.util.SceneManager;
 import com.auction.common.dto.auction.AuctionDetailDto;
 import com.auction.common.dto.bid.BidUpdateEvent;
+import com.auction.common.dto.bid.PlaceBidResponse;
 import com.auction.common.protocol.MessageType;
 import com.auction.common.protocol.Response;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
@@ -30,13 +33,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class LiveBiddingController {
-    private static final Logger logger = LoggerFactory.getLogger(LiveBiddingController.class);
+
+    private static final Logger logger = LoggerFactory.getLogger(
+        LiveBiddingController.class
+    );
 
     private static final NumberFormat USD_FORMAT =
         NumberFormat.getCurrencyInstance(Locale.US);
 
     @FXML
     private Label countdownLabel;
+
+    @FXML
+    private Label statusLabel;
+
+    @FXML
+    private Label auctionTitleLabel;
+
+    @FXML
+    private Label auctionSubtitleLabel;
 
     @FXML
     private Label currentPriceLabel;
@@ -104,11 +119,13 @@ public class LiveBiddingController {
     @FXML
     private Button simulateOutbidButton;
 
-    private final AuctionClientService auctionService = new AuctionClientService();
-    private final Consumer<Response<?>> bidUpdateListener = this::handleBidUpdate;
-    
+    private final AuctionClientService auctionService =
+        new AuctionClientService();
+    private final Consumer<Response<?>> bidUpdateListener =
+        this::handleBidUpdate;
+
     private Long auctionId;
-    private final BigDecimal minimumIncrement = new BigDecimal("500");
+    private final BigDecimal minimumIncrement = new BigDecimal("1.00");
     private final BigDecimal walletBalance = SceneManager.getCurrentBalance();
 
     private BigDecimal currentPrice = new BigDecimal("0");
@@ -121,13 +138,17 @@ public class LiveBiddingController {
     public void setAuctionId(Long auctionId) {
         this.auctionId = auctionId;
         loadAuctionData();
+        loadBidHistory();
         subscribeToUpdates();
     }
 
     private void subscribeToUpdates() {
         if (auctionId == null) return;
         auctionService.subscribeAuction(auctionId);
-        SocketClient.getInstance().addEventListener(MessageType.BID_UPDATE, bidUpdateListener);
+        SocketClient.getInstance().addEventListener(
+            MessageType.BID_UPDATE,
+            bidUpdateListener
+        );
     }
 
     @FXML
@@ -153,35 +174,88 @@ public class LiveBiddingController {
     private void loadAuctionData() {
         if (auctionId == null) return;
 
-        auctionService.getAuctionDetail(auctionId).thenAccept(response -> {
+        auctionService
+            .getAuctionDetail(auctionId)
+            .thenAccept(response -> {
+                if (response.isSuccess()) {
+                    AuctionDetailDto detail = response.getData();
+                    Platform.runLater(() -> {
+                        this.currentPrice = detail.currentPrice();
+                        this.statusLabel.setText(detail.status().toString());
+                        updateStatusStyle(detail.status().toString());
+                        this.auctionTitleLabel.setText(detail.title());
+                        this.auctionSubtitleLabel.setText(
+                            "Lot #" +
+                                detail.auctionId() +
+                                " · " +
+                                detail.itemType() +
+                                " · " +
+                                detail.status()
+                        );
+                        this.highestBidderLabel.setText(
+                            detail.highestBidderUsername() != null
+                                ? detail.highestBidderUsername()
+                                : "No bids"
+                        );
+                        refreshCurrentPrice();
+                        refreshAutoBidPanel();
+                        autoBidMessageLabel.setText("Realtime updates active.");
+                        autoLastActionLabel.setText(
+                            "Watching: " + detail.title()
+                        );
+                        addPricePoint("Start", this.currentPrice);
+                    });
+                }
+            });
+    }
+
+    private void loadBidHistory() {
+        if (auctionId == null) return;
+        
+        auctionService.getBidHistory(auctionId).thenAccept(response -> {
             if (response.isSuccess()) {
-                AuctionDetailDto detail = response.getData();
+                List<PlaceBidResponse> history = response.getData();
                 Platform.runLater(() -> {
-                    this.currentPrice = detail.currentPrice();
-                    this.highestBidderLabel.setText(detail.highestBidderUsername() != null ? detail.highestBidderUsername() : "No bids");
-                    refreshCurrentPrice();
-                    refreshAutoBidPanel();
-                    autoBidMessageLabel.setText("Realtime updates active.");
-                    autoLastActionLabel.setText("Watching: " + detail.title());
+                    bidHistoryList.getItems().clear();
+                    for (PlaceBidResponse bid : history) {
+                        bidHistoryList.getItems().add(0, formatHistoryRow("Past", bid.highestBidderUsername(), bid.currentPrice()));
+                    }
                 });
             }
         });
     }
 
     private void handleBidUpdate(Response<?> response) {
-        BidUpdateEvent event = JsonMapper.getInstance().convertData(response.getData(), BidUpdateEvent.class);
-        if (event.auctionId() == auctionId) {
+        BidUpdateEvent event = JsonMapper.getInstance().convertData(
+            response.getData(),
+            BidUpdateEvent.class
+        );
+        if (event.auctionId().equals(auctionId)) {
             Platform.runLater(() -> {
                 this.currentPrice = event.amount();
                 this.highestBidderLabel.setText(event.bidderUsername());
-                
-                bidHistoryList.getItems().add(0, formatHistoryRow("Now", event.bidderUsername(), this.currentPrice));
-                addPricePoint("Now", this.currentPrice);
-                
+
+                bidHistoryList
+                    .getItems()
+                    .add(
+                        0,
+                        formatHistoryRow(
+                            "Now",
+                            event.bidderUsername(),
+                            this.currentPrice
+                        )
+                    );
+                addPricePoint("Update", this.currentPrice);
+
                 refreshCurrentPrice();
                 refreshAutoBidPanel();
-                
-                if (autoBidEnabled && !event.bidderUsername().equals(SceneManager.getCurrentUsername())) {
+
+                if (
+                    autoBidEnabled &&
+                    !event
+                        .bidderUsername()
+                        .equals(SceneManager.getCurrentUsername())
+                ) {
                     triggerAutoBidIfPossible();
                 }
             });
@@ -190,6 +264,13 @@ public class LiveBiddingController {
 
     @FXML
     private void handlePlaceBid() {
+        if (auctionId == null) {
+            showManualMessage(
+                "No auction selected. Please go to Auctions list and select one."
+            );
+            return;
+        }
+
         BigDecimal manualBid = parsePositiveMoney(bidAmountField.getText());
 
         if (manualBid == null) {
@@ -206,20 +287,27 @@ public class LiveBiddingController {
             return;
         }
 
-        auctionService.placeBid(auctionId, manualBid).thenAccept(response -> {
-            Platform.runLater(() -> {
-                if (response.isSuccess()) {
-                    showManualMessage("Bid placed successfully!");
-                    bidAmountField.clear();
-                } else {
-                    showManualMessage("Error: " + response.getMessage());
-                }
+        auctionService
+            .placeBid(auctionId, manualBid)
+            .thenAccept(response -> {
+                Platform.runLater(() -> {
+                    if (response.isSuccess()) {
+                        showManualMessage("Bid placed successfully!");
+                        bidAmountField.clear();
+                    } else {
+                        showManualMessage("Error: " + response.getMessage());
+                    }
+                });
             });
-        });
     }
 
     @FXML
     private void handleEnableAutoBid() {
+        if (auctionId == null) {
+            showAutoMessage("No auction selected.");
+            return;
+        }
+
         BigDecimal parsedMaxBudget = parsePositiveMoney(
             autoMaxBudgetField.getText()
         );
@@ -237,6 +325,11 @@ public class LiveBiddingController {
         showAutoMessage("Auto bidding is active.");
         autoLastActionLabel.setText("Watching this auction.");
         refreshAutoBidPanel();
+        
+        // Try to bid immediately if not leading
+        if (!SceneManager.getCurrentUsername().equals(highestBidderLabel.getText())) {
+            triggerAutoBidIfPossible();
+        }
     }
 
     @FXML
@@ -275,27 +368,7 @@ public class LiveBiddingController {
 
     @FXML
     private void handleSimulateOutbid() {
-        BigDecimal competitorBid = currentPrice.add(minimumIncrement);
-
-        currentPrice = competitorBid;
-        highestBidderLabel.setText("Bidder_5555");
-
-        bidHistoryList
-            .getItems()
-            .add(0, formatHistoryRow("Now", "Bidder_5555", competitorBid));
-        addPricePoint("Outbid", currentPrice);
-        refreshCurrentPrice();
-
-        if (autoBidEnabled) {
-            triggerAutoBidIfPossible();
-        } else {
-            showAutoMessage("You were outbid. Auto bidding is off.");
-            autoLastActionLabel.setText(
-                "Competitor placed " + formatMoney(competitorBid) + "."
-            );
-        }
-
-        refreshAutoBidPanel();
+        // Mock removed
     }
 
     private boolean validateAutoBidInput(
@@ -349,114 +422,77 @@ public class LiveBiddingController {
 
         if (nextAutoBid.compareTo(autoMaxBudget) > 0) {
             autoBidEnabled = false;
-            highestBidderLabel.setText("Bidder_5555");
-
             autoLastActionLabel.setText("Maximum budget reached.");
             showAutoMessage(
                 "Auto bidding stopped because your maximum budget was reached."
             );
-
             refreshAutoBidPanel();
             return;
         }
 
-        currentPrice = nextAutoBid;
-        highestBidderLabel.setText("You");
-
-        bidHistoryList
-            .getItems()
-            .add(0, formatHistoryRow("Now", "Auto Bid", nextAutoBid));
-        addPricePoint("Auto", currentPrice);
-        refreshCurrentPrice();
-
-        autoLastActionLabel.setText(
-            "Auto bid placed: " + formatMoney(nextAutoBid) + "."
-        );
-        showAutoMessage("Auto bidding responded successfully.");
-        refreshAutoBidPanel();
+        logger.info("Auto-bidding placing bid of {} for auction {}", nextAutoBid, auctionId);
+        auctionService.placeBid(auctionId, nextAutoBid).thenAccept(response -> {
+            Platform.runLater(() -> {
+                if (response.isSuccess()) {
+                    autoLastActionLabel.setText(
+                        "Auto bid placed: " + formatMoney(nextAutoBid) + "."
+                    );
+                    showAutoMessage("Auto bidding responded successfully.");
+                } else {
+                    showAutoMessage("Auto bid failed: " + response.getMessage());
+                    autoLastActionLabel.setText("Auto bid failed.");
+                    autoBidEnabled = false;
+                }
+                refreshAutoBidPanel();
+            });
+        });
     }
 
     private void setupChart() {
         priceSeries = new XYChart.Series<>();
         priceSeries.setName("Current Price");
 
-        List<XYChart.Data<String, Number>> initialPoints = List.of(
-            new XYChart.Data<>("10:00", 12000),
-            new XYChart.Data<>("10:10", 12500),
-            new XYChart.Data<>("10:20", 13750),
-            new XYChart.Data<>("10:24", currentPrice)
-        );
-
-        priceSeries.getData().setAll(initialPoints);
-
         timeAxis.setLabel("Time");
-        timeAxis.setCategories(
-            FXCollections.observableArrayList(
-                "10:00",
-                "10:10",
-                "10:20",
-                "10:24"
-            )
-        );
-        timeAxis.setTickLabelRotation(0);
         timeAxis.setAnimated(false);
 
         priceAxis.setLabel("Price");
-        priceAxis.setAutoRanging(false);
-        priceAxis.setLowerBound(0);
-        priceAxis.setUpperBound(15000);
-        priceAxis.setTickUnit(5000);
-        priceAxis.setMinorTickVisible(false);
+        priceAxis.setAutoRanging(true);
         priceAxis.setAnimated(false);
 
         priceChart.getData().setAll(priceSeries);
         priceChart.setLegendVisible(false);
         priceChart.setAnimated(false);
         priceChart.setCreateSymbols(true);
-        priceChart.setHorizontalGridLinesVisible(true);
-        priceChart.setVerticalGridLinesVisible(true);
     }
 
     private void addPricePoint(String label, BigDecimal price) {
-        String safeLabel = createUniqueChartLabel(label);
-
-        if (!timeAxis.getCategories().contains(safeLabel)) {
-            timeAxis.getCategories().add(safeLabel);
-        }
+        String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+        String safeLabel = time + " (" + label + ")";
 
         priceSeries
             .getData()
             .add(new XYChart.Data<>(safeLabel, price.doubleValue()));
 
-        if (priceSeries.getData().size() > 8) {
-            String removedCategory = priceSeries.getData().get(0).getXValue();
+        if (priceSeries.getData().size() > 10) {
             priceSeries.getData().remove(0);
-            timeAxis.getCategories().remove(removedCategory);
         }
-
-        updatePriceAxisRange(price);
     }
 
-    private String createUniqueChartLabel(String label) {
-        int duplicateCount = 0;
-        String candidate = label;
+    private void updateStatusStyle(String status) {
+        statusLabel
+            .getStyleClass()
+            .removeAll(
+                "live-status-running",
+                "live-status-open",
+                "live-status-finished"
+            );
 
-        while (timeAxis.getCategories().contains(candidate)) {
-            duplicateCount++;
-            candidate = label + " " + duplicateCount;
-        }
-
-        return candidate;
-    }
-
-    private void updatePriceAxisRange(BigDecimal latestPrice) {
-        double latest = latestPrice.doubleValue();
-        double upper = priceAxis.getUpperBound();
-
-        if (latest >= upper * 0.9) {
-            double newUpper = Math.ceil((latest + 3000) / 5000.0) * 5000.0;
-            priceAxis.setUpperBound(newUpper);
-            priceAxis.setTickUnit(newUpper / 3);
+        switch (status) {
+            case "RUNNING" -> statusLabel
+                .getStyleClass()
+                .add("live-status-running");
+            case "OPEN" -> statusLabel.getStyleClass().add("live-status-open");
+            default -> statusLabel.getStyleClass().add("live-status-finished");
         }
     }
 
@@ -468,9 +504,7 @@ public class LiveBiddingController {
     private void refreshAutoBidPanel() {
         refreshCurrentPrice();
 
-        boolean userIsLeading = "You".equalsIgnoreCase(
-            highestBidderLabel.getText()
-        );
+        boolean userIsLeading = SceneManager.getCurrentUsername().equals(highestBidderLabel.getText());
 
         autoUserPositionLabel.setText(userIsLeading ? "Leading" : "Outbid");
         autoUserPositionLabel

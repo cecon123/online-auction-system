@@ -33,13 +33,19 @@
             </padding>
 
             <VBox spacing="3" HBox.hgrow="ALWAYS">
-                <Label text="LIVE AUCTION" styleClass="live-status-running" />
                 <Label
-                    text="Vintage 1969 Omega Speedmaster Professional"
+                    fx:id="statusLabel"
+                    text="-"
+                    styleClass="live-status-running"
+                />
+                <Label
+                    fx:id="auctionTitleLabel"
+                    text="No auction selected"
                     styleClass="live-title-compact"
                 />
                 <Label
-                    text="Lot #4092-A · Watches · Running auction"
+                    fx:id="auctionSubtitleLabel"
+                    text="Please select an auction from the list to start bidding."
                     styleClass="live-subtitle"
                 />
             </VBox>

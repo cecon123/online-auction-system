@@ -4,6 +4,7 @@ import com.auction.client.socket.SocketClient;
 import com.auction.client.util.JsonMapper;
 import com.auction.common.dto.auction.AuctionDetailDto;
 import com.auction.common.dto.auction.AuctionSummaryDto;
+import com.auction.common.dto.auction.CreateAuctionRequest;
 import com.auction.common.dto.bid.PlaceBidRequest;
 import com.auction.common.dto.bid.PlaceBidResponse;
 import com.auction.common.protocol.MessageType;
@@ -91,5 +92,37 @@ public class AuctionClientService {
     public CompletableFuture<Response<Void>> unsubscribeAuction(Long auctionId) {
         Request<Long> request = new Request<>(MessageType.UNSUBSCRIBE_AUCTION, null, null, auctionId);
         return socketClient.sendRequest(request);
+    }
+
+    /**
+     * Creates a new auction.
+     */
+    public CompletableFuture<Response<AuctionSummaryDto>> createAuction(CreateAuctionRequest createRequest) {
+        Request<CreateAuctionRequest> request = new Request<>(MessageType.CREATE_AUCTION, null, null, createRequest);
+        
+        return socketClient.<CreateAuctionRequest, AuctionSummaryDto>sendRequest(request)
+            .thenApply(response -> {
+                if (response.isSuccess()) {
+                    AuctionSummaryDto data = jsonMapper.convertData(response.getData(), AuctionSummaryDto.class);
+                    response.setData(data);
+                }
+                return response;
+            });
+    }
+
+    /**
+     * Fetches the bid history for an auction.
+     */
+    public CompletableFuture<Response<List<PlaceBidResponse>>> getBidHistory(Long auctionId) {
+        Request<Long> request = new Request<>(MessageType.GET_BID_HISTORY, null, null, auctionId);
+        
+        return socketClient.<Long, List<PlaceBidResponse>>sendRequest(request)
+            .thenApply(response -> {
+                if (response.isSuccess()) {
+                    List<PlaceBidResponse> data = jsonMapper.convertList(response.getData(), PlaceBidResponse.class);
+                    response.setData(data);
+                }
+                return response;
+            });
     }
 }

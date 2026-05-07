@@ -74,11 +74,15 @@ public final class SceneManager {
         setAuthScene(root);
     }
 
-    public static void showAppShell(Role role, String username) {
+    public static void showAppShell(
+        Role role,
+        String username,
+        BigDecimal balance
+    ) {
         currentRole = role == null ? Role.BIDDER : role;
         currentUsername =
             username == null || username.isBlank() ? "guest" : username.trim();
-        currentBalance = createMockBalanceForRole(currentRole);
+        currentBalance = balance == null ? BigDecimal.ZERO : balance;
 
         Parent root = loadFxml("/fxml/AppShell.fxml");
         BorderPane foundContentRoot = (BorderPane) root.lookup("#contentRoot");
@@ -124,18 +128,24 @@ public final class SceneManager {
         }
 
         try {
-            URL resource = SceneManager.class.getResource("/fxml/AuctionDetailView.fxml");
+            URL resource = SceneManager.class.getResource(
+                "/fxml/AuctionDetailView.fxml"
+            );
             FXMLLoader loader = new FXMLLoader(resource);
             Parent content = loader.load();
-            
+
             if (auctionId != null) {
-                com.auction.client.controller.AuctionDetailController controller = loader.getController();
+                com.auction.client.controller.AuctionDetailController controller =
+                    loader.getController();
                 controller.setAuctionId(auctionId);
             }
-            
+
             contentRoot.setCenter(content);
         } catch (IOException e) {
-            throw new IllegalStateException("Could not load AuctionDetailView", e);
+            throw new IllegalStateException(
+                "Could not load AuctionDetailView",
+                e
+            );
         }
     }
 
@@ -150,18 +160,24 @@ public final class SceneManager {
         }
 
         try {
-            URL resource = SceneManager.class.getResource("/fxml/LiveBiddingView.fxml");
+            URL resource = SceneManager.class.getResource(
+                "/fxml/LiveBiddingView.fxml"
+            );
             FXMLLoader loader = new FXMLLoader(resource);
             Parent content = loader.load();
-            
+
             if (auctionId != null) {
-                com.auction.client.controller.LiveBiddingController controller = loader.getController();
+                com.auction.client.controller.LiveBiddingController controller =
+                    loader.getController();
                 controller.setAuctionId(auctionId);
             }
-            
+
             contentRoot.setCenter(content);
         } catch (IOException e) {
-            throw new IllegalStateException("Could not load LiveBiddingView", e);
+            throw new IllegalStateException(
+                "Could not load LiveBiddingView",
+                e
+            );
         }
     }
 
@@ -208,18 +224,6 @@ public final class SceneManager {
         }
 
         showCenter("/fxml/AdminPanelView.fxml");
-    }
-
-    private static BigDecimal createMockBalanceForRole(Role role) {
-        if (role == Role.SELLER) {
-            return new BigDecimal("12800");
-        }
-
-        if (role == Role.ADMIN) {
-            return BigDecimal.ZERO;
-        }
-
-        return new BigDecimal("45000");
     }
 
     private static void showCenter(String fxmlPath) {

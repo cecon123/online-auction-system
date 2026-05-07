@@ -4,6 +4,8 @@ import com.auction.common.enums.AuctionStatus;
 import com.auction.common.model.Auction;
 import com.auction.server.dao.AuctionDao;
 import com.auction.server.dao.Database;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -20,6 +22,7 @@ import java.util.Optional;
  * SQLite implementation of AuctionDao.
  */
 public class SQLiteAuctionDao implements AuctionDao {
+    private static final Logger logger = LoggerFactory.getLogger(SQLiteAuctionDao.class);
     private final Database database;
 
     public SQLiteAuctionDao() {
@@ -62,6 +65,7 @@ public class SQLiteAuctionDao implements AuctionDao {
 
             throw new SQLException("Creating auction failed, no generated ID returned.");
         } catch (SQLException e) {
+            logger.error("Database error during create auction for item: {}", auction.getItemId(), e);
             throw new IllegalStateException("Could not create auction for item: " + auction.getItemId(), e);
         }
     }
@@ -83,6 +87,7 @@ public class SQLiteAuctionDao implements AuctionDao {
                 return Optional.of(mapRow(resultSet));
             }
         } catch (SQLException e) {
+            logger.error("Database error during findById: {}", id, e);
             throw new IllegalStateException("Could not find auction by id: " + id, e);
         }
     }
@@ -104,6 +109,7 @@ public class SQLiteAuctionDao implements AuctionDao {
                 return Optional.of(mapRow(resultSet));
             }
         } catch (SQLException e) {
+            logger.error("Database error during findByItemId: {}", itemId, e);
             throw new IllegalStateException("Could not find auction by item_id: " + itemId, e);
         }
     }
@@ -122,6 +128,7 @@ public class SQLiteAuctionDao implements AuctionDao {
             }
             return auctions;
         } catch (SQLException e) {
+            logger.error("Database error during findAll auctions", e);
             throw new IllegalStateException("Could not find all auctions", e);
         }
     }
@@ -143,6 +150,7 @@ public class SQLiteAuctionDao implements AuctionDao {
             }
             return auctions;
         } catch (SQLException e) {
+            logger.error("Database error during findByStatus: {}", status, e);
             throw new IllegalStateException("Could not find auctions by status: " + status, e);
         }
     }
@@ -182,6 +190,7 @@ public class SQLiteAuctionDao implements AuctionDao {
                 throw new IllegalStateException("Optimistic locking failure for Auction ID: " + auction.getId());
             }
         } catch (SQLException e) {
+            logger.error("Database error during update auction: {}", auction.getId(), e);
             throw new IllegalStateException("Could not update auction: " + auction.getId(), e);
         }
     }

@@ -9,5 +9,6 @@ public record LoginResponse(
     long userId,
     String username,
     Role role,
+    java.math.BigDecimal balance,
     String token
 ) {}

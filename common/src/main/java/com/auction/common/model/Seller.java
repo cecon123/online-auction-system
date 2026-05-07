@@ -13,6 +13,7 @@ public class Seller extends User {
         String username,
         String passwordHash,
         String fullName,
+        java.math.BigDecimal balance,
         boolean active,
         LocalDateTime createdAt
     ) {
@@ -22,6 +23,7 @@ public class Seller extends User {
             passwordHash,
             fullName,
             Role.SELLER,
+            balance,
             active,
             createdAt
         );

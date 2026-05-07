@@ -25,11 +25,19 @@ public class BidService {
     private final AuctionLockManager lockManager;
     private final AuctionDao auctionDao;
     private final BidDao bidDao;
+    private final com.auction.server.dao.UserDao userDao;
+    private final NotificationService notificationService;
 
-    public BidService(AuctionDao auctionDao, BidDao bidDao) {
+    public BidService(
+        AuctionDao auctionDao,
+        BidDao bidDao,
+        com.auction.server.dao.UserDao userDao
+    ) {
         this.lockManager = AuctionLockManager.getInstance();
         this.auctionDao = auctionDao;
         this.bidDao = bidDao;
+        this.userDao = userDao;
+        this.notificationService = NotificationService.getInstance();
     }
 
     /**
@@ -41,39 +49,60 @@ public class BidService {
      */
     public PlaceBidResponse placeBid(long bidderId, PlaceBidRequest request) {
         return lockManager.executeLocked(request.auctionId(), () -> {
-            // 1. Fetch auction from DB
+            // 1. Fetch bidder and check balance
+            com.auction.server.dao.UserDao.UserRecord bidder = userDao
+                .findById(bidderId)
+                .orElseThrow(() ->
+                    new IllegalArgumentException("Bidder not found.")
+                );
+
+            if (bidder.balance().compareTo(request.amount()) < 0) {
+                throw new IllegalArgumentException(
+                    "Insufficient balance to place this bid."
+                );
+            }
+
+            // 2. Fetch auction from DB
             Auction auction = auctionDao
                 .findById(request.auctionId())
                 .orElseThrow(() ->
                     new IllegalArgumentException("Auction not found.")
                 );
 
-            // 2. Validate auction status
-            if (auction.getStatus() != AuctionStatus.RUNNING) {
+            // 2.1 Prevent seller from bidding on their own auction
+            if (auction.getSellerId() == bidderId) {
                 throw new IllegalArgumentException(
-                    "Auction is not currently running."
+                    "You cannot bid on your own auction."
                 );
             }
 
-            // 3. Validate end time
+            // 3. Validate auction status
+            if (auction.getStatus() != AuctionStatus.RUNNING) {
+                throw new IllegalArgumentException(
+                    "Auction is not currently running. Current status: " +
+                    auction.getStatus()
+                );
+            }
+
+            // 4. Validate end time
             if (LocalDateTime.now().isAfter(auction.getEndTime())) {
                 throw new IllegalArgumentException(
                     "Auction has already ended."
                 );
             }
 
-            // 4. Validate bid amount
+            // 5. Validate bid amount
             if (request.amount().compareTo(auction.getCurrentPrice()) <= 0) {
                 throw new IllegalArgumentException(
                     "Bid amount must be higher than the current price."
                 );
             }
 
-            // 5. Update auction state
+            // 6. Update auction state
             auction.updateHighestBid(bidderId, request.amount());
             auctionDao.update(auction);
 
-            // 6. Record bid transaction
+            // 7. Record bid transaction
             BidTransaction transaction = new BidTransaction(
                 0L, // ID will be generated
                 auction.getId(),
@@ -84,18 +113,55 @@ public class BidService {
             bidDao.create(transaction);
 
             logger.info(
-                "Bid accepted: Auction {} now at {} by User {}",
+                "Bid accepted: Auction {} now at {} by User {} ({})",
                 auction.getId(),
                 request.amount(),
-                bidderId
+                bidderId,
+                bidder.username()
+            );
+
+            // 8. Notify subscribed clients
+            notificationService.broadcast(
+                auction.getId(),
+                com.auction.common.protocol.MessageType.BID_UPDATE,
+                new com.auction.common.dto.bid.BidUpdateEvent(
+                    auction.getId(),
+                    bidder.username(),
+                    request.amount(),
+                    transaction.getCreatedAt(),
+                    auction.getEndTime()
+                )
             );
 
             return new PlaceBidResponse(
                 auction.getId(),
                 request.amount(),
-                "user-" + bidderId, // Later: Fetch actual username
+                bidder.username(),
                 transaction.getCreatedAt()
             );
         });
+    }
+
+    /**
+     * Retrieves the bid history for a specific auction.
+     *
+     * @param auctionId The ID of the auction.
+     * @return List of bid responses.
+     */
+    public java.util.List<PlaceBidResponse> getBidHistory(long auctionId) {
+        return bidDao.findByAuctionId(auctionId).stream()
+            .map(transaction -> {
+                String username = userDao.findById(transaction.getBidderId())
+                    .map(com.auction.server.dao.UserDao.UserRecord::username)
+                    .orElse("Unknown");
+
+                return new PlaceBidResponse(
+                    transaction.getAuctionId(),
+                    transaction.getAmount(),
+                    username,
+                    transaction.getCreatedAt()
+                );
+            })
+            .collect(java.util.stream.Collectors.toList());
     }
 }

@@ -15,7 +15,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class LoginController {
-    private static final Logger logger = LoggerFactory.getLogger(LoginController.class);
+
+    private static final Logger logger = LoggerFactory.getLogger(
+        LoginController.class
+    );
     private final AuthClientService authService = new AuthClientService();
 
     @FXML
@@ -49,20 +52,29 @@ public class LoginController {
             return;
         }
 
-        authService.login(username, password).thenAccept(response -> {
-            Platform.runLater(() -> {
-                if (response.isSuccess()) {
-                    LoginResponse data = response.getData();
-                    SceneManager.showAppShell(data.role(), data.username());
-                } else {
-                    showError(response.getMessage());
-                }
+        authService
+            .login(username, password)
+            .thenAccept(response -> {
+                Platform.runLater(() -> {
+                    if (response.isSuccess()) {
+                        LoginResponse data = response.getData();
+                        SceneManager.showAppShell(
+                            data.role(),
+                            data.username(),
+                            data.balance()
+                        );
+                    } else {
+                        showError(response.getMessage());
+                    }
+                });
+            })
+            .exceptionally(ex -> {
+                logger.error("Login request failed", ex);
+                Platform.runLater(() ->
+                    showError("Connection error. Please try again later.")
+                );
+                return null;
             });
-        }).exceptionally(ex -> {
-            logger.error("Login request failed", ex);
-            Platform.runLater(() -> showError("Connection error. Please try again later."));
-            return null;
-        });
     }
 
     @FXML

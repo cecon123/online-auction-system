@@ -1,7 +1,10 @@
 package com.auction.client.controller;
 
+import com.auction.client.service.WalletClientService;
+import com.auction.client.util.JsonMapper;
 import com.auction.client.util.SceneManager;
 import java.math.BigDecimal;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -18,6 +21,8 @@ public class WalletController {
     private Label messageLabel;
 
     private BigDecimal balance;
+    private final WalletClientService walletService = new WalletClientService();
+    private final JsonMapper jsonMapper = JsonMapper.getInstance();
 
     @FXML
     private void initialize() {
@@ -34,12 +39,30 @@ public class WalletController {
             return;
         }
 
-        balance = balance.add(amount);
-        SceneManager.setCurrentBalance(balance);
-        refreshBalance();
-        messageLabel.setText(
-            "Mock deposit successful. Reopen dashboard/topbar later to refresh header."
-        );
+        walletService
+            .deposit(amount)
+            .thenAccept(response -> {
+                Platform.runLater(() -> {
+                    if (response.isSuccess()) {
+                        BigDecimal newBalance = jsonMapper.convertData(
+                            response.getData(),
+                            BigDecimal.class
+                        );
+                        balance = newBalance;
+                        SceneManager.setCurrentBalance(balance);
+                        refreshBalance();
+                        messageLabel.setText(
+                            "Deposit successful! New balance: $" +
+                                balance.toPlainString()
+                        );
+                        amountField.clear();
+                    } else {
+                        messageLabel.setText(
+                            "Deposit failed: " + response.getMessage()
+                        );
+                    }
+                });
+            });
     }
 
     @FXML
@@ -55,12 +78,30 @@ public class WalletController {
             return;
         }
 
-        balance = balance.subtract(amount);
-        SceneManager.setCurrentBalance(balance);
-        refreshBalance();
-        messageLabel.setText(
-            "Mock withdraw successful. Reopen dashboard/topbar later to refresh header."
-        );
+        walletService
+            .withdraw(amount)
+            .thenAccept(response -> {
+                Platform.runLater(() -> {
+                    if (response.isSuccess()) {
+                        BigDecimal newBalance = jsonMapper.convertData(
+                            response.getData(),
+                            BigDecimal.class
+                        );
+                        balance = newBalance;
+                        SceneManager.setCurrentBalance(balance);
+                        refreshBalance();
+                        messageLabel.setText(
+                            "Withdraw successful! New balance: $" +
+                                balance.toPlainString()
+                        );
+                        amountField.clear();
+                    } else {
+                        messageLabel.setText(
+                            "Withdraw failed: " + response.getMessage()
+                        );
+                    }
+                });
+            });
     }
 
     private BigDecimal parseAmount() {

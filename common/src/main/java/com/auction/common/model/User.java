@@ -15,10 +15,12 @@ public abstract class User extends Entity {
     private String passwordHash;
     private String fullName;
     private Role role;
+    private java.math.BigDecimal balance;
     private boolean active;
 
     protected User() {
         super();
+        this.balance = java.math.BigDecimal.ZERO;
         this.active = true;
     }
 
@@ -28,15 +30,25 @@ public abstract class User extends Entity {
         String passwordHash,
         String fullName,
         Role role,
+        java.math.BigDecimal balance,
         boolean active,
-        LocalDateTime createdAt
+        java.time.LocalDateTime createdAt
     ) {
         super(id, createdAt);
         this.username = requireText(username, "username");
         this.passwordHash = requireText(passwordHash, "passwordHash");
         this.fullName = requireText(fullName, "fullName");
         this.role = Objects.requireNonNull(role, "role must not be null");
+        this.balance = balance == null ? java.math.BigDecimal.ZERO : balance;
         this.active = active;
+    }
+
+    public java.math.BigDecimal getBalance() {
+        return balance;
+    }
+
+    public void setBalance(java.math.BigDecimal balance) {
+        this.balance = balance == null ? java.math.BigDecimal.ZERO : balance;
     }
 
     public String getUsername() {

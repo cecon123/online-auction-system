@@ -13,6 +13,7 @@ public class Admin extends User {
         String username,
         String passwordHash,
         String fullName,
+        java.math.BigDecimal balance,
         boolean active,
         LocalDateTime createdAt
     ) {
@@ -22,6 +23,7 @@ public class Admin extends User {
             passwordHash,
             fullName,
             Role.ADMIN,
+            balance,
             active,
             createdAt
         );

@@ -20,6 +20,7 @@ class ModelInheritanceTest {
             "bidder01",
             "hash",
             "Bidder One",
+            new BigDecimal("100.00"),
             true,
             now
         );
@@ -29,15 +30,26 @@ class ModelInheritanceTest {
             "seller01",
             "hash",
             "Seller One",
+            new BigDecimal("200.00"),
             true,
             now
         );
 
-        User admin = new Admin(3L, "admin01", "hash", "Admin One", true, now);
+        User admin = new Admin(
+            3L,
+            "admin01",
+            "hash",
+            "Admin One",
+            BigDecimal.ZERO,
+            true,
+            now
+        );
 
         assertEquals(Role.BIDDER, bidder.getRole());
         assertEquals(Role.SELLER, seller.getRole());
         assertEquals(Role.ADMIN, admin.getRole());
+        assertEquals(new BigDecimal("100.00"), bidder.getBalance());
+        assertEquals(new BigDecimal("200.00"), seller.getBalance());
 
         assertTrue(((Bidder) bidder).canBid());
         assertTrue(((Seller) seller).canCreateAuction());

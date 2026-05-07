@@ -40,6 +40,10 @@ public enum MessageType {
     AUCTION_CLOSED,
     TIME_EXTENDED,
 
+    // Wallet
+    DEPOSIT,
+    WITHDRAW,
+
     // Admin
     ADMIN_GET_USERS,
     ADMIN_UPDATE_USER_STATUS,

@@ -12,19 +12,27 @@ import com.auction.common.dto.bid.PlaceBidResponse;
 import com.auction.common.enums.AuctionStatus;
 import com.auction.common.enums.ItemType;
 import com.auction.common.enums.Role;
+import com.auction.common.model.Auction;
+import com.auction.common.model.Item;
 import com.auction.common.protocol.MessageType;
 import com.auction.common.protocol.Request;
 import com.auction.common.protocol.Response;
 import com.auction.server.dao.AuctionDao;
 import com.auction.server.dao.BidDao;
+import com.auction.server.dao.ItemDao;
 import com.auction.server.dao.UserDao;
 import com.auction.server.dao.sqlite.SQLiteAuctionDao;
 import com.auction.server.dao.sqlite.SQLiteBidDao;
+import com.auction.server.dao.sqlite.SQLiteItemDao;
 import com.auction.server.dao.sqlite.SQLiteUserDao;
+import com.auction.server.service.AuctionService;
 import com.auction.server.service.AuthService;
 import com.auction.server.service.BidService;
+import com.auction.server.service.NotificationService;
 import com.auction.server.service.SessionManager;
+import com.auction.server.service.WalletService;
 import com.auction.server.util.JsonMapper;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -43,19 +51,31 @@ public class RequestRouter {
     private final JsonMapper jsonMapper;
     private final AuthService authService;
     private final BidService bidService;
+    private final WalletService walletService;
+    private final AuctionService auctionService;
+    private final NotificationService notificationService;
     private final SessionManager sessionManager;
+    private final AuctionDao auctionDao;
+    private final UserDao userDao;
+    private final ItemDao itemDao;
+    private final PrintWriter clientWriter;
 
-    public RequestRouter() {
+    public RequestRouter(PrintWriter clientWriter) {
         this.jsonMapper = JsonMapper.getInstance();
+        this.clientWriter = clientWriter;
 
         // Initialize real DAOs
-        UserDao userDao = new SQLiteUserDao();
-        AuctionDao auctionDao = new SQLiteAuctionDao();
+        this.userDao = new SQLiteUserDao();
+        this.auctionDao = new SQLiteAuctionDao();
+        this.itemDao = new SQLiteItemDao();
         BidDao bidDao = new SQLiteBidDao();
 
         // Initialize real services
         this.authService = new AuthService(userDao);
-        this.bidService = new BidService(auctionDao, bidDao);
+        this.bidService = new BidService(auctionDao, bidDao, userDao);
+        this.walletService = new WalletService(userDao);
+        this.auctionService = new AuctionService(auctionDao, itemDao);
+        this.notificationService = NotificationService.getInstance();
         this.sessionManager = SessionManager.getInstance();
     }
 
@@ -135,31 +155,74 @@ public class RequestRouter {
                         bidService.placeBid(userId, bidData)
                     );
                 }
-                case GET_AUCTIONS -> handleGetAuctionsMock(request);
-                case GET_AUCTION_DETAIL -> handleGetAuctionDetailMock(request);
-                case CREATE_AUCTION -> handleCreateAuctionMock(request);
-                case GET_BID_HISTORY -> Response.ok(
-                    type,
-                    request.getRequestId(),
-                    "Mock bid history route reached",
-                    List.of()
-                );
-                case SUBSCRIBE_AUCTION -> Response.ok(
-                    type,
-                    request.getRequestId(),
-                    "Mock subscribe auction successful",
-                    null
-                );
-                case UNSUBSCRIBE_AUCTION -> Response.ok(
-                    type,
-                    request.getRequestId(),
-                    "Mock unsubscribe auction successful",
-                    null
-                );
+                case GET_AUCTIONS -> handleGetAuctions(request);
+                case GET_AUCTION_DETAIL -> handleGetAuctionDetail(request);
+                case CREATE_AUCTION -> handleCreateAuction(request);
+                case DEPOSIT -> handleDeposit(request);
+                case WITHDRAW -> handleWithdraw(request);
+                case GET_BID_HISTORY -> {
+                    Long auctionId = jsonMapper.convertData(
+                        request.getData(),
+                        Long.class
+                    );
+                    if (auctionId == null) {
+                        yield Response.fail(
+                            type,
+                            request.getRequestId(),
+                            "Missing auction ID"
+                        );
+                    }
+                    yield Response.ok(
+                        type,
+                        request.getRequestId(),
+                        "Bid history loaded",
+                        bidService.getBidHistory(auctionId)
+                    );
+                }
+                case SUBSCRIBE_AUCTION -> {
+                    Long auctionId = jsonMapper.convertData(
+                        request.getData(),
+                        Long.class
+                    );
+                    if (auctionId == null) {
+                        yield Response.fail(
+                            type,
+                            request.getRequestId(),
+                            "Missing auction ID"
+                        );
+                    }
+                    notificationService.subscribe(auctionId, clientWriter);
+                    yield Response.ok(
+                        type,
+                        request.getRequestId(),
+                        "Subscribed to auction " + auctionId,
+                        null
+                    );
+                }
+                case UNSUBSCRIBE_AUCTION -> {
+                    Long auctionId = jsonMapper.convertData(
+                        request.getData(),
+                        Long.class
+                    );
+                    if (auctionId == null) {
+                        yield Response.fail(
+                            type,
+                            request.getRequestId(),
+                            "Missing auction ID"
+                        );
+                    }
+                    notificationService.unsubscribe(auctionId, clientWriter);
+                    yield Response.ok(
+                        type,
+                        request.getRequestId(),
+                        "Unsubscribed from auction " + auctionId,
+                        null
+                    );
+                }
                 default -> Response.fail(
                     type,
                     request.getRequestId(),
-                    "Unsupported message type in mock router: " + type
+                    "Unsupported message type in router: " + type
                 );
             };
         } catch (IllegalArgumentException | IllegalStateException e) {
@@ -174,89 +237,167 @@ public class RequestRouter {
         }
     }
 
-    private Response<List<AuctionSummaryDto>> handleGetAuctionsMock(
+    private Response<List<AuctionSummaryDto>> handleGetAuctions(
         Request<?> request
     ) {
-        LocalDateTime now = LocalDateTime.now();
+        List<Auction> auctionList = auctionDao.findAll();
+        List<Item> itemList = itemDao.findAll();
 
-        List<AuctionSummaryDto> auctions = List.of(
-            new AuctionSummaryDto(
-                1L,
-                "Vintage Camera X100",
-                ItemType.ELECTRONICS,
-                new BigDecimal("12000.00"),
-                new BigDecimal("14500.00"),
-                now.minusHours(1),
-                now.plusHours(2),
-                AuctionStatus.RUNNING,
-                "/images/mock-camera.png"
-            ),
-            new AuctionSummaryDto(
-                2L,
-                "Modern Abstract Painting",
-                ItemType.ART,
-                new BigDecimal("8000.00"),
-                new BigDecimal("9500.00"),
-                now.minusMinutes(30),
-                now.plusHours(4),
-                AuctionStatus.RUNNING,
-                "/images/mock-art.png"
-            ),
-            new AuctionSummaryDto(
-                3L,
-                "Classic Scooter 1985",
-                ItemType.VEHICLE,
-                new BigDecimal("20000.00"),
-                new BigDecimal("22500.00"),
-                now.plusHours(1),
-                now.plusDays(1),
-                AuctionStatus.OPEN,
-                "/images/mock-vehicle.png"
-            )
-        );
+        java.util.Map<Long, Item> itemMap = itemList
+            .stream()
+            .collect(java.util.stream.Collectors.toMap(Item::getId, i -> i));
+
+        List<AuctionSummaryDto> auctions = auctionList
+            .stream()
+            .map(a -> {
+                Item item = itemMap.get(a.getItemId());
+                String title = (item != null)
+                    ? item.getName()
+                    : "Unknown Item";
+                ItemType type = (item != null)
+                    ? item.getItemType()
+                    : ItemType.ELECTRONICS;
+                String image = (item != null) ? item.getImagePath() : null;
+
+                return new AuctionSummaryDto(
+                    a.getId(),
+                    title,
+                    type,
+                    a.getCurrentPrice(),
+                    a.getCurrentPrice(),
+                    a.getStartTime(),
+                    a.getEndTime(),
+                    a.getStatus(),
+                    image
+                );
+            })
+            .toList();
 
         return Response.ok(
             MessageType.GET_AUCTIONS,
             request.getRequestId(),
-            "Mock auctions loaded",
+            "Auctions loaded",
             auctions
         );
     }
 
-    private Response<AuctionDetailDto> handleGetAuctionDetailMock(
+    private Response<AuctionDetailDto> handleGetAuctionDetail(
         Request<?> request
     ) {
-        LocalDateTime now = LocalDateTime.now();
+        Long auctionId = jsonMapper.convertData(request.getData(), Long.class);
+        if (auctionId == null) {
+            throw new IllegalArgumentException("Missing auction ID");
+        }
+
+        Auction auction = auctionDao
+            .findById(auctionId)
+            .orElseThrow(() ->
+                new IllegalArgumentException("Auction not found: " + auctionId)
+            );
+
+        Item item = itemDao
+            .findById(auction.getItemId())
+            .orElseThrow(() ->
+                new IllegalStateException(
+                    "Item not found for auction: " + auction.getItemId()
+                )
+            );
+
+        String sellerName = userDao
+            .findById(auction.getSellerId())
+            .map(UserDao.UserRecord::username)
+            .orElse("Unknown Seller");
+
+        String highestBidder = null;
+        if (auction.getHighestBidderId() != null) {
+            highestBidder = userDao
+                .findById(auction.getHighestBidderId())
+                .map(UserDao.UserRecord::username)
+                .orElse("Unknown");
+        }
 
         AuctionDetailDto detail = new AuctionDetailDto(
-            1L,
-            10L,
-            2L,
-            "seller-demo",
-            "Vintage Camera X100",
-            ItemType.ELECTRONICS,
-            "Used - Excellent",
-            "A collectible vintage camera prepared for live bidding demo.",
-            new BigDecimal("12000.00"),
-            new BigDecimal("14500.00"),
-            "mock-user",
-            now.minusHours(1),
-            now.plusHours(2),
-            AuctionStatus.RUNNING,
-            "/images/mock-camera.png"
+            auction.getId(),
+            auction.getItemId(),
+            auction.getSellerId(),
+            sellerName,
+            item.getName(),
+            item.getItemType(),
+            item.getCondition(),
+            item.getDescription(),
+            auction.getCurrentPrice(),
+            auction.getCurrentPrice(),
+            highestBidder,
+            auction.getStartTime(),
+            auction.getEndTime(),
+            auction.getStatus(),
+            item.getImagePath()
         );
 
         return Response.ok(
             MessageType.GET_AUCTION_DETAIL,
             request.getRequestId(),
-            "Mock auction detail loaded",
+            "Auction detail loaded",
             detail
         );
     }
 
-    private Response<AuctionSummaryDto> handleCreateAuctionMock(
+    private Response<BigDecimal> handleDeposit(Request<?> request) {
+        Long userId = sessionManager.getUserId(request.getToken());
+        if (userId == null) {
+            throw new IllegalStateException("Unauthorized. Please login.");
+        }
+
+        BigDecimal amount = jsonMapper.convertData(
+            request.getData(),
+            BigDecimal.class
+        );
+        if (amount == null) {
+            throw new IllegalArgumentException("Missing deposit amount");
+        }
+
+        BigDecimal newBalance = walletService.deposit(userId, amount);
+
+        return Response.ok(
+            MessageType.DEPOSIT,
+            request.getRequestId(),
+            "Deposit successful",
+            newBalance
+        );
+    }
+
+    private Response<BigDecimal> handleWithdraw(Request<?> request) {
+        Long userId = sessionManager.getUserId(request.getToken());
+        if (userId == null) {
+            throw new IllegalStateException("Unauthorized. Please login.");
+        }
+
+        BigDecimal amount = jsonMapper.convertData(
+            request.getData(),
+            BigDecimal.class
+        );
+        if (amount == null) {
+            throw new IllegalArgumentException("Missing withdraw amount");
+        }
+
+        BigDecimal newBalance = walletService.withdraw(userId, amount);
+
+        return Response.ok(
+            MessageType.WITHDRAW,
+            request.getRequestId(),
+            "Withdraw successful",
+            newBalance
+        );
+    }
+
+    private Response<AuctionSummaryDto> handleCreateAuction(
         Request<?> request
     ) {
+        Long userId = sessionManager.getUserId(request.getToken());
+        if (userId == null) {
+            throw new IllegalStateException("Unauthorized. Please login.");
+        }
+
         CreateAuctionRequest data = requireData(
             request,
             CreateAuctionRequest.class,
@@ -265,22 +406,12 @@ public class RequestRouter {
 
         validateCreateAuctionRequest(data);
 
-        AuctionSummaryDto response = new AuctionSummaryDto(
-            999L,
-            data.itemName().trim(),
-            data.itemType(),
-            data.startingPrice(),
-            data.startingPrice(),
-            data.startTime(),
-            data.endTime(),
-            AuctionStatus.OPEN,
-            data.imagePath()
-        );
+        AuctionSummaryDto response = auctionService.createAuction(userId, data);
 
         return Response.ok(
             MessageType.CREATE_AUCTION,
             request.getRequestId(),
-            "Mock auction created successfully",
+            "Auction created successfully",
             response
         );
     }

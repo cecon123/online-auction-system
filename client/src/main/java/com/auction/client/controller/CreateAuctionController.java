@@ -1,12 +1,15 @@
 package com.auction.client.controller;
 
+import com.auction.client.service.AuctionClientService;
 import com.auction.client.util.SceneManager;
+import com.auction.common.dto.auction.CreateAuctionRequest;
 import com.auction.common.enums.ItemType;
 import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
@@ -20,6 +23,12 @@ public class CreateAuctionController {
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER =
         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+    private final AuctionClientService auctionService;
+
+    public CreateAuctionController() {
+        this.auctionService = new AuctionClientService();
+    }
 
     @FXML
     private TextField productNameField;
@@ -156,23 +165,38 @@ public class CreateAuctionController {
             return;
         }
 
-        /*
-         * Current phase:
-         * This is still a mock UI action.
-         *
-         * Next phase:
-         * Build CreateAuctionRequest and send it through AuctionClientService.
-         */
-        showSuccess(
-            "Mock auction saved successfully: " +
-                categoryComboBox.getValue() +
-                " / " +
-                startingPrice.toPlainString() +
-                " / " +
-                startTime.format(DATE_TIME_FORMATTER) +
-                " -> " +
-                endTime.format(DATE_TIME_FORMATTER)
+        CreateAuctionRequest request = new CreateAuctionRequest(
+            productName,
+            categoryComboBox.getValue(),
+            conditionComboBox.getValue(),
+            description,
+            startingPrice,
+            startTime,
+            endTime,
+            selectedImageFile.getAbsolutePath()
         );
+
+        messageLabel.setText("Saving auction...");
+
+        auctionService.createAuction(request).thenAccept(response -> {
+            Platform.runLater(() -> {
+                if (response.isSuccess()) {
+                    showSuccess("Auction created successfully!");
+                    // Briefly wait then return to seller center
+                    new Thread(() -> {
+                        try {
+                            Thread.sleep(1500);
+                            Platform.runLater(SceneManager::showSellerCenter);
+                        } catch (InterruptedException ignored) {}
+                    }).start();
+                } else {
+                    showError("Failed to create auction: " + response.getMessage());
+                }
+            });
+        }).exceptionally(ex -> {
+            Platform.runLater(() -> showError("Network error: " + ex.getMessage()));
+            return null;
+        });
     }
 
     @FXML

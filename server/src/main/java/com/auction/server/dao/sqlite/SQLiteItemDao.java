@@ -9,6 +9,8 @@ import com.auction.common.model.Entity;
 import com.auction.server.dao.Database;
 import com.auction.server.dao.ItemDao;
 import com.auction.server.factory.ItemFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -25,6 +27,7 @@ import java.util.Optional;
  * SQLite implementation of ItemDao.
  */
 public class SQLiteItemDao implements ItemDao {
+    private static final Logger logger = LoggerFactory.getLogger(SQLiteItemDao.class);
     private final Database database;
     private final ItemFactory itemFactory;
 
@@ -97,6 +100,7 @@ public class SQLiteItemDao implements ItemDao {
 
             throw new SQLException("Creating item failed, no generated ID returned.");
         } catch (SQLException e) {
+            logger.error("Database error during create item: {}", item.getName(), e);
             throw new IllegalStateException("Could not create item: " + item.getName(), e);
         }
     }
@@ -118,6 +122,7 @@ public class SQLiteItemDao implements ItemDao {
                 return Optional.of(mapRow(resultSet));
             }
         } catch (SQLException e) {
+            logger.error("Database error during findById: {}", id, e);
             throw new IllegalStateException("Could not find item by id: " + id, e);
         }
     }
@@ -139,6 +144,7 @@ public class SQLiteItemDao implements ItemDao {
             }
             return items;
         } catch (SQLException e) {
+            logger.error("Database error during findBySellerId: {}", sellerId, e);
             throw new IllegalStateException("Could not find items by seller_id: " + sellerId, e);
         }
     }
@@ -157,6 +163,7 @@ public class SQLiteItemDao implements ItemDao {
             }
             return items;
         } catch (SQLException e) {
+            logger.error("Database error during findAll items", e);
             throw new IllegalStateException("Could not find all items", e);
         }
     }
@@ -171,6 +178,7 @@ public class SQLiteItemDao implements ItemDao {
             statement.setLong(1, id);
             statement.executeUpdate();
         } catch (SQLException e) {
+            logger.error("Database error during delete item: {}", id, e);
             throw new IllegalStateException("Could not delete item: " + id, e);
         }
     }

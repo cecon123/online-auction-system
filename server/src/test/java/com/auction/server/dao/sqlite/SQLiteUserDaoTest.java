@@ -1,24 +1,28 @@
 package com.auction.server.dao.sqlite;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import com.auction.common.enums.Role;
 import com.auction.server.dao.SchemaInitializer;
 import com.auction.server.dao.UserDao;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 class SQLiteUserDaoTest {
+
     private UserDao userDao;
 
     @BeforeEach
     void setUp() throws Exception {
         Path tempDatabase = Files.createTempFile("auction-test-", ".db");
-        System.setProperty("auction.db.url", "jdbc:sqlite:" + tempDatabase.toAbsolutePath());
+        System.setProperty(
+            "auction.db.url",
+            "jdbc:sqlite:" + tempDatabase.toAbsolutePath()
+        );
+        System.setProperty("auction.skip.seed", "true");
 
         SchemaInitializer.initialize();
         userDao = new SQLiteUserDao();
@@ -30,7 +34,8 @@ class SQLiteUserDaoTest {
             "huy",
             "hashed-password",
             "Nguyen Huy",
-            Role.BIDDER
+            Role.BIDDER,
+            new java.math.BigDecimal("1000")
         );
 
         assertTrue(userId > 0);
@@ -42,7 +47,8 @@ class SQLiteUserDaoTest {
             "manh",
             "hashed-password",
             "Nguyen Manh",
-            Role.SELLER
+            Role.SELLER,
+            new java.math.BigDecimal("2000")
         );
 
         Optional<UserDao.UserRecord> user = userDao.findByUsername("manh");
@@ -52,6 +58,7 @@ class SQLiteUserDaoTest {
         assertEquals("manh", user.get().username());
         assertEquals("Nguyen Manh", user.get().fullName());
         assertEquals(Role.SELLER, user.get().role());
+        assertEquals(new java.math.BigDecimal("2000"), user.get().balance());
         assertTrue(user.get().active());
     }
 
@@ -68,7 +75,8 @@ class SQLiteUserDaoTest {
             "linh",
             "hashed-password",
             "Nguyen Linh",
-            Role.BIDDER
+            Role.BIDDER,
+            java.math.BigDecimal.ZERO
         );
 
         userDao.updateActiveStatus(userId, false);
@@ -80,9 +88,38 @@ class SQLiteUserDaoTest {
     }
 
     @Test
+    void updateBalanceShouldChangeUserBalance() {
+        long userId = userDao.create(
+            "bal-user",
+            "p",
+            "Name",
+            Role.BIDDER,
+            java.math.BigDecimal.ZERO
+        );
+
+        userDao.updateBalance(userId, new java.math.BigDecimal("500.50"));
+
+        Optional<UserDao.UserRecord> user = userDao.findById(userId);
+        assertTrue(user.isPresent());
+        assertEquals(new java.math.BigDecimal("500.50"), user.get().balance());
+    }
+
+    @Test
     void findAllShouldReturnInsertedUsers() {
-        userDao.create("user1", "hash1", "User One", Role.BIDDER);
-        userDao.create("user2", "hash2", "User Two", Role.SELLER);
+        userDao.create(
+            "user1",
+            "hash1",
+            "User One",
+            Role.BIDDER,
+            java.math.BigDecimal.ZERO
+        );
+        userDao.create(
+            "user2",
+            "hash2",
+            "User Two",
+            Role.SELLER,
+            java.math.BigDecimal.ZERO
+        );
 
         assertEquals(2, userDao.findAll().size());
     }

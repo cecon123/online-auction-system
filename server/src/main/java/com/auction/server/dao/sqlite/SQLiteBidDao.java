@@ -3,6 +3,8 @@ package com.auction.server.dao.sqlite;
 import com.auction.common.model.BidTransaction;
 import com.auction.server.dao.BidDao;
 import com.auction.server.dao.Database;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -18,6 +20,7 @@ import java.util.List;
  * SQLite implementation of BidDao.
  */
 public class SQLiteBidDao implements BidDao {
+    private static final Logger logger = LoggerFactory.getLogger(SQLiteBidDao.class);
     private final Database database;
 
     public SQLiteBidDao() {
@@ -49,6 +52,7 @@ public class SQLiteBidDao implements BidDao {
 
             throw new SQLException("Creating bid failed, no generated ID returned.");
         } catch (SQLException e) {
+            logger.error("Database error during create bid for auction: {}", bid.getAuctionId(), e);
             throw new IllegalStateException("Could not create bid for auction: " + bid.getAuctionId(), e);
         }
     }
@@ -70,6 +74,7 @@ public class SQLiteBidDao implements BidDao {
             }
             return bids;
         } catch (SQLException e) {
+            logger.error("Database error during findByAuctionId: {}", auctionId, e);
             throw new IllegalStateException("Could not find bids by auction_id: " + auctionId, e);
         }
     }
@@ -91,6 +96,7 @@ public class SQLiteBidDao implements BidDao {
             }
             return bids;
         } catch (SQLException e) {
+            logger.error("Database error during findByBidderId: {}", bidderId, e);
             throw new IllegalStateException("Could not find bids by bidder_id: " + bidderId, e);
         }
     }

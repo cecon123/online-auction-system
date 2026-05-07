@@ -5,6 +5,7 @@ import com.auction.common.dto.auth.LoginResponse;
 import com.auction.common.dto.auth.RegisterRequest;
 import com.auction.common.dto.auth.RegisterResponse;
 import com.auction.server.dao.UserDao;
+import java.math.BigDecimal;
 import java.util.Optional;
 import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
@@ -43,11 +44,13 @@ public class AuthService {
         String hashed = BCrypt.hashpw(request.password(), salt);
 
         // 3. Store in DB
+        BigDecimal initialBalance = BigDecimal.ZERO;
         long id = userDao.create(
             request.username(),
             hashed,
             request.fullName(),
-            request.role()
+            request.role(),
+            initialBalance
         );
 
         logger.info(
@@ -56,7 +59,12 @@ public class AuthService {
             id
         );
 
-        return new RegisterResponse(id, request.username(), request.role());
+        return new RegisterResponse(
+            id,
+            request.username(),
+            request.role(),
+            initialBalance
+        );
     }
 
     /**
@@ -97,6 +105,7 @@ public class AuthService {
             user.id(),
             user.username(),
             user.role(),
+            user.balance(),
             token
         );
     }

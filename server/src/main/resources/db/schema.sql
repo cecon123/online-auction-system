@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash TEXT NOT NULL,
     full_name TEXT NOT NULL,
     role TEXT NOT NULL CHECK (role IN ('BIDDER', 'SELLER', 'ADMIN')),
+    balance TEXT NOT NULL DEFAULT '0.00',
     active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
     created_at TEXT NOT NULL
 );

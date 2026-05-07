@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.auction.common.dto.bid.PlaceBidRequest;
 import com.auction.server.dao.sqlite.SQLiteAuctionDao;
 import com.auction.server.dao.sqlite.SQLiteBidDao;
+import com.auction.server.dao.sqlite.SQLiteUserDao;
 import java.math.BigDecimal;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -20,7 +21,11 @@ public class BidServiceConcurrencyTest {
     @BeforeEach
     void setUp() {
         // Now requires real or mock DAOs
-        bidService = new BidService(new SQLiteAuctionDao(), new SQLiteBidDao());
+        bidService = new BidService(
+            new SQLiteAuctionDao(),
+            new SQLiteBidDao(),
+            new SQLiteUserDao()
+        );
     }
 
     @Test

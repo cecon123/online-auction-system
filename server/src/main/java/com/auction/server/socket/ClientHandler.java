@@ -2,6 +2,7 @@ package com.auction.server.socket;
 
 import com.auction.common.protocol.Request;
 import com.auction.common.protocol.Response;
+import com.auction.server.service.NotificationService;
 import com.auction.server.util.JsonMapper;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,22 +20,25 @@ public class ClientHandler implements Runnable {
 
     private final Socket socket;
     private final JsonMapper jsonMapper;
-    private final RequestRouter requestRouter;
+    private RequestRouter requestRouter;
+    private final NotificationService notificationService;
 
     public ClientHandler(Socket socket) {
         this.socket = socket;
         this.jsonMapper = JsonMapper.getInstance();
-        this.requestRouter = new RequestRouter();
+        this.notificationService = NotificationService.getInstance();
     }
 
     @Override
     public void run() {
+        PrintWriter writer = null;
         try (
             BufferedReader reader = new BufferedReader(
                 new InputStreamReader(socket.getInputStream())
-            );
-            PrintWriter writer = new PrintWriter(socket.getOutputStream(), true)
+            )
         ) {
+            writer = new PrintWriter(socket.getOutputStream(), true);
+            this.requestRouter = new RequestRouter(writer);
             String line;
 
             while ((line = reader.readLine()) != null) {
@@ -43,6 +47,10 @@ public class ClientHandler implements Runnable {
             }
         } catch (IOException e) {
             System.err.println("Client disconnected: " + e.getMessage());
+        } finally {
+            if (writer != null) {
+                notificationService.unsubscribeFromAll(writer);
+            }
         }
     }
 
