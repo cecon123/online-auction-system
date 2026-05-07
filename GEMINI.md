@@ -61,3 +61,10 @@ Sử dụng `ncat localhost 8080` và gửi các dòng JSON mẫu:
 
 ### 8.3 Quan sát Log
 Theo dõi cửa sổ Server để thấy các log SLF4J (INFO/ERROR) nhằm debug luồng xử lý.
+
+## 9. Agent Skills (Kỹ năng hỗ trợ)
+Dự án khuyến khích sử dụng các Agent Skill sau để tối ưu hóa quy trình:
+- `web-design-guidelines`: Sử dụng khi cần review giao diện JavaFX, kiểm tra tính thẩm mỹ và UX theo chuẩn.
+- `java-refactoring-extract-method`: Hỗ trợ tái cấu trúc các phương thức Java phức tạp, giúp mã nguồn sạch và dễ bảo trì hơn.
+- `skill-creator`: Sử dụng khi muốn tạo thêm các skill tùy chỉnh mới cho dự án.
+- `find-skills`: Tìm kiếm các skill bổ trợ khác có sẵn trong hệ thống.
