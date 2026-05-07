@@ -37,7 +37,12 @@ public class TopBarController {
         avatarLabel.setText(createInitials(username));
         usernameLabel.setText(username);
         roleLabel.setText(role.name());
-        balanceLabel.setText(SceneManager.getCurrentBalanceText());
+        updateBalanceLabel();
+
+        // Register listener for balance updates
+        SceneManager.setBalanceListener(() -> {
+            javafx.application.Platform.runLater(this::updateBalanceLabel);
+        });
 
         if (role == Role.BIDDER) {
             show(placeBidButton);
@@ -55,6 +60,10 @@ public class TopBarController {
             show(balanceCaptionLabel);
             show(balanceLabel);
         }
+    }
+
+    private void updateBalanceLabel() {
+        balanceLabel.setText(SceneManager.getCurrentBalanceText());
     }
 
     @FXML

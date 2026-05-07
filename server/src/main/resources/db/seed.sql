@@ -21,18 +21,18 @@ INSERT INTO items (seller_id, item_type, name, description, condition_text, star
 -- Status: 'OPEN', 'RUNNING', 'FINISHED', 'PAID', 'CANCELED'
 -- Note: 'RUNNING' status means the auction is active and can receive bids.
 
--- Auction 1: Vintage Camera (Running)
+-- Auction 1: Vintage Camera (Running - Started yesterday, ends tomorrow)
 INSERT INTO auctions (item_id, seller_id, current_price, start_time, end_time, status, created_at) VALUES
-(1, 2, '12000.00', REPLACE(DATETIME('now', '-1 hour'), ' ', 'T'), REPLACE(DATETIME('now', '+2 hours'), ' ', 'T'), 'RUNNING', REPLACE(DATETIME('now'), ' ', 'T'));
+(1, 2, '12500.00', REPLACE(DATETIME('now', '-1 day'), ' ', 'T'), REPLACE(DATETIME('now', '+1 day'), ' ', 'T'), 'RUNNING', REPLACE(DATETIME('now'), ' ', 'T'));
 
--- Auction 2: Abstract Painting (Running)
+-- Auction 2: Abstract Painting (Running - Started recently, ends in 12 hours)
 INSERT INTO auctions (item_id, seller_id, current_price, start_time, end_time, status, created_at) VALUES
-(2, 3, '8000.00', REPLACE(DATETIME('now', '-30 minutes'), ' ', 'T'), REPLACE(DATETIME('now', '+5 hours'), ' ', 'T'), 'RUNNING', REPLACE(DATETIME('now'), ' ', 'T'));
+(2, 3, '8200.00', REPLACE(DATETIME('now', '-2 hours'), ' ', 'T'), REPLACE(DATETIME('now', '+12 hours'), ' ', 'T'), 'RUNNING', REPLACE(DATETIME('now'), ' ', 'T'));
 
--- Auction 3: Classic Scooter (Upcoming - OPEN)
+-- Auction 3: Classic Scooter (Upcoming - Starts in 2 hours)
 INSERT INTO auctions (item_id, seller_id, current_price, start_time, end_time, status, created_at) VALUES
-(3, 2, '20000.00', REPLACE(DATETIME('now', '+1 day'), ' ', 'T'), REPLACE(DATETIME('now', '+2 days'), ' ', 'T'), 'OPEN', REPLACE(DATETIME('now'), ' ', 'T'));
+(3, 2, '20000.00', REPLACE(DATETIME('now', '+2 hours'), ' ', 'T'), REPLACE(DATETIME('now', '+2 days'), ' ', 'T'), 'OPEN', REPLACE(DATETIME('now'), ' ', 'T'));
 
--- Auction 4: Sculpture Replica (Running)
+-- Auction 4: Sculpture Replica (Finished - Ended 1 hour ago)
 INSERT INTO auctions (item_id, seller_id, current_price, start_time, end_time, status, created_at) VALUES
-(4, 3, '5000.00', REPLACE(DATETIME('now', '-2 hours'), ' ', 'T'), REPLACE(DATETIME('now', '+1 hour'), ' ', 'T'), 'RUNNING', REPLACE(DATETIME('now'), ' ', 'T'));
+(4, 3, '5500.00', REPLACE(DATETIME('now', '-5 hours'), ' ', 'T'), REPLACE(DATETIME('now', '-1 hour'), ' ', 'T'), 'FINISHED', REPLACE(DATETIME('now'), ' ', 'T'));

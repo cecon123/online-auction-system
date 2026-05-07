@@ -109,10 +109,24 @@ Dự án hiện đang tập trung vào **Tuần 7: Concurrency & Realtime Founda
 - [x] `AuthClientService` (Nối Login/Register với socket thật) (Done - feature/linh/client-socket-foundation)
 - [x] Cập nhật UI Client không dùng mock logic (Done - feature/linh/client-socket-foundation)
 
-#### 🟠 ƯU TIÊN 4: Tầng Tích hợp UI & Realtime (Hải Anh)
-- [ ] Validation cho các form Create Auction (Pending)
-- [x] Tích hợp `AuctionClientService` cho màn hình đấu giá (Done - feature/haianh/ui-real-integration)
-- [x] Cơ chế `Platform.runLater()` cho Realtime Update UI (Done - feature/haianh/ui-real-integration)
+#### 🟠 ƯU TIÊN 4: Tầng Tích hợp UI & Realtime (Hải Anh & Gemini)
+- [x] Cải thiện UI Auction List (Scroll, Status Badge, Responsive Tiles) (Done)
+- [x] Persistence: Giữ trạng thái phiên đấu giá đã chọn khi điều hướng (Done)
+- [x] Fix lỗi Realtime: Xử lý `BID_UPDATE` và dispatch sự kiện chính xác (Done)
+- [x] Đồng bộ số dư: Tự động cập nhật TopBar khi số dư thay đổi (Done)
+- [x] Sửa lỗi Optimistic Locking khi đặt thầu (Done)
+- [ ] Hoàn thiện logic lọc (Filter) và tìm kiếm (Search) tại Auction List (Next)
+- [ ] Thông báo (Notification) Realtime khi phiên đấu giá kết thúc (Next)
+- [ ] Tích hợp biểu đồ giá chi tiết và lịch sử thầu đầy đủ (Next)
+
+---
+
+## 17. Kế hoạch cho thành viên tiếp theo (Next Steps)
+
+1.  **Hoàn thiện Filter/Search:** Hiện tại UI đã có thanh Search và ComboBox nhưng logic filter trong `AuctionListController` cần được kết nối với API/Backend.
+2.  **Notification System:** Xây dựng cơ chế hiện Toast hoặc Alert khi người dùng bị outbid hoặc khi phiên đấu giá họ đang theo dõi kết thúc.
+3.  **My Bids View:** Xây dựng màn hình danh sách các phiên đấu giá mà người dùng hiện tại đã tham gia đặt thầu.
+4.  **Admin Panel:** Hoàn thiện giao diện quản lý người dùng và phiên đấu giá cho tài khoản Admin.
 
 ---
 

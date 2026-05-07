@@ -125,8 +125,7 @@ public class LiveBiddingController {
         this::handleBidUpdate;
 
     private Long auctionId;
-    private final BigDecimal minimumIncrement = new BigDecimal("1.00");
-    private final BigDecimal walletBalance = SceneManager.getCurrentBalance();
+    private BigDecimal minimumIncrement = new BigDecimal("1.00");
 
     private BigDecimal currentPrice = new BigDecimal("0");
     private BigDecimal autoMaxBudget = new BigDecimal("20000");
@@ -294,6 +293,12 @@ public class LiveBiddingController {
                     if (response.isSuccess()) {
                         showManualMessage("Bid placed successfully!");
                         bidAmountField.clear();
+                        
+                        // Deduct from local balance for immediate feedback 
+                        // (Server should eventually send an official balance update)
+                        BigDecimal currentBalance = SceneManager.getCurrentBalance();
+                        BigDecimal newBalance = currentBalance.subtract(manualBid);
+                        SceneManager.setCurrentBalance(newBalance);
                     } else {
                         showManualMessage("Error: " + response.getMessage());
                     }
@@ -396,10 +401,10 @@ public class LiveBiddingController {
             return false;
         }
 
-        if (parsedMaxBudget.compareTo(walletBalance) > 0) {
+        if (parsedMaxBudget.compareTo(SceneManager.getCurrentBalance()) > 0) {
             showAutoMessage(
                 "Your maximum budget cannot exceed wallet balance " +
-                    formatMoney(walletBalance) +
+                    formatMoney(SceneManager.getCurrentBalance()) +
                     "."
             );
             return false;

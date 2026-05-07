@@ -147,7 +147,9 @@ public final class SocketClient {
             Response<?> response = JsonMapper.getInstance().fromJson(json, Response.class);
             String requestId = response.getRequestId();
 
-            if (requestId != null) {
+            // Realtime events from server often have requestId starting with 'event-' 
+            // or no requestId at all.
+            if (requestId != null && !requestId.startsWith("event-")) {
                 CompletableFuture<Response<?>> future = pendingRequests.remove(requestId);
                 if (future != null) {
                     future.complete(response);
@@ -164,8 +166,17 @@ public final class SocketClient {
     }
 
     private void handleEvent(Response<?> event) {
-        logger.info("Received realtime event: {}", event.getType());
-        // TODO: Implement an event bus or observer pattern for UI updates
+        logger.debug("Dispatching realtime event: {}", event.getType());
+        java.util.List<java.util.function.Consumer<Response<?>>> listeners = eventListeners.get(event.getType());
+        if (listeners != null) {
+            for (java.util.function.Consumer<Response<?>> listener : listeners) {
+                try {
+                    listener.accept(event);
+                } catch (Exception e) {
+                    logger.error("Error in event listener for {}", event.getType(), e);
+                }
+            }
+        }
     }
 
     public void setToken(String token) {

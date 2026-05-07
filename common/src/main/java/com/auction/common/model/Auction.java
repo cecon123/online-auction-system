@@ -148,7 +148,6 @@ public class Auction extends Entity {
 
         this.highestBidderId = bidderId;
         this.currentPrice = amount;
-        increaseVersion();
     }
 
     public void extendEndTimeSeconds(long seconds) {
@@ -157,7 +156,6 @@ public class Auction extends Entity {
         }
 
         this.endTime = this.endTime.plusSeconds(seconds);
-        increaseVersion();
     }
 
     @Override

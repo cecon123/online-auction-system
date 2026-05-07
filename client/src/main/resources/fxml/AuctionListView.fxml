@@ -11,30 +11,47 @@
     xmlns="http://javafx.com/javafx"
     xmlns:fx="http://javafx.com/fxml"
     fx:controller="com.auction.client.controller.AuctionListController"
-    spacing="20"
+    spacing="24"
     styleClass="page"
 >
-
     <padding>
         <Insets top="28" right="32" bottom="32" left="32" />
     </padding>
 
-    <VBox spacing="6">
+    <VBox spacing="8">
         <Label text="Live Auctions" styleClass="page-title" />
         <Label
-            text="Browse active and upcoming auction lots."
+            text="Discover and bid on exclusive items from around the world."
             styleClass="page-subtitle"
         />
     </VBox>
 
-    <HBox spacing="12">
-        <TextField promptText="Search auctions..." prefWidth="300" />
-        <ComboBox promptText="All Categories" prefWidth="180" />
-        <ComboBox promptText="Any Status" prefWidth="180" />
-        <ComboBox promptText="Any Price Range" prefWidth="200" />
+    <HBox spacing="16" alignment="CENTER_LEFT" styleClass="filter-bar">
+        <TextField fx:id="searchField" promptText="Search auctions by name..." prefWidth="350" styleClass="search-field" />
+        <ComboBox fx:id="categoryFilter" promptText="All Categories" prefWidth="180" />
+        <ComboBox fx:id="statusFilter" promptText="Active Status" prefWidth="180" />
+        <HBox HBox.hgrow="ALWAYS" />
+        <Button text="Refresh" onAction="#initialize" styleClass="secondary-button" />
     </HBox>
 
-    <TilePane fx:id="auctionContainer" hgap="16" vgap="16" prefColumns="3">
-        <!-- Dynamically populated from controller -->
-    </TilePane>
+    <javafx.scene.control.ScrollPane 
+        fitToWidth="true" 
+        styleClass="content-scroll-pane" 
+        VBox.vgrow="ALWAYS"
+    >
+        <content>
+            <TilePane 
+                fx:id="auctionContainer" 
+                hgap="20" 
+                vgap="24" 
+                prefColumns="3" 
+                alignment="TOP_LEFT"
+                style="-fx-background-color: transparent;"
+            >
+                <padding>
+                    <Insets top="4" right="4" bottom="20" left="4" />
+                </padding>
+            </TilePane>
+        </content>
+    </javafx.scene.control.ScrollPane>
 </VBox>

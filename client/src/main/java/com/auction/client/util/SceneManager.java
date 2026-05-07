@@ -28,8 +28,14 @@ public final class SceneManager {
     private static Role currentRole = Role.BIDDER;
     private static String currentUsername = "guest";
     private static BigDecimal currentBalance = new BigDecimal("45000");
+    private static Long lastSelectedAuctionId;
+    private static Runnable balanceListener;
 
     private SceneManager() {}
+
+    public static void setBalanceListener(Runnable listener) {
+        balanceListener = listener;
+    }
 
     public static void initialize(Stage stage) {
         primaryStage = stage;
@@ -51,6 +57,9 @@ public final class SceneManager {
     public static void setCurrentBalance(BigDecimal balance) {
         if (balance != null) {
             currentBalance = balance;
+            if (balanceListener != null) {
+                balanceListener.run();
+            }
         }
     }
 
@@ -150,13 +159,17 @@ public final class SceneManager {
     }
 
     public static void showLiveBidding() {
-        showLiveBidding(null);
+        showLiveBidding(lastSelectedAuctionId);
     }
 
     public static void showLiveBidding(Long auctionId) {
         if (currentRole != Role.BIDDER) {
             showDashboard();
             return;
+        }
+
+        if (auctionId != null) {
+            lastSelectedAuctionId = auctionId;
         }
 
         try {
@@ -166,10 +179,10 @@ public final class SceneManager {
             FXMLLoader loader = new FXMLLoader(resource);
             Parent content = loader.load();
 
-            if (auctionId != null) {
+            if (lastSelectedAuctionId != null) {
                 com.auction.client.controller.LiveBiddingController controller =
                     loader.getController();
-                controller.setAuctionId(auctionId);
+                controller.setAuctionId(lastSelectedAuctionId);
             }
 
             contentRoot.setCenter(content);
