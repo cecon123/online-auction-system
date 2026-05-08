@@ -123,7 +123,7 @@ Các thành viên sử dụng **Gemini CLI** hãy copy prompt tương ứng bên
 - **Huy (Lead):**
     - [x] Task: `GET_MY_BIDS` API & Admin Logic (`GET_USERS`, `LOCK_USER`).
 - **Hải Anh:**
-    - [ ] Task: Auction Detail Data Binding & `NotificationManager` (Toast system).
+    - [x] Task: Auction Detail Data Binding & `NotificationManager` (Toast system).
     - [ ] **Gemini Prompt:** `Tôi là Hải Anh. Hãy thực hiện Task: 1. Code 'AuctionDetailController.java' để map 'AuctionDetailDto' vào FXML. 2. Xây dựng 'NotificationManager.java' hiển thị Toast khi nhận 'BID_UPDATE'. QUY TRÌNH: Tạo branch 'feature/haianh/detail-notif', tuân thủ @GEMINI.md, sau khi xong nhắc tôi chạy 'mvn clean install' và test thực tế. Chỉ commit/push khi hệ thống ổn định và nhắc tôi tạo PR cho Huy (Lead) review.`
 
 #### 🟡 ƯU TIÊN 2: UI Logic & Search/Filter

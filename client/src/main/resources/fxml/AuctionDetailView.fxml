@@ -20,12 +20,14 @@
 
     <HBox spacing="24">
         <VBox
+            fx:id="imageContainer"
             styleClass="card"
             prefWidth="560"
             prefHeight="360"
             alignment="CENTER"
         >
             <Label
+                fx:id="imagePlaceholderLabel"
                 text="Product Image Placeholder"
                 styleClass="page-subtitle"
             />
@@ -36,17 +38,48 @@
                 <Insets top="24" right="24" bottom="24" left="24" />
             </padding>
 
-            <Label text="LIVE AUCTION" styleClass="status-running" />
+            <Label fx:id="statusLabel" text="LIVE AUCTION" styleClass="status-running" />
             <Label
+                fx:id="titleLabel"
                 text="Vintage 1969 Omega Speedmaster Professional"
                 styleClass="card-title"
+                wrapText="true"
             />
             <Label text="Current High Bid" styleClass="form-label" />
-            <Label text="\$42,500.00" styleClass="money-large" />
+            <Label fx:id="currentPriceLabel" text="\$42,500.00" styleClass="money-large" />
             <Label
+                fx:id="highestBidderLabel"
                 text="Highest Bidder: Bidder_8921"
                 styleClass="page-subtitle"
             />
+
+            <VBox spacing="4">
+                <HBox spacing="10">
+                    <Label text="Item Type:" styleClass="form-label" prefWidth="100"/>
+                    <Label fx:id="itemTypeLabel" text="Electronics" styleClass="page-subtitle"/>
+                </HBox>
+                <HBox spacing="10">
+                    <Label text="Condition:" styleClass="form-label" prefWidth="100"/>
+                    <Label fx:id="conditionLabel" text="Used - Like New" styleClass="page-subtitle"/>
+                </HBox>
+                <HBox spacing="10">
+                    <Label text="Starting Price:" styleClass="form-label" prefWidth="100"/>
+                    <Label fx:id="startingPriceLabel" text="\$10,000.00" styleClass="page-subtitle"/>
+                </HBox>
+                <HBox spacing="10">
+                    <Label text="Seller:" styleClass="form-label" prefWidth="100"/>
+                    <Label fx:id="sellerLabel" text="Premium_Seller" styleClass="page-subtitle"/>
+                </HBox>
+                <HBox spacing="10">
+                    <Label text="Start Time:" styleClass="form-label" prefWidth="100"/>
+                    <Label fx:id="startTimeLabel" text="2024-01-01 10:00" styleClass="page-subtitle"/>
+                </HBox>
+                <HBox spacing="10">
+                    <Label text="End Time:" styleClass="form-label" prefWidth="100"/>
+                    <Label fx:id="endTimeLabel" text="2024-01-07 10:00" styleClass="page-subtitle"/>
+                </HBox>
+            </VBox>
+
             <Button
                 text="Place Bid"
                 onAction="#handlePlaceBid"
@@ -62,10 +95,12 @@
         </padding>
 
         <Label
+            fx:id="descriptionTitleLabel"
             text="Haas VF-2TR 5-Axis CNC Milling Machine"
             styleClass="section-title"
         />
         <Label
+            fx:id="descriptionLabel"
             wrapText="true"
             text="Exceptional condition 2019 Haas VF-2TR. Low spindle hours. Includes probing system and tooling package."
             styleClass="page-subtitle"

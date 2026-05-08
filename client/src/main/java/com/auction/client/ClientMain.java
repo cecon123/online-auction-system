@@ -1,6 +1,7 @@
 package com.auction.client;
 
 import com.auction.client.socket.SocketClient;
+import com.auction.client.util.NotificationManager;
 import com.auction.client.util.SceneManager;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -23,6 +24,7 @@ public class ClientMain extends Application {
             }
         }).start();
 
+        NotificationManager.initialize();
         SceneManager.initialize(stage);
         SceneManager.showLogin();
     }
