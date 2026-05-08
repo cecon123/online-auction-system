@@ -117,24 +117,23 @@ Sử dụng WAL mode để tăng hiệu năng concurrency.
 
 ## 15. Task Board (Sprint Week 14: Integration & Polishing)
 
-Các thành viên sử dụng **Gemini CLI** hãy copy prompt tương ứng bên dưới để thực hiện task.
+Các thành viên sử dụng **Gemini CLI** hãy copy prompt tương ứng bên dưới. **Yêu cầu BẮT BUỘC: Tuân thủ nghiêm ngặt mọi quy tắc trong @GEMINI.md.**
 
 #### 🔴 ƯU TIÊN 1: Hoàn thiện Logic Nghiệp vụ & Realtime
 - **Huy (Lead):**
-    - [ ] Task: `GET_MY_BIDS` API & Admin Logic (`GET_USERS`, `LOCK_USER`).
-    - [ ] **Gemini Prompt:** `Tôi là Huy (Lead). Hãy thêm MessageType GET_MY_BIDS, ADMIN_GET_USERS, ADMIN_LOCK_USER vào 'MessageType.java' và cập nhật 'RequestRouter.java' để điều hướng. Kiểm tra quyền ADMIN trong 'SessionManager'.`
+    - [x] Task: `GET_MY_BIDS` API & Admin Logic (`GET_USERS`, `LOCK_USER`).
 - **Hải Anh:**
     - [ ] Task: Auction Detail Data Binding & `NotificationManager` (Toast system).
-    - [ ] **Gemini Prompt:** `Tôi là Hải Anh. Hãy code 'AuctionDetailController.java' để map 'AuctionDetailDto' vào FXML. Xây dựng 'NotificationManager.java' tại client để hiển thị Toast khi nhận 'BID_UPDATE' (nếu bị vượt giá).`
+    - [ ] **Gemini Prompt:** `Tôi là Hải Anh. Hãy thực hiện Task: 1. Code 'AuctionDetailController.java' để map 'AuctionDetailDto' vào FXML. 2. Xây dựng 'NotificationManager.java' hiển thị Toast khi nhận 'BID_UPDATE'. QUY TRÌNH: Tạo branch 'feature/haianh/detail-notif', tuân thủ @GEMINI.md, sau khi xong nhắc tôi chạy 'mvn clean install' và test thực tế. Chỉ commit/push khi hệ thống ổn định và nhắc tôi tạo PR cho Huy (Lead) review.`
 
 #### 🟡 ƯU TIÊN 2: UI Logic & Search/Filter
 - **Linh:**
     - [ ] Task: Filter/Search tại `AuctionList` & `MyBidsController` implementation.
-    - [ ] Task: Cài đặt và sử dụng **Ikonli** để thay thế các text placeholder bằng icon đẹp hơn (Sidebar, Dashboard, Buttons).
-    - [ ] **Gemini Prompt:** `Tôi là Linh. Tại 'AuctionListController.java', hãy code logic lọc danh sách tại chỗ (Category/SearchField). Triển khai 'MyBidsController.java' để hiển thị lịch sử thầu. Ngoài ra, hãy sử dụng Ikonli (FontAwesome5/MaterialDesign2) để thêm icon vào Sidebar và các nút bấm thay cho text đơn thuần. Kiểm tra 'client/pom.xml' để biết các pack đã cài đặt.`
+    - [ ] Task: Cài đặt và sử dụng **Ikonli** để thay thế các text placeholder bằng icon.
+    - [ ] **Gemini Prompt:** `Tôi là Linh. Hãy thực hiện Task: 1. Code logic lọc danh sách tại 'AuctionListController.java'. 2. Triển khai 'MyBidsController.java' hiển thị lịch sử thầu. 3. Sử dụng Ikonli (FontAwesome5/MaterialDesign2) cho Sidebar/Buttons. QUY TRÌNH: Tạo branch 'feature/linh/ui-logic', tuân thủ @GEMINI.md, sau khi xong nhắc tôi chạy 'mvn clean install' và test thực tế. Chỉ commit/push khi hệ thống ổn định và nhắc tôi tạo PR cho Huy (Lead) review.`
 - **Mạnh:**
     - [ ] Task: `findByBidderId` in DAO & Concurrency Stress Test.
-    - [ ] **Gemini Prompt:** `Tôi là Mạnh. Thêm 'findByBidderId(long bidderId)' vào 'AuctionDao' và 'SQLiteAuctionDao' (Join auctions và bids). Tạo test 'ConcurrentBidTest.java' giả lập 10 thread cùng bid vào 1 auction.`
+    - [ ] **Gemini Prompt:** `Tôi là Mạnh. Hãy thực hiện Task: 1. Thêm 'findByBidderId' vào 'AuctionDao'/'SQLiteAuctionDao'. 2. Tạo test 'ConcurrentBidTest.java' (JUnit 5) giả lập 20 thread cùng bid. 3. Thêm Index tối ưu trong 'schema.sql'. QUY TRÌNH: Tạo branch 'feature/manh/stress-test-db', tuân thủ @GEMINI.md, sau khi xong nhắc tôi chạy 'mvn clean install' và 'mvn test'. Chỉ commit/push khi hệ thống ổn định và nhắc tôi tạo PR cho Huy (Lead) review.`
 
 #### 🔵 ƯU TIÊN 3: Quản trị & Polish
 - **Hải Anh:** Tích hợp LineChart dữ liệu thật.
