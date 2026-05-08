@@ -7,6 +7,8 @@ import com.auction.common.dto.auth.LoginRequest;
 import com.auction.common.dto.auth.LoginResponse;
 import com.auction.common.dto.auth.RegisterRequest;
 import com.auction.common.dto.auth.RegisterResponse;
+import com.auction.common.dto.auth.UpdateUserStatusRequest;
+import com.auction.common.dto.auth.UserDto;
 import com.auction.common.dto.bid.PlaceBidRequest;
 import com.auction.common.dto.bid.PlaceBidResponse;
 import com.auction.common.enums.AuctionStatus;
@@ -218,6 +220,19 @@ public class RequestRouter {
                         "Unsubscribed from auction " + auctionId,
                         null
                     );
+                }
+                case GET_MY_BIDS -> handleGetMyBids(request);
+                case ADMIN_GET_USERS -> {
+                    requireAdmin(request);
+                    yield handleAdminGetUsers(request);
+                }
+                case ADMIN_UPDATE_USER_STATUS -> {
+                    requireAdmin(request);
+                    yield handleAdminUpdateUserStatus(request);
+                }
+                case ADMIN_GET_AUCTIONS -> {
+                    requireAdmin(request);
+                    yield handleGetAuctions(request); // Admin uses same summary for now
                 }
                 default -> Response.fail(
                     type,
@@ -455,6 +470,100 @@ public class RequestRouter {
                 "End time must be after start time."
             );
         }
+    }
+
+    private Response<List<AuctionSummaryDto>> handleGetMyBids(Request<?> request) {
+        Long userId = sessionManager.getUserId(request.getToken());
+        if (userId == null) {
+            throw new IllegalStateException("Unauthorized. Please login.");
+        }
+
+        // Find all auctions where the user has placed at least one bid
+        List<Long> auctionIds = bidService.getMyBids(userId);
+        
+        List<AuctionSummaryDto> auctions = auctionIds.stream()
+            .map(auctionDao::findById)
+            .filter(java.util.Optional::isPresent)
+            .map(java.util.Optional::get)
+            .map(a -> {
+                Item item = itemDao.findById(a.getItemId()).orElse(null);
+                String title = (item != null) ? item.getName() : "Unknown Item";
+                ItemType type = (item != null) ? item.getItemType() : ItemType.ELECTRONICS;
+                String image = (item != null) ? item.getImagePath() : null;
+
+                return new AuctionSummaryDto(
+                    a.getId(),
+                    title,
+                    type,
+                    a.getCurrentPrice(),
+                    a.getCurrentPrice(),
+                    a.getStartTime(),
+                    a.getEndTime(),
+                    a.getStatus(),
+                    image
+                );
+            })
+            .toList();
+
+        return Response.ok(
+            MessageType.GET_MY_BIDS,
+            request.getRequestId(),
+            "My bids loaded",
+            auctions
+        );
+    }
+
+    private void requireAdmin(Request<?> request) {
+        Long userId = sessionManager.getUserId(request.getToken());
+        if (userId == null) {
+            throw new IllegalStateException("Unauthorized. Please login.");
+        }
+
+        UserDao.UserRecord user = userDao.findById(userId)
+            .orElseThrow(() -> new IllegalStateException("User not found."));
+
+        if (user.role() != Role.ADMIN) {
+            throw new IllegalStateException("Access denied. Admin role required.");
+        }
+    }
+
+    private Response<List<UserDto>> handleAdminGetUsers(Request<?> request) {
+        List<UserDto> users = userDao.findAll().stream()
+            .map(u -> new UserDto(
+                u.id(),
+                u.username(),
+                u.fullName(),
+                u.role(),
+                u.balance(),
+                u.active(),
+                u.createdAt()
+            ))
+            .toList();
+
+        return Response.ok(
+            MessageType.ADMIN_GET_USERS,
+            request.getRequestId(),
+            "User list loaded",
+            users
+        );
+    }
+
+    private Response<Void> handleAdminUpdateUserStatus(Request<?> request) {
+        UpdateUserStatusRequest data = requireData(
+            request,
+            UpdateUserStatusRequest.class,
+            "ADMIN_UPDATE_USER_STATUS requires user status payload"
+        );
+
+        userDao.updateActiveStatus(data.userId(), data.active());
+        logger.info("Admin updated user {} active status to {}", data.userId(), data.active());
+
+        return Response.ok(
+            MessageType.ADMIN_UPDATE_USER_STATUS,
+            request.getRequestId(),
+            "User status updated successfully",
+            null
+        );
     }
 
     private <T> T requireData(

@@ -164,4 +164,17 @@ public class BidService {
             })
             .collect(java.util.stream.Collectors.toList());
     }
+
+    /**
+     * Retrieves all auction IDs where the user has placed at least one bid.
+     *
+     * @param userId The ID of the user.
+     * @return List of unique auction IDs.
+     */
+    public java.util.List<Long> getMyBids(long userId) {
+        return bidDao.findByBidderId(userId).stream()
+            .map(BidTransaction::getAuctionId)
+            .distinct()
+            .collect(java.util.stream.Collectors.toList());
+    }
 }

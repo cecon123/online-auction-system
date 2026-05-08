@@ -30,6 +30,7 @@ public enum MessageType {
     // Bidding
     PLACE_BID,
     GET_BID_HISTORY,
+    GET_MY_BIDS,
 
     // Realtime subscription
     SUBSCRIBE_AUCTION,
