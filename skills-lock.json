@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "skills": {
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "computedHash": "9e1c8b3103f92fa8092568a44fe64858de7c5c9dc65ce4bea8f168080e889cfd"
+    },
+    "java-junit": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/java-junit/SKILL.md",
+      "computedHash": "fbf3cb0d47ffb44bdb6e1ebcc4d89dd7083208efdfc5b88f316c8bc2b58250b5"
+    },
+    "java-refactoring-extract-method": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/java-refactoring-extract-method/SKILL.md",
+      "computedHash": "8a467a2fe1f1d8c14a2c344dfef7060f5cf1300ad5b4d4f036b336c78f6952ab"
+    },
+    "javafx": {
+      "source": "sanyokkua/renamer_app",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/javafx/SKILL.md",
+      "computedHash": "5d25fe3a4211dfce3dbac50aec4a8e0df99ac92ced8dcce510e4fcaabc5e6217"
+    },
+    "javafx-ui-designer": {
+      "source": "sanyokkua/renamer_app",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/javafx-ui-designer/SKILL.md",
+      "computedHash": "bc1e9e34e202929c8efb694e5c6b6b1ac6a37e81e2d62a1abbf5f2ede1cb4a55"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-guidelines/SKILL.md",
+      "computedHash": "f3bc47f890f42a44db1007ab390709ec368e4b8c089baee6b0007182236ac474"
+    }
+  }
+}
