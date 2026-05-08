@@ -130,7 +130,8 @@ Các thành viên sử dụng **Gemini CLI** hãy copy prompt tương ứng bên
 #### 🟡 ƯU TIÊN 2: UI Logic & Search/Filter
 - **Linh:**
     - [ ] Task: Filter/Search tại `AuctionList` & `MyBidsController` implementation.
-    - [ ] **Gemini Prompt:** `Tôi là Linh. Tại 'AuctionListController.java', hãy code logic lọc danh sách tại chỗ (Category/SearchField). Triển khai 'MyBidsController.java' để gọi socket 'GET_MY_BIDS' và hiển thị dữ liệu.`
+    - [ ] Task: Cài đặt và sử dụng **Ikonli** để thay thế các text placeholder bằng icon đẹp hơn (Sidebar, Dashboard, Buttons).
+    - [ ] **Gemini Prompt:** `Tôi là Linh. Tại 'AuctionListController.java', hãy code logic lọc danh sách tại chỗ (Category/SearchField). Triển khai 'MyBidsController.java' để hiển thị lịch sử thầu. Ngoài ra, hãy sử dụng Ikonli (FontAwesome5/MaterialDesign2) để thêm icon vào Sidebar và các nút bấm thay cho text đơn thuần. Kiểm tra 'client/pom.xml' để biết các pack đã cài đặt.`
 - **Mạnh:**
     - [ ] Task: `findByBidderId` in DAO & Concurrency Stress Test.
     - [ ] **Gemini Prompt:** `Tôi là Mạnh. Thêm 'findByBidderId(long bidderId)' vào 'AuctionDao' và 'SQLiteAuctionDao' (Join auctions và bids). Tạo test 'ConcurrentBidTest.java' giả lập 10 thread cùng bid vào 1 auction.`
