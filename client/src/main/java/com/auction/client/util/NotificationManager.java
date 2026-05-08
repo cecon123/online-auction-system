@@ -39,6 +39,13 @@ public final class NotificationManager {
         SocketClient.getInstance().addEventListener(MessageType.BID_UPDATE, response -> {
             try {
                 BidUpdateEvent event = JsonMapper.getInstance().convertData(response.getData(), BidUpdateEvent.class);
+                
+                // Don't show toast for own bids to avoid cluttering the UI
+                String currentUsername = SceneManager.getCurrentUsername();
+                if (event.bidderUsername().equals(currentUsername)) {
+                    return;
+                }
+
                 String title = "New Bid Placed!";
                 String message = String.format("%s bid %s on Auction #%d", 
                     event.bidderUsername(), 

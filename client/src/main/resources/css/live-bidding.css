@@ -154,6 +154,14 @@
     -fx-text-fill: #35225d;
 }
 
+.live-message-text.msg-success {
+    -fx-text-fill: #059669;
+}
+
+.live-message-text.msg-error {
+    -fx-text-fill: #ba1a1a;
+}
+
 .auto-status-off,
 .auto-status-active,
 .auto-status-max {

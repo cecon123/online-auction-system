@@ -291,7 +291,7 @@ public class LiveBiddingController {
             .thenAccept(response -> {
                 Platform.runLater(() -> {
                     if (response.isSuccess()) {
-                        showManualMessage("Bid placed successfully!");
+                        showManualMessage("Bid placed successfully!", true);
                         bidAmountField.clear();
                         
                         // Deduct from local balance for immediate feedback 
@@ -300,7 +300,7 @@ public class LiveBiddingController {
                         BigDecimal newBalance = currentBalance.subtract(manualBid);
                         SceneManager.setCurrentBalance(newBalance);
                     } else {
-                        showManualMessage("Error: " + response.getMessage());
+                        showManualMessage("Error: " + response.getMessage(), false);
                     }
                 });
             });
@@ -429,7 +429,8 @@ public class LiveBiddingController {
             autoBidEnabled = false;
             autoLastActionLabel.setText("Maximum budget reached.");
             showAutoMessage(
-                "Auto bidding stopped because your maximum budget was reached."
+                "Auto bidding stopped because your maximum budget was reached.",
+                false
             );
             refreshAutoBidPanel();
             return;
@@ -442,9 +443,9 @@ public class LiveBiddingController {
                     autoLastActionLabel.setText(
                         "Auto bid placed: " + formatMoney(nextAutoBid) + "."
                     );
-                    showAutoMessage("Auto bidding responded successfully.");
+                    showAutoMessage("Auto bidding responded successfully.", true);
                 } else {
-                    showAutoMessage("Auto bid failed: " + response.getMessage());
+                    showAutoMessage("Auto bid failed: " + response.getMessage(), false);
                     autoLastActionLabel.setText("Auto bid failed.");
                     autoBidEnabled = false;
                 }
@@ -634,11 +635,23 @@ public class LiveBiddingController {
         );
     }
 
-    private void showManualMessage(String message) {
+    private void showManualMessage(String message, boolean isSuccess) {
         manualBidMessageLabel.setText(message);
+        manualBidMessageLabel.getStyleClass().removeAll("msg-success", "msg-error");
+        manualBidMessageLabel.getStyleClass().add(isSuccess ? "msg-success" : "msg-error");
+    }
+
+    private void showAutoMessage(String message, boolean isSuccess) {
+        autoBidMessageLabel.setText(message);
+        autoBidMessageLabel.getStyleClass().removeAll("msg-success", "msg-error");
+        autoBidMessageLabel.getStyleClass().add(isSuccess ? "msg-success" : "msg-error");
+    }
+
+    private void showManualMessage(String message) {
+        showManualMessage(message, false);
     }
 
     private void showAutoMessage(String message) {
-        autoBidMessageLabel.setText(message);
+        showAutoMessage(message, false);
     }
 }
