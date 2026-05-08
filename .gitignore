@@ -34,3 +34,7 @@ build/
 
 # Environment
 .env
+
+# AI Agent
+.claude
+CLAUDE.md
