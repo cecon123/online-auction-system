@@ -90,6 +90,9 @@ Events pushed by the server have `requestId` as `null`.
 | | `CREATE_AUCTION` | Seller: Create new listing |
 | | `UPDATE_AUCTION` | Seller: Edit before RUNNING |
 | | `CANCEL_AUCTION` | Seller/Admin: Stop auction |
+| **ITEM** | `CREATE_ITEM` | Seller: Create item without auction |
+| | `UPDATE_ITEM` | Seller: Edit item details |
+| | `DELETE_ITEM` | Seller: Remove item |
 | **BID** | `PLACE_BID` | Bidder: Place a new bid |
 | | `GET_BID_HISTORY` | View bid logs for an auction |
 | **REALTIME** | `SUBSCRIBE_AUCTION` | Listen for updates on an auction |
@@ -97,6 +100,8 @@ Events pushed by the server have `requestId` as `null`.
 | | `BID_UPDATE` | Server: New bid broadcast |
 | | `AUCTION_CLOSED` | Server: Auction ended broadcast |
 | | `TIME_EXTENDED` | Server: Anti-sniping trigger broadcast |
+| **WALLET** | `DEPOSIT` | Add funds to user balance |
+| | `WITHDRAW` | Remove funds from user balance |
 | **ADMIN** | `ADMIN_GET_USERS` | List all users |
 | | `ADMIN_UPDATE_USER_STATUS` | Enable/Disable users |
 | | `ADMIN_GET_AUCTIONS` | System-wide auction management |

@@ -1,172 +1,175 @@
-### 12.5 Chạy client
+# Online Auction System - AuctionPro
 
-Mở terminal khác:
+> Bài tập lớn Lập trình nâng cao 2026: xây dựng hệ thống đấu giá trực tuyến theo kiến trúc **Client-Server**, sử dụng **Java 21**, **JavaFX**, **Socket JSON**, **SQLite**, **Maven multi-module**, **JUnit 5** và **Git/GitHub**.
 
-```bash
-mvn -pl client javafx:run
+## 1. Thông tin dự án
+
+- **Tên dự án:** Online Auction System / AuctionPro
+- **Repository:** `https://github.com/cecon123/online-auction-system`
+- **Môn học:** Lập trình nâng cao - LTNC 2026
+- **Mô hình:** Client-Server + MVC
+- **Ngôn ngữ:** Java 21
+- **GUI:** JavaFX + FXML + CSS
+- **Giao tiếp:** TCP Socket + JSON
+- **Database:** SQLite
+- **Build tool:** Maven multi-module
+- **Testing:** JUnit 5, JaCoCo
+- **CI/CD:** GitHub Actions
+- **Quản lý mã nguồn:** Git + Pull Request review
+
+## 2. Thành viên và phân công chính
+
+| Vai trò | Thành viên | Phụ trách chính |
+|---|---|---|
+| Backend 1 / Lead | **Huy** | Kiến trúc tổng thể, Security, Concurrency, Reviewer chính, Auth & Admin Logic |
+| Backend 2 | **Mạnh** | DAO/Repository, SQLite, Unit Test Backend, CI/CD, SQL Optimization |
+| Frontend 1 | **Linh** | Login/Register, Dashboard, Auction List, Filter/Search, My Bids Logic |
+| Frontend 2 | **Hải Anh** | Auction Detail UI, Live Bidding, Realtime Chart, Notification System, Admin UI |
+
+## 3. Mục tiêu chức năng
+
+### 3.1 Chức năng bắt buộc (Core)
+- [x] Đăng ký / đăng nhập tài khoản.
+- [x] Role người dùng: `BIDDER`, `SELLER`, `ADMIN`.
+- [x] Quản lý sản phẩm & đấu giá (Seller): Thêm/Sửa/Xóa.
+- [x] Đấu giá thời gian thực: Đặt giá, kiểm tra bid hợp lệ, cập nhật highest bidder.
+- [x] Concurrency: Xử lý nhiều bidder cùng lúc bằng `ReentrantLock`.
+- [x] SQLite Persistence: Lưu trữ dữ liệu an toàn.
+
+### 3.2 Chức năng đang hoàn thiện (In Progress)
+- [ ] Filter & Search: Lọc theo danh mục và trạng thái tại Auction List.
+- [ ] My Bids: Xem lại các phiên đấu giá đã tham gia.
+- [ ] Notification System: Thông báo Toast khi bị vượt giá hoặc đấu giá kết thúc.
+- [ ] Admin Panel: Quản lý người dùng và phiên đấu giá.
+
+## 4. Kiến trúc tổng thể
+
+```text
+JavaFX Client
+    |
+    | TCP Socket + JSON
+    v
+Auction Server
+    |
+    v
+Controller Layer
+    |
+    v
+Service Layer
+    |
+    v
+DAO / Repository Layer
+    |
+    v
+SQLite Database
 ```
 
-### 12.6 Chạy test
+## 5. Cấu trúc Maven multi-module
 
-```bash
-mvn test
+```text
+online-auction-system/
+├── common/ (DTO, Enum, Model dùng chung)
+├── server/ (Socket Server, Business Logic, SQLite DAO)
+└── client/ (JavaFX UI, Socket Client)
 ```
 
-Chạy riêng common test:
+## 6. Module dependency rule
 
-```bash
-mvn -pl common test
+```text
+common  <- không phụ thuộc module nào
+server  -> phụ thuộc common
+client  -> phụ thuộc common
 ```
 
-Chạy riêng server test:
+## 7. JSON protocol
+Chi tiết tại `docs/protocol.md`. Tất cả message đều là một dòng JSON duy nhất kết thúc bằng ký tự xuống dòng.
 
-```bash
-mvn -pl server test
-```
+## 8. Database SQLite
+File schema: `server/src/main/resources/db/schema.sql`.
+Sử dụng WAL mode để tăng hiệu năng concurrency.
+
+## 9. Auction state machine
+`OPEN -> RUNNING -> FINISHED -> PAID/CANCELED`
+
+## 10. Logic đặt giá placeBid()
+- Sử dụng `ReentrantLock` theo `auctionId`.
+- Kiểm tra số dư, thời gian, giá hiện tại trong cùng một transaction/lock block.
+
+## 11. Design Patterns
+- **Singleton**: Database, SessionManager.
+- **Factory Method**: ItemFactory.
+- **Observer**: BroadcastService (Realtime updates).
+
+## 12. UI / JavaFX design
+- Sử dụng FXML cho layout và CSS cho styling.
+- Giao diện hiện đại theo phong cách Material Design.
+
+## 13. Lộ trình theo tuần (Roadmap)
+- **W14 (Hiện tại):** Tích hợp và hoàn thiện (Integration & Polishing).
+- **W15:** Final Testing & Demo.
+
+## 14. Git workflow
+- Branch: `feature/<name>/<task>`.
+- Pull Request review bởi Huy (Lead).
+- Conventional Commits: `feat:`, `fix:`, `docs:`, `test:`.
 
 ---
 
-## 13. Manual socket test
+## 15. Task Board (Sprint Week 14: Integration & Polishing)
 
-Cài `ncat` nếu cần, sau đó chạy server:
+Các thành viên sử dụng **Gemini CLI** hãy copy prompt tương ứng bên dưới để thực hiện task.
 
-```bash
-mvn -pl server exec:java
-```
+#### 🔴 ƯU TIÊN 1: Hoàn thiện Logic Nghiệp vụ & Realtime
+- **Huy (Lead):**
+    - [ ] Task: `GET_MY_BIDS` API & Admin Logic (`GET_USERS`, `LOCK_USER`).
+    - [ ] **Gemini Prompt:** `Tôi là Huy (Lead). Hãy thêm MessageType GET_MY_BIDS, ADMIN_GET_USERS, ADMIN_LOCK_USER vào 'MessageType.java' và cập nhật 'RequestRouter.java' để điều hướng. Kiểm tra quyền ADMIN trong 'SessionManager'.`
+- **Hải Anh:**
+    - [ ] Task: Auction Detail Data Binding & `NotificationManager` (Toast system).
+    - [ ] **Gemini Prompt:** `Tôi là Hải Anh. Hãy code 'AuctionDetailController.java' để map 'AuctionDetailDto' vào FXML. Xây dựng 'NotificationManager.java' tại client để hiển thị Toast khi nhận 'BID_UPDATE' (nếu bị vượt giá).`
 
-Mở terminal khác:
+#### 🟡 ƯU TIÊN 2: UI Logic & Search/Filter
+- **Linh:**
+    - [ ] Task: Filter/Search tại `AuctionList` & `MyBidsController` implementation.
+    - [ ] **Gemini Prompt:** `Tôi là Linh. Tại 'AuctionListController.java', hãy code logic lọc danh sách tại chỗ (Category/SearchField). Triển khai 'MyBidsController.java' để gọi socket 'GET_MY_BIDS' và hiển thị dữ liệu.`
+- **Mạnh:**
+    - [ ] Task: `findByBidderId` in DAO & Concurrency Stress Test.
+    - [ ] **Gemini Prompt:** `Tôi là Mạnh. Thêm 'findByBidderId(long bidderId)' vào 'AuctionDao' và 'SQLiteAuctionDao' (Join auctions và bids). Tạo test 'ConcurrentBidTest.java' giả lập 10 thread cùng bid vào 1 auction.`
 
-```bash
-ncat localhost 8080
-```
-
-### Test LOGIN
-
-Gửi một dòng JSON:
-
-```json
-{"type":"LOGIN","requestId":"req-login-001","token":null,"data":{"username":"seller01","password":"123456"}}
-```
-
-Kỳ vọng server trả response JSON hợp lệ.
-
-### Test PLACE_BID
-
-```json
-{"type":"PLACE_BID","requestId":"req-bid-001","token":"mock-session-token","data":{"auctionId":1,"amount":15000}}
-```
-
-### Test GET_AUCTIONS
-
-```json
-{"type":"GET_AUCTIONS","requestId":"req-auctions-001","token":"mock-session-token","data":null}
-```
+#### 🔵 ƯU TIÊN 3: Quản trị & Polish
+- **Hải Anh:** Tích hợp LineChart dữ liệu thật.
+- **Mạnh:** Tối ưu SQLite Index cho bảng `bids`.
 
 ---
 
-## 14. Git Workflow chuẩn (Team Rule)
+## 16. Setup môi trường
+- Java 21, Maven 3.9+, SQLite.
+- Server: `mvn -pl server exec:java`
+- Client: `mvn -pl client javafx:run`
 
-### 14.1 Branching Strategy
-- **`main`**: Ổn định, dùng để Demo. Không commit trực tiếp.
-- **`dev`**: Tích hợp, mọi tính năng được merge vào đây trước qua PR.
-- **`feature/<tên-người-làm>/<tên-task>`**: Branch làm việc cá nhân.
-    *   Ví dụ: `feature/manh/sqlite-item-dao`
+## 17. GitHub Actions
+Tự động chạy `mvn test` trên mỗi PR vào `dev` và `main`.
 
-### 14.2 Quy trình làm việc hàng ngày
-1. **Bắt đầu:** `git checkout dev` -> `git pull origin dev` -> `git checkout -b feature/<tên-người-làm>/<tên-task>`.
-2. **Code & Local Test:** Code và chạy thử Server/Client (xem mục 17).
-3. **Push:** `git push origin feature/<tên-người-làm>/<tên-task>`.
-4. **Pull Request (PR):** Tạo PR trên GitHub vào branch `dev`.
-5. **Review:** Gửi link PR cho **Huy (Lead)** để review. Sửa code nếu có comment.
-6. **Merge:** Chỉ sau khi Huy **Approve**, branch mới được merge vào `dev`.
-7. **Sync:** Toàn team pull `dev` về và chạy `mvn clean install` để đồng bộ.
+## 18. Test plan
+- Unit tests cho Service và DAO.
+- E2E Testing với nhiều client cùng lúc.
 
----
+## 19. Definition of Done
+- Build success, Pass Tests, Lead Approved, Merged to `dev`.
 
-## 15. Roadmap & Task Board (W7 - Priority Based)
+## 20. Checklist chấm điểm
+- OOP, Design Patterns, Concurrency, Realtime, Client-Server, MVC.
 
-Dự án hiện đang tập trung vào **Tuần 7: Concurrency & Realtime Foundation**. Các task được sắp xếp theo chuỗi phụ thuộc: Mạnh -> Huy -> Linh -> Hải Anh.
+## 21. Rủi ro và cách tránh
+- SQLite Busy: Sử dụng WAL mode và Lock nghiệp vụ.
+- JavaFX Threading: Luôn dùng `Platform.runLater()`.
 
-### 16. Task Board (Cập nhật tiến độ tại đây)
+## 22. Việc cần làm ngay (Action Items)
+- Huy: Khai báo MessageType mới cho My Bids và Admin.
+- Linh: Cập nhật UI Auction List để nhận sự kiện filter.
 
-#### 🟢 ƯU TIÊN 1: Tầng Dữ liệu & Persistence (Mạnh)
-*Huy và Linh cần DAO thật để làm Service và test socket.*
-- [x] `UserDao` & `SQLiteUserDao` (Done - feature/manh/sqlite-user-dao)
-- [x] Interface `ItemDao`, `AuctionDao`, `BidDao` (Done)
-- [x] Triển khai `SQLiteItemDao`, `SQLiteAuctionDao`, `SQLiteBidDao` (Done)
-- [x] Unit Test cho toàn bộ DAO (Done)
+## 23. Ghi chú cuối
+Tập trung vào luồng: **Register/Login -> Browse -> Bid -> Realtime Update -> Close.**
 
-#### 🔵 ƯU TIÊN 2: Tầng Nghiệp vụ & Bảo mật (Huy)
-*Linh cần AuthService thật để nối giao diện Login/Register.*
-- [x] `AuctionLockManager` & `BidService` skeleton (Done - feature/huy/auction-locking)
-- [x] `AuthService` với BCrypt hashing (Done - feature/huy/auth-service-security)
-- [x] Hoàn thiện `BidService` logic với DAO thật (Done - feature/huy/bid-service-real-integration)
-- [x] `AuctionService` (Quản lý trạng thái OPEN/RUNNING/FINISHED) (Done)
-
-#### 🟡 ƯU TIÊN 3: Tầng Kết nối Socket (Linh)
-*Hải Anh cần SocketClient để gửi/nhận dữ liệu thật từ các màn hình.*
-- [x] `SocketClient` chạy nền (Background Thread) (Done - feature/linh/client-socket-foundation)
-- [x] `AuthClientService` (Nối Login/Register với socket thật) (Done - feature/linh/client-socket-foundation)
-- [x] Cập nhật UI Client không dùng mock logic (Done - feature/linh/client-socket-foundation)
-
-#### 🟠 ƯU TIÊN 4: Tầng Tích hợp UI & Realtime (Hải Anh & Gemini)
-- [x] Cải thiện UI Auction List (Scroll, Status Badge, Responsive Tiles) (Done)
-- [x] Persistence: Giữ trạng thái phiên đấu giá đã chọn khi điều hướng (Done)
-- [x] Fix lỗi Realtime: Xử lý `BID_UPDATE` và dispatch sự kiện chính xác (Done)
-- [x] Đồng bộ số dư: Tự động cập nhật TopBar khi số dư thay đổi (Done)
-- [x] Sửa lỗi Optimistic Locking khi đặt thầu (Done)
-- [ ] Hoàn thiện logic lọc (Filter) và tìm kiếm (Search) tại Auction List (Next)
-- [ ] Thông báo (Notification) Realtime khi phiên đấu giá kết thúc (Next)
-- [ ] Tích hợp biểu đồ giá chi tiết và lịch sử thầu đầy đủ (Next)
-
----
-
-## 17. Kế hoạch cho thành viên tiếp theo (Next Steps)
-
-1.  **Hoàn thiện Filter/Search:** Hiện tại UI đã có thanh Search và ComboBox nhưng logic filter trong `AuctionListController` cần được kết nối với API/Backend.
-2.  **Notification System:** Xây dựng cơ chế hiện Toast hoặc Alert khi người dùng bị outbid hoặc khi phiên đấu giá họ đang theo dõi kết thúc.
-3.  **My Bids View:** Xây dựng màn hình danh sách các phiên đấu giá mà người dùng hiện tại đã tham gia đặt thầu.
-4.  **Admin Panel:** Hoàn thiện giao diện quản lý người dùng và phiên đấu giá cho tài khoản Admin.
-
----
-
-## 17. Checklist kiểm thử bắt buộc (Trước khi Commit/PR)
-Hành động bắt buộc cho mọi thành viên (AI Agent phải nhắc nhở):
-1.  **Build:** `mvn clean install` -> Đảm bảo không lỗi dependency.
-2.  **Server:** `mvn -pl server exec:java` -> Server khởi động không crash.
-3.  **Client:** `mvn -pl client javafx:run` -> Client mở được giao diện.
-4.  **Test:** `mvn test` -> Tất cả unit test phải Pass.
-5.  **Review:** Gửi mã nguồn cho **Huy** và chỉ merge khi được phê duyệt.
-
----
-
-## 18. Coding conventions (Quy ước Code)
-
-- Java class: `PascalCase`.
-- Method/variable: `camelCase`.
-- Constants: `UPPER_SNAKE_CASE`.
-- DAO naming: `UserDao` / `SQLiteUserDao` (không dùng DAO viết hoa toàn bộ).
-- Không để business logic trong JavaFX Controller.
-- Tuyệt đối không để SQL query trong Service layer.
-- Client tuyệt đối không import bất kỳ package nào từ module `server`.
-
----
-
-## 19. Presentation notes (Ghi chú bảo vệ)
-
-Khi bảo vệ BTL, mỗi thành viên cần nắm vững:
-- **Huy:** Kiến trúc tổng thể, Socket Protocol, Concurrency (Locking), Security.
-- **Mạnh:** SQLite Schema, DAO Pattern, Database Integrity.
-- **Linh:** JavaFX MVC, Socket Client Threading.
-- **Hải Anh:** Realtime UI Update, LineChart Visualization, Auto-bidding.
-
----
-
-## 20. Definition of Done (Định nghĩa Hoàn thành)
-
-Một task được coi là hoàn thành (Done) khi:
-- Code build thành công và vượt qua các Unit Test.
-- Tuân thủ đúng kiến trúc và quy ước code.
-- Đã được Huy (Lead) review và Approve trên GitHub.
-- Đã được merge vào branch `dev`.
-- Tài liệu liên quan (nếu có) được cập nhật.
+## 24. Tài liệu tham khảo
+- `docs/protocol.md`
+- `docs/class-diagram.md`

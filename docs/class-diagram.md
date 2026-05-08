@@ -237,10 +237,11 @@ classDiagram
         -String passwordHash
         -String fullName
         -Role role
+        -BigDecimal balance
         -boolean active
         +String getUsername()
-        +String getPasswordHash()
-        +String getFullName()
+        +BigDecimal getBalance()
+        +void setBalance(BigDecimal balance)
         +Role getRole()
         +boolean isActive()
         +void activate()
