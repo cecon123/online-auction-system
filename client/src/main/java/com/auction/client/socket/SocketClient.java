@@ -1,6 +1,7 @@
 package com.auction.client.socket;
 
 import com.auction.client.util.JsonMapper;
+import com.auction.common.protocol.MessageType;
 import com.auction.common.protocol.Request;
 import com.auction.common.protocol.Response;
 import java.io.BufferedReader;
@@ -8,10 +9,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +42,7 @@ public final class SocketClient {
     private final Map<String, CompletableFuture<Response<?>>> pendingRequests = new ConcurrentHashMap<>();
 
     // Listeners for realtime events (requestId is null)
-    private final Map<com.auction.common.protocol.MessageType, java.util.List<java.util.function.Consumer<Response<?>>>> eventListeners = new ConcurrentHashMap<>();
+    private final Map<MessageType, List<Consumer<Response<?>>>> eventListeners = new ConcurrentHashMap<>();
 
     private SocketClient() {}
 
@@ -49,15 +53,15 @@ public final class SocketClient {
     /**
      * Registers a listener for a specific message type (realtime events).
      */
-    public void addEventListener(com.auction.common.protocol.MessageType type, java.util.function.Consumer<Response<?>> listener) {
-        eventListeners.computeIfAbsent(type, k -> new java.util.concurrent.CopyOnWriteArrayList<>()).add(listener);
+    public void addEventListener(MessageType type, Consumer<Response<?>> listener) {
+        eventListeners.computeIfAbsent(type, k -> new CopyOnWriteArrayList<>()).add(listener);
     }
 
     /**
      * Removes a listener.
      */
-    public void removeEventListener(com.auction.common.protocol.MessageType type, java.util.function.Consumer<Response<?>> listener) {
-        java.util.List<java.util.function.Consumer<Response<?>>> listeners = eventListeners.get(type);
+    public void removeEventListener(MessageType type, Consumer<Response<?>> listener) {
+        List<Consumer<Response<?>>> listeners = eventListeners.get(type);
         if (listeners != null) {
             listeners.remove(listener);
         }
@@ -167,9 +171,9 @@ public final class SocketClient {
 
     private void handleEvent(Response<?> event) {
         logger.debug("Dispatching realtime event: {}", event.getType());
-        java.util.List<java.util.function.Consumer<Response<?>>> listeners = eventListeners.get(event.getType());
+        List<Consumer<Response<?>>> listeners = eventListeners.get(event.getType());
         if (listeners != null) {
-            for (java.util.function.Consumer<Response<?>> listener : listeners) {
+            for (Consumer<Response<?>> listener : listeners) {
                 try {
                     listener.accept(event);
                 } catch (Exception e) {

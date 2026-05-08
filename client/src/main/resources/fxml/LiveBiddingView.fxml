@@ -12,6 +12,8 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
 <ScrollPane
     xmlns="http://javafx.com/javafx"
     xmlns:fx="http://javafx.com/fxml"
@@ -109,11 +111,15 @@
                             />
 
                             <Button
-                                text="Confirm Bid"
                                 onAction="#handlePlaceBid"
                                 minWidth="130"
                                 styleClass="live-primary-button"
-                            />
+                                text="Confirm Bid"
+                            >
+                                <graphic>
+                                    <FontIcon iconLiteral="mdi2g-gavel" iconSize="16" iconColor="white" />
+                                </graphic>
+                            </Button>
                         </HBox>
 
                         <Label
@@ -266,33 +272,49 @@
                     <HBox spacing="8" alignment="CENTER_LEFT">
                         <Button
                             fx:id="enableAutoBidButton"
-                            text="Enable Auto Bid"
                             onAction="#handleEnableAutoBid"
                             styleClass="auto-primary-button"
-                        />
+                            text="Enable Auto Bid"
+                        >
+                            <graphic>
+                                <FontIcon iconLiteral="mdi2p-play" iconSize="16" iconColor="white" />
+                            </graphic>
+                        </Button>
 
                         <Button
                             fx:id="updateAutoBidButton"
-                            text="Update Limit"
                             onAction="#handleUpdateAutoBid"
                             styleClass="auto-primary-button"
-                        />
+                            text="Update Limit"
+                        >
+                            <graphic>
+                                <FontIcon iconLiteral="mdi2u-update" iconSize="16" iconColor="white" />
+                            </graphic>
+                        </Button>
 
                         <Button
                             fx:id="disableAutoBidButton"
-                            text="Disable"
                             onAction="#handleDisableAutoBid"
                             styleClass="auto-danger-button"
-                        />
+                            text="Disable"
+                        >
+                            <graphic>
+                                <FontIcon iconLiteral="mdi2s-stop" iconSize="16" iconColor="white" />
+                            </graphic>
+                        </Button>
 
                         <Region HBox.hgrow="ALWAYS" />
 
                         <Button
                             fx:id="simulateOutbidButton"
-                            text="Simulate Outbid"
                             onAction="#handleSimulateOutbid"
                             styleClass="auto-ghost-button"
-                        />
+                            text="Simulate Outbid"
+                        >
+                            <graphic>
+                                <FontIcon iconLiteral="mdi2b-bell-ring-outline" iconSize="16" />
+                            </graphic>
+                        </Button>
                     </HBox>
 
                     <Label

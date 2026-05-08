@@ -9,8 +9,11 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
 
 <ScrollPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.auction.client.controller.MyBidsController"
             fitToWidth="true"
             hbarPolicy="NEVER"
             vbarPolicy="AS_NEEDED"
@@ -34,8 +37,8 @@
                 </padding>
 
                 <Label text="ACTIVE BIDS" styleClass="form-label"/>
-                <Label text="18" styleClass="stat-number"/>
-                <Label text="Across 5 categories" styleClass="page-subtitle"/>
+                <Label fx:id="activeBidsLabel" text="0" styleClass="stat-number"/>
+                <Label text="Across active auctions" styleClass="page-subtitle"/>
             </VBox>
 
             <VBox styleClass="card" spacing="8" prefWidth="260">
@@ -44,7 +47,7 @@
                 </padding>
 
                 <Label text="CURRENTLY WINNING" styleClass="form-label"/>
-                <Label text="7" styleClass="stat-number"/>
+                <Label fx:id="winningBidsLabel" text="0" styleClass="stat-number"/>
                 <Label text="You are leading these auctions" styleClass="success-text"/>
             </VBox>
 
@@ -54,7 +57,7 @@
                 </padding>
 
                 <Label text="OUTBID" styleClass="form-label"/>
-                <Label text="2" styleClass="stat-number"/>
+                <Label fx:id="outbidLabel" text="0" styleClass="stat-number"/>
                 <Label text="Need a higher bid to win" styleClass="error-text"/>
             </VBox>
 
@@ -64,7 +67,7 @@
                 </padding>
 
                 <Label text="WATCHLIST" styleClass="form-label"/>
-                <Label text="5" styleClass="stat-number"/>
+                <Label fx:id="watchlistLabel" text="0" styleClass="stat-number"/>
                 <Label text="Auctions you follow" styleClass="page-subtitle"/>
             </VBox>
         </HBox>
@@ -73,10 +76,14 @@
             <HBox alignment="CENTER_LEFT">
                 <Label text="Participating Auctions" styleClass="section-title"/>
                 <Region HBox.hgrow="ALWAYS"/>
-                <Button text="Refresh" styleClass="secondary-button"/>
+                <Button onAction="#loadMyBids" styleClass="secondary-button" text="Refresh">
+                    <graphic>
+                        <FontIcon iconLiteral="mdi2r-refresh" iconSize="16" />
+                    </graphic>
+                </Button>
             </HBox>
 
-            <VBox styleClass="card" spacing="0">
+            <VBox fx:id="participatingAuctionsContainer" styleClass="card" spacing="0">
                 <GridPane hgap="20" styleClass="admin-table-header">
                     <padding>
                         <Insets top="12" right="18" bottom="12" left="18"/>
@@ -98,79 +105,14 @@
                     <Label text="ENDS IN" styleClass="admin-table-header-text" GridPane.columnIndex="4"/>
                     <Label text="ACTION" styleClass="admin-table-header-text" GridPane.columnIndex="5"/>
                 </GridPane>
-
-                <GridPane hgap="20" styleClass="admin-table-row">
-                    <padding>
-                        <Insets top="14" right="18" bottom="14" left="18"/>
-                    </padding>
-
-                    <columnConstraints>
-                        <ColumnConstraints percentWidth="28"/>
-                        <ColumnConstraints percentWidth="15"/>
-                        <ColumnConstraints percentWidth="15"/>
-                        <ColumnConstraints percentWidth="15"/>
-                        <ColumnConstraints percentWidth="15"/>
-                        <ColumnConstraints percentWidth="12"/>
-                    </columnConstraints>
-
-                    <Label text="Patek Philippe Nautilus" GridPane.columnIndex="0"/>
-                    <Label text="\$125,000" styleClass="money" GridPane.columnIndex="1"/>
-                    <Label text="\$125,000" styleClass="money" GridPane.columnIndex="2"/>
-                    <Label text="Winning" styleClass="success-text" GridPane.columnIndex="3"/>
-                    <Label text="02:14:05" GridPane.columnIndex="4"/>
-                    <Button text="Bid More" styleClass="secondary-button" GridPane.columnIndex="5"/>
-                </GridPane>
-
-                <GridPane hgap="20" styleClass="admin-table-row-alt">
-                    <padding>
-                        <Insets top="14" right="18" bottom="14" left="18"/>
-                    </padding>
-
-                    <columnConstraints>
-                        <ColumnConstraints percentWidth="28"/>
-                        <ColumnConstraints percentWidth="15"/>
-                        <ColumnConstraints percentWidth="15"/>
-                        <ColumnConstraints percentWidth="15"/>
-                        <ColumnConstraints percentWidth="15"/>
-                        <ColumnConstraints percentWidth="12"/>
-                    </columnConstraints>
-
-                    <Label text="1964 Aston Martin DB5" GridPane.columnIndex="0"/>
-                    <Label text="\$820,000" styleClass="money" GridPane.columnIndex="1"/>
-                    <Label text="\$850,000" styleClass="money" GridPane.columnIndex="2"/>
-                    <Label text="Outbid" styleClass="error-text" GridPane.columnIndex="3"/>
-                    <Label text="14:00:00" GridPane.columnIndex="4"/>
-                    <Button text="Bid Again" styleClass="secondary-button" GridPane.columnIndex="5"/>
-                </GridPane>
-
-                <GridPane hgap="20" styleClass="admin-table-row">
-                    <padding>
-                        <Insets top="14" right="18" bottom="14" left="18"/>
-                    </padding>
-
-                    <columnConstraints>
-                        <ColumnConstraints percentWidth="28"/>
-                        <ColumnConstraints percentWidth="15"/>
-                        <ColumnConstraints percentWidth="15"/>
-                        <ColumnConstraints percentWidth="15"/>
-                        <ColumnConstraints percentWidth="15"/>
-                        <ColumnConstraints percentWidth="12"/>
-                    </columnConstraints>
-
-                    <Label text="Untitled Composition II" GridPane.columnIndex="0"/>
-                    <Label text="\$32,000" styleClass="money" GridPane.columnIndex="1"/>
-                    <Label text="\$32,000" styleClass="money" GridPane.columnIndex="2"/>
-                    <Label text="Winning" styleClass="success-text" GridPane.columnIndex="3"/>
-                    <Label text="1d 04h" GridPane.columnIndex="4"/>
-                    <Button text="View" styleClass="secondary-button" GridPane.columnIndex="5"/>
-                </GridPane>
+                <!-- Dynamic rows will be added here -->
             </VBox>
         </VBox>
 
         <VBox spacing="14">
             <Label text="Recent Bid History" styleClass="section-title"/>
 
-            <VBox styleClass="card" spacing="0">
+            <VBox fx:id="bidHistoryContainer" styleClass="card" spacing="0">
                 <GridPane hgap="20" styleClass="admin-table-header">
                     <padding>
                         <Insets top="12" right="18" bottom="12" left="18"/>
@@ -188,60 +130,7 @@
                     <Label text="AMOUNT" styleClass="admin-table-header-text" GridPane.columnIndex="2"/>
                     <Label text="RESULT" styleClass="admin-table-header-text" GridPane.columnIndex="3"/>
                 </GridPane>
-
-                <GridPane hgap="20" styleClass="admin-table-row">
-                    <padding>
-                        <Insets top="14" right="18" bottom="14" left="18"/>
-                    </padding>
-
-                    <columnConstraints>
-                        <ColumnConstraints percentWidth="18"/>
-                        <ColumnConstraints percentWidth="37"/>
-                        <ColumnConstraints percentWidth="20"/>
-                        <ColumnConstraints percentWidth="25"/>
-                    </columnConstraints>
-
-                    <Label text="10:24:12" GridPane.columnIndex="0"/>
-                    <Label text="Patek Philippe Nautilus" GridPane.columnIndex="1"/>
-                    <Label text="\$125,000" styleClass="money" GridPane.columnIndex="2"/>
-                    <Label text="Highest bid" styleClass="success-text" GridPane.columnIndex="3"/>
-                </GridPane>
-
-                <GridPane hgap="20" styleClass="admin-table-row-alt">
-                    <padding>
-                        <Insets top="14" right="18" bottom="14" left="18"/>
-                    </padding>
-
-                    <columnConstraints>
-                        <ColumnConstraints percentWidth="18"/>
-                        <ColumnConstraints percentWidth="37"/>
-                        <ColumnConstraints percentWidth="20"/>
-                        <ColumnConstraints percentWidth="25"/>
-                    </columnConstraints>
-
-                    <Label text="10:18:44" GridPane.columnIndex="0"/>
-                    <Label text="1964 Aston Martin DB5" GridPane.columnIndex="1"/>
-                    <Label text="\$820,000" styleClass="money" GridPane.columnIndex="2"/>
-                    <Label text="Outbid later" styleClass="error-text" GridPane.columnIndex="3"/>
-                </GridPane>
-
-                <GridPane hgap="20" styleClass="admin-table-row">
-                    <padding>
-                        <Insets top="14" right="18" bottom="14" left="18"/>
-                    </padding>
-
-                    <columnConstraints>
-                        <ColumnConstraints percentWidth="18"/>
-                        <ColumnConstraints percentWidth="37"/>
-                        <ColumnConstraints percentWidth="20"/>
-                        <ColumnConstraints percentWidth="25"/>
-                    </columnConstraints>
-
-                    <Label text="09:52:01" GridPane.columnIndex="0"/>
-                    <Label text="Untitled Composition II" GridPane.columnIndex="1"/>
-                    <Label text="\$32,000" styleClass="money" GridPane.columnIndex="2"/>
-                    <Label text="Highest bid" styleClass="success-text" GridPane.columnIndex="3"/>
-                </GridPane>
+                <!-- Dynamic rows will be added here -->
             </VBox>
         </VBox>
     </VBox>

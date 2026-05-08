@@ -125,4 +125,20 @@ public class AuctionClientService {
                 return response;
             });
     }
+
+    /**
+     * Fetches auctions where the current user has placed bids.
+     */
+    public CompletableFuture<Response<List<AuctionSummaryDto>>> getMyBids() {
+        Request<Void> request = new Request<>(MessageType.GET_MY_BIDS, null, null, null);
+        
+        return socketClient.<Void, List<AuctionSummaryDto>>sendRequest(request)
+            .thenApply(response -> {
+                if (response.isSuccess()) {
+                    List<AuctionSummaryDto> data = jsonMapper.convertList(response.getData(), AuctionSummaryDto.class);
+                    response.setData(data);
+                }
+                return response;
+            });
+    }
 }

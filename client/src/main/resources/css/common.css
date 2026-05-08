@@ -107,20 +107,54 @@
 .combo-box,
 .text-area {
     -fx-background-color: white;
-    -fx-border-color: #c7c4d8;
-    -fx-border-radius: 8;
-    -fx-background-radius: 8;
+    -fx-border-color: #e2e8f0; /* Subtler gray-blue border */
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
     -fx-padding: 8 12 8 12;
     -fx-font-size: 14px;
-    -fx-text-fill: #111827;
-    -fx-prompt-text-fill: #9ca3af;
+    -fx-text-fill: #1e293b;
+    -fx-prompt-text-fill: #94a3b8;
 }
 
 .text-field:focused,
 .password-field:focused,
-.combo-box:focused {
-    -fx-border-color: #3525cd;
-    -fx-border-width: 2;
+.combo-box:focused,
+.combo-box:showing {
+    -fx-border-color: #94a3b8; /* Muted gray for focus to keep it subtle */
+    -fx-border-width: 1;
+}
+
+.combo-box:hover {
+    -fx-border-color: #cbd5e1;
+}
+
+/* Dropdown Menu (Popup) Styling */
+.combo-box .list-view {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 10;
+    -fx-padding: 4;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.05), 10, 0, 0, 4);
+}
+
+.combo-box .list-cell {
+    -fx-padding: 8 12 8 12;
+    -fx-background-color: transparent;
+    -fx-text-fill: #1e293b;
+    -fx-font-size: 14px;
+    -fx-background-radius: 6;
+}
+
+.combo-box .list-cell:hover {
+    -fx-background-color: #f8fafc; /* Very light gray-blue for hover */
+    -fx-text-fill: #3525cd;
+}
+
+.combo-box .list-cell:selected {
+    -fx-background-color: #f1f5f9;
+    -fx-text-fill: #3525cd;
+    -fx-font-weight: bold;
 }
 
 .image-placeholder {

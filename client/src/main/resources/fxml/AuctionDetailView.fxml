@@ -4,6 +4,8 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
 <VBox
     xmlns="http://javafx.com/javafx"
     xmlns:fx="http://javafx.com/fxml"
@@ -81,11 +83,15 @@
             </VBox>
 
             <Button
-                text="Place Bid"
                 onAction="#handlePlaceBid"
                 styleClass="primary-button"
                 maxWidth="Infinity"
-            />
+                text="Place Bid"
+            >
+                <graphic>
+                    <FontIcon iconLiteral="mdi2g-gavel" iconSize="18" iconColor="white" />
+                </graphic>
+            </Button>
         </VBox>
     </HBox>
 

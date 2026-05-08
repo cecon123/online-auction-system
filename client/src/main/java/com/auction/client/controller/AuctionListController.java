@@ -33,29 +33,37 @@ public class AuctionListController {
     private ComboBox<String> statusFilter;
 
     private final AuctionClientService auctionService = new AuctionClientService();
+    private List<AuctionSummaryDto> allAuctions = List.of();
 
     @FXML
     private void initialize() {
-        loadAuctions();
         setupFilters();
+        loadAuctions();
     }
 
     private void setupFilters() {
         if (categoryFilter != null) {
+            categoryFilter.getItems().clear();
             categoryFilter.getItems().addAll("All Categories", "ELECTRONICS", "ART", "VEHICLE");
             categoryFilter.setValue("All Categories");
+            categoryFilter.setOnAction(e -> applyFilters());
         }
         if (statusFilter != null) {
+            statusFilter.getItems().clear();
             statusFilter.getItems().addAll("Any Status", "OPEN", "RUNNING", "FINISHED");
             statusFilter.setValue("Any Status");
+            statusFilter.setOnAction(e -> applyFilters());
+        }
+        if (searchField != null) {
+            searchField.textProperty().addListener((obs, oldVal, newVal) -> applyFilters());
         }
     }
 
     private void loadAuctions() {
         auctionService.getAuctions().thenAccept(response -> {
             if (response.isSuccess()) {
-                List<AuctionSummaryDto> auctions = response.getData();
-                Platform.runLater(() -> populateAuctions(auctions));
+                allAuctions = response.getData();
+                Platform.runLater(this::applyFilters);
             } else {
                 logger.error("Failed to load auctions: {}", response.getMessage());
             }
@@ -63,6 +71,20 @@ public class AuctionListController {
             logger.error("Error connecting to server", ex);
             return null;
         });
+    }
+
+    private void applyFilters() {
+        String searchText = searchField.getText().toLowerCase().trim();
+        String category = categoryFilter.getValue();
+        String status = statusFilter.getValue();
+
+        List<AuctionSummaryDto> filtered = allAuctions.stream()
+                .filter(a -> searchText.isEmpty() || a.title().toLowerCase().contains(searchText))
+                .filter(a -> category == null || category.equals("All Categories") || a.itemType().toString().equalsIgnoreCase(category))
+                .filter(a -> status == null || status.equals("Any Status") || a.status().toString().equalsIgnoreCase(status))
+                .toList();
+
+        populateAuctions(filtered);
     }
 
     private void populateAuctions(List<AuctionSummaryDto> auctions) {
@@ -135,12 +157,14 @@ public class AuctionListController {
         
         Button viewDetailBtn = new Button("View Detail");
         viewDetailBtn.getStyleClass().add("secondary-button");
+        viewDetailBtn.setGraphic(new org.kordamp.ikonli.javafx.FontIcon("mdi2i-information-outline"));
         HBox.setHgrow(viewDetailBtn, javafx.scene.layout.Priority.ALWAYS);
         viewDetailBtn.setMaxWidth(Double.MAX_VALUE);
         viewDetailBtn.setOnAction(e -> SceneManager.showAuctionDetail(auction.id()));
 
         Button liveBidBtn = new Button("Live Bid");
         liveBidBtn.getStyleClass().add("primary-button");
+        liveBidBtn.setGraphic(new org.kordamp.ikonli.javafx.FontIcon("mdi2g-gavel"));
         HBox.setHgrow(liveBidBtn, javafx.scene.layout.Priority.ALWAYS);
         liveBidBtn.setMaxWidth(Double.MAX_VALUE);
         liveBidBtn.setOnAction(e -> SceneManager.showLiveBidding(auction.id()));

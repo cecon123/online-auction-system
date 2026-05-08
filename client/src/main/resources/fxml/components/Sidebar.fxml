@@ -4,6 +4,8 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
 <VBox
     xmlns="http://javafx.com/javafx"
     xmlns:fx="http://javafx.com/fxml"
@@ -23,66 +25,98 @@
     <Region prefHeight="32" />
 
     <Button
-        text="▦  Dashboard"
         onAction="#showDashboard"
         maxWidth="Infinity"
         styleClass="nav-button"
-    />
+        text="Dashboard"
+    >
+        <graphic>
+            <FontIcon iconLiteral="mdi2v-view-dashboard-outline" iconSize="18" />
+        </graphic>
+    </Button>
 
     <Button
         fx:id="auctionsButton"
-        text="⚖  Auctions"
         onAction="#showAuctions"
         maxWidth="Infinity"
         styleClass="nav-button"
-    />
+        text="Auctions"
+    >
+        <graphic>
+            <FontIcon iconLiteral="mdi2g-gavel" iconSize="18" />
+        </graphic>
+    </Button>
 
     <Button
         fx:id="liveBiddingButton"
-        text="⏱  Live Bidding"
         onAction="#showLiveBidding"
         maxWidth="Infinity"
         styleClass="nav-button"
-    />
+        text="Live Bidding"
+    >
+        <graphic>
+            <FontIcon iconLiteral="mdi2t-timer-outline" iconSize="18" />
+        </graphic>
+    </Button>
 
     <Button
         fx:id="myBidsButton"
-        text="▤  My Bids"
         onAction="#showMyBids"
         maxWidth="Infinity"
         styleClass="nav-button"
-    />
+        text="My Bids"
+    >
+        <graphic>
+            <FontIcon iconLiteral="mdi2h-history" iconSize="18" />
+        </graphic>
+    </Button>
 
     <Button
         fx:id="sellerCenterButton"
-        text="▣  Seller Center"
         onAction="#showSellerCenter"
         maxWidth="Infinity"
         styleClass="nav-button"
-    />
+        text="Seller Center"
+    >
+        <graphic>
+            <FontIcon iconLiteral="mdi2s-storefront-outline" iconSize="18" />
+        </graphic>
+    </Button>
 
     <Button
         fx:id="walletButton"
-        text="▰  Wallet"
         onAction="#showWallet"
         maxWidth="Infinity"
         styleClass="nav-button"
-    />
+        text="Wallet"
+    >
+        <graphic>
+            <FontIcon iconLiteral="mdi2w-wallet-outline" iconSize="18" />
+        </graphic>
+    </Button>
 
     <Button
         fx:id="adminPanelButton"
-        text="🛡  Admin Panel"
         onAction="#showAdminPanel"
         maxWidth="Infinity"
         styleClass="nav-button"
-    />
+        text="Admin Panel"
+    >
+        <graphic>
+            <FontIcon iconLiteral="mdi2s-shield-check-outline" iconSize="18" />
+        </graphic>
+    </Button>
 
     <Region VBox.vgrow="ALWAYS" />
 
     <Button
-        text="↩  Logout"
         onAction="#logout"
         maxWidth="Infinity"
         styleClass="nav-button"
-    />
+        text="Logout"
+    >
+        <graphic>
+            <FontIcon iconLiteral="mdi2l-logout" iconSize="18" />
+        </graphic>
+    </Button>
 </VBox>
