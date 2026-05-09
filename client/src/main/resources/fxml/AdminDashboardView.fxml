@@ -6,6 +6,8 @@
 <?import javafx.scene.layout.VBox?>
 
 <VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.controller.AdminDashboardController"
       spacing="24"
       styleClass="page">
 
@@ -25,8 +27,8 @@
                 <Insets top="18" right="18" bottom="18" left="18"/>
             </padding>
             <Label text="TOTAL USERS" styleClass="form-label"/>
-            <Label text="12,450" styleClass="stat-number"/>
-            <Label text="+5.2%" styleClass="success-text"/>
+            <Label fx:id="totalUsersLabel" text="0" styleClass="stat-number"/>
+            <Label text="Registered users" styleClass="success-text"/>
         </VBox>
 
         <VBox styleClass="card" spacing="8" prefWidth="240">
@@ -34,8 +36,8 @@
                 <Insets top="18" right="18" bottom="18" left="18"/>
             </padding>
             <Label text="TOTAL AUCTIONS" styleClass="form-label"/>
-            <Label text="3,890" styleClass="stat-number"/>
-            <Label text="+1.8%" styleClass="success-text"/>
+            <Label fx:id="totalAuctionsLabel" text="0" styleClass="stat-number"/>
+            <Label text="In database" styleClass="success-text"/>
         </VBox>
 
         <VBox styleClass="card" spacing="8" prefWidth="240">
@@ -43,7 +45,7 @@
                 <Insets top="18" right="18" bottom="18" left="18"/>
             </padding>
             <Label text="RUNNING" styleClass="form-label"/>
-            <Label text="1,204" styleClass="stat-number"/>
+            <Label fx:id="runningAuctionsLabel" text="0" styleClass="stat-number"/>
             <Label text="Live auctions" styleClass="page-subtitle"/>
         </VBox>
 
@@ -52,7 +54,7 @@
                 <Insets top="18" right="18" bottom="18" left="18"/>
             </padding>
             <Label text="FINISHED" styleClass="form-label"/>
-            <Label text="2,686" styleClass="stat-number"/>
+            <Label fx:id="finishedAuctionsLabel" text="0" styleClass="stat-number"/>
             <Label text="Completed auctions" styleClass="page-subtitle"/>
         </VBox>
     </HBox>

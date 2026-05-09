@@ -53,7 +53,7 @@
             </VBox>
 
             <VBox spacing="3" minWidth="140">
-                <Label text="TIME REMAINING" styleClass="live-form-label" />
+                <Label fx:id="countdownHeaderLabel" text="TIME REMAINING" styleClass="live-form-label" />
                 <Label
                     fx:id="countdownLabel"
                     text="02:14:05"

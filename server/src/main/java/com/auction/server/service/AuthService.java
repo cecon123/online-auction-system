@@ -104,6 +104,7 @@ public class AuthService {
         return new LoginResponse(
             user.id(),
             user.username(),
+            user.fullName(),
             user.role(),
             user.balance(),
             token

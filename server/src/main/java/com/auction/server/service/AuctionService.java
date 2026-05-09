@@ -100,6 +100,7 @@ public class AuctionService {
             request.itemType(),
             request.startingPrice(),
             request.startingPrice(),
+            null, // No highest bidder yet
             request.startTime(),
             request.endTime(),
             AuctionStatus.OPEN,

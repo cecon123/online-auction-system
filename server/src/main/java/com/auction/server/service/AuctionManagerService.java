@@ -22,10 +22,14 @@ public class AuctionManagerService {
     );
 
     private final AuctionDao auctionDao;
+    private final com.auction.server.dao.UserDao userDao;
+    private final NotificationService notificationService;
     private final ScheduledExecutorService scheduler;
 
-    public AuctionManagerService(AuctionDao auctionDao) {
+    public AuctionManagerService(AuctionDao auctionDao, com.auction.server.dao.UserDao userDao) {
         this.auctionDao = auctionDao;
+        this.userDao = userDao;
+        this.notificationService = NotificationService.getInstance();
         this.scheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
             Thread thread = new Thread(runnable, "AuctionManager-Thread");
             thread.setDaemon(true);
@@ -38,8 +42,8 @@ public class AuctionManagerService {
      */
     public void start() {
         logger.info("Starting Auction Manager Service...");
-        // Check every 10 seconds
-        scheduler.scheduleAtFixedRate(this::checkStatuses, 0, 10, TimeUnit.SECONDS);
+        // Check every 5 seconds for more responsiveness
+        scheduler.scheduleAtFixedRate(this::checkStatuses, 0, 5, TimeUnit.SECONDS);
     }
 
     /**
@@ -79,6 +83,29 @@ public class AuctionManagerService {
                 auctionDao.update(auction);
                 logger.info("Auction {} status changed from {} to {}", 
                     auction.getId(), currentStatus, newStatus);
+
+                // Broadcast status change
+                String winner = null;
+                if (newStatus == AuctionStatus.FINISHED && auction.getHighestBidderId() != null) {
+                    winner = userDao.findById(auction.getHighestBidderId())
+                        .map(com.auction.server.dao.UserDao.UserRecord::username)
+                        .orElse("Unknown");
+                }
+
+                notificationService.broadcast(
+                    auction.getId(),
+                    newStatus == AuctionStatus.FINISHED ? 
+                        com.auction.common.protocol.MessageType.AUCTION_CLOSED : 
+                        com.auction.common.protocol.MessageType.BID_UPDATE, // Reuse for RUNNING status change
+                    new com.auction.common.dto.auction.AuctionEventDto(
+                        auction.getId(),
+                        newStatus,
+                        "Auction status changed to " + newStatus,
+                        winner,
+                        auction.getCurrentPrice(),
+                        auction.getEndTime()
+                    )
+                );
             } catch (IllegalStateException e) {
                 // Optimistic locking failure - someone else might have updated it
                 logger.warn("Optimistic locking failure while updating status for Auction {}", auction.getId());

@@ -8,6 +8,8 @@
 <?import javafx.scene.layout.VBox?>
 <ScrollPane
     xmlns="http://javafx.com/javafx"
+    xmlns:fx="http://javafx.com/fxml"
+    fx:controller="com.auction.client.controller.BidderDashboardController"
     fitToWidth="true"
     hbarPolicy="NEVER"
     vbarPolicy="AS_NEEDED"
@@ -33,7 +35,7 @@
                     <Insets top="18" right="18" bottom="18" left="18" />
                 </padding>
                 <Label text="WALLET BALANCE" styleClass="form-label" />
-                <Label text="\$45,000" styleClass="money-large" />
+                <Label fx:id="balanceLabel" text="\$0.00" styleClass="money-large" />
                 <Label text="Available to bid" styleClass="success-text" />
             </VBox>
 
@@ -42,8 +44,8 @@
                     <Insets top="18" right="18" bottom="18" left="18" />
                 </padding>
                 <Label text="MY ACTIVE BIDS" styleClass="form-label" />
-                <Label text="18" styleClass="stat-number" />
-                <Label text="Across 5 categories" styleClass="page-subtitle" />
+                <Label fx:id="activeBidsLabel" text="0" styleClass="stat-number" />
+                <Label text="Across active auctions" styleClass="page-subtitle" />
             </VBox>
 
             <VBox styleClass="card" spacing="8" prefWidth="260">
@@ -51,8 +53,12 @@
                     <Insets top="18" right="18" bottom="18" left="18" />
                 </padding>
                 <Label text="CURRENTLY WINNING" styleClass="form-label" />
-                <Label text="7" styleClass="stat-number" />
-                <Label text="Outbid on 2 items" styleClass="error-text" />
+                <Label fx:id="winningBidsLabel" text="0" styleClass="stat-number" />
+                <HBox spacing="4">
+                    <Label text="Outbid on " styleClass="error-text" />
+                    <Label fx:id="outbidLabel" text="0" styleClass="error-text" />
+                    <Label text=" items" styleClass="error-text" />
+                </HBox>
             </VBox>
 
             <VBox styleClass="card" spacing="8" prefWidth="260">
@@ -60,7 +66,7 @@
                     <Insets top="18" right="18" bottom="18" left="18" />
                 </padding>
                 <Label text="WATCHLIST" styleClass="form-label" />
-                <Label text="5" styleClass="stat-number" />
+                <Label fx:id="watchlistLabel" text="0" styleClass="stat-number" />
                 <Label
                     text="Following active lots"
                     styleClass="page-subtitle"
@@ -76,7 +82,7 @@
                         styleClass="section-title"
                     />
                     <Region HBox.hgrow="ALWAYS" />
-                    <Button text="View All" styleClass="secondary-button" />
+                    <Button onAction="#showAllAuctions" text="View All" styleClass="secondary-button" />
                 </HBox>
 
                 <HBox spacing="16">

@@ -14,6 +14,7 @@ public record AuctionSummaryDto(
     ItemType itemType,
     BigDecimal startingPrice,
     BigDecimal currentPrice,
+    Long highestBidderId,
     LocalDateTime startTime,
     LocalDateTime endTime,
     AuctionStatus status,

@@ -27,11 +27,17 @@ public final class SceneManager {
 
     private static Role currentRole = Role.BIDDER;
     private static String currentUsername = "guest";
+    private static long currentUserId = -1;
     private static BigDecimal currentBalance = new BigDecimal("45000");
+
     private static Long lastSelectedAuctionId;
     private static Runnable balanceListener;
 
     private SceneManager() {}
+
+    public static long getCurrentUserId() {
+        return currentUserId;
+    }
 
     public static void setBalanceListener(Runnable listener) {
         balanceListener = listener;
@@ -84,10 +90,12 @@ public final class SceneManager {
     }
 
     public static void showAppShell(
+        long userId,
         Role role,
         String username,
         BigDecimal balance
     ) {
+        currentUserId = userId;
         currentRole = role == null ? Role.BIDDER : role;
         currentUsername =
             username == null || username.isBlank() ? "guest" : username.trim();

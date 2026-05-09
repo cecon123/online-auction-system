@@ -17,6 +17,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -29,6 +32,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +44,9 @@ public class LiveBiddingController {
 
     private static final NumberFormat USD_FORMAT =
         NumberFormat.getCurrencyInstance(Locale.US);
+
+    @FXML
+    private Label countdownHeaderLabel;
 
     @FXML
     private Label countdownLabel;
@@ -123,6 +130,10 @@ public class LiveBiddingController {
         new AuctionClientService();
     private final Consumer<Response<?>> bidUpdateListener =
         this::handleBidUpdate;
+    private final Consumer<Response<?>> auctionClosedListener =
+        this::handleAuctionClosed;
+    private final Consumer<Response<?>> timeExtendedListener =
+        this::handleTimeExtended;
 
     private Long auctionId;
     private BigDecimal minimumIncrement = new BigDecimal("1.00");
@@ -133,6 +144,9 @@ public class LiveBiddingController {
 
     private boolean autoBidEnabled = false;
     private XYChart.Series<String, Number> priceSeries;
+    
+    private LocalDateTime endTime;
+    private Timeline countdownTimeline;
 
     public void setAuctionId(Long auctionId) {
         this.auctionId = auctionId;
@@ -144,10 +158,11 @@ public class LiveBiddingController {
     private void subscribeToUpdates() {
         if (auctionId == null) return;
         auctionService.subscribeAuction(auctionId);
-        SocketClient.getInstance().addEventListener(
-            MessageType.BID_UPDATE,
-            bidUpdateListener
-        );
+        
+        SocketClient socket = SocketClient.getInstance();
+        socket.addEventListener(MessageType.BID_UPDATE, bidUpdateListener);
+        socket.addEventListener(MessageType.AUCTION_CLOSED, auctionClosedListener);
+        socket.addEventListener(MessageType.TIME_EXTENDED, timeExtendedListener);
     }
 
     @FXML
@@ -168,7 +183,66 @@ public class LiveBiddingController {
 
         simulateOutbidButton.setVisible(false);
         simulateOutbidButton.setManaged(false);
+        
+        setupCountdownTimeline();
     }
+
+    private void setupCountdownTimeline() {
+        countdownTimeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> updateCountdown()));
+        countdownTimeline.setCycleCount(Animation.INDEFINITE);
+        countdownTimeline.play();
+    }
+
+    private void updateCountdown() {
+        if (endTime == null) {
+            countdownLabel.setText("--:--:--");
+            return;
+        }
+
+        String status = statusLabel.getText();
+        if ("FINISHED".equals(status)) {
+            countdownHeaderLabel.setText("TIME REMAINING");
+            countdownLabel.setText("00:00:00");
+            return;
+        }
+
+        LocalDateTime targetTime = endTime;
+
+        if ("OPEN".equals(status)) {
+            countdownHeaderLabel.setText("START IN");
+            targetTime = getStartTimeFromDetail(); 
+            if (targetTime == null) {
+                countdownLabel.setText("Opening...");
+                return;
+            }
+        } else {
+            countdownHeaderLabel.setText("TIME REMAINING");
+        }
+
+        java.time.Duration duration = java.time.Duration.between(LocalDateTime.now(), targetTime);
+        if (duration.isNegative() || duration.isZero()) {
+            if ("OPEN".equals(status)) {
+                countdownLabel.setText("Starting...");
+            } else {
+                countdownLabel.setText("00:00:00");
+            }
+            return;
+        }
+
+        long totalSeconds = duration.toSeconds();
+        long hours = totalSeconds / 3600;
+        long minutes = (totalSeconds % 3600) / 60;
+        long seconds = totalSeconds % 60;
+
+        countdownLabel.setText(String.format("%02d:%02d:%02d", hours, minutes, seconds));
+    }
+
+    private LocalDateTime getStartTimeFromDetail() {
+        // We need to store startTime in the controller if we want to use it here
+        return this.startTime;
+    }
+
+    private LocalDateTime startTime; // Add this field to store start time
 
     private void loadAuctionData() {
         if (auctionId == null) return;
@@ -180,6 +254,8 @@ public class LiveBiddingController {
                     AuctionDetailDto detail = response.getData();
                     Platform.runLater(() -> {
                         this.currentPrice = detail.currentPrice();
+                        this.startTime = detail.startTime();
+                        this.endTime = detail.endTime();
                         this.statusLabel.setText(detail.status().toString());
                         updateStatusStyle(detail.status().toString());
                         this.auctionTitleLabel.setText(detail.title());
@@ -203,6 +279,7 @@ public class LiveBiddingController {
                             "Watching: " + detail.title()
                         );
                         addPricePoint("Start", this.currentPrice);
+                        updateCountdown();
                     });
                 }
             });
@@ -233,6 +310,7 @@ public class LiveBiddingController {
             Platform.runLater(() -> {
                 this.currentPrice = event.amount();
                 this.highestBidderLabel.setText(event.bidderUsername());
+                this.endTime = event.newEndTime();
 
                 bidHistoryList
                     .getItems()
@@ -248,6 +326,7 @@ public class LiveBiddingController {
 
                 refreshCurrentPrice();
                 refreshAutoBidPanel();
+                updateCountdown();
 
                 if (
                     autoBidEnabled &&
@@ -653,5 +732,44 @@ public class LiveBiddingController {
 
     private void showAutoMessage(String message) {
         showAutoMessage(message, false);
+    }
+
+    private void handleAuctionClosed(Response<?> response) {
+        com.auction.common.dto.auction.AuctionEventDto event = JsonMapper.getInstance().convertData(
+            response.getData(),
+            com.auction.common.dto.auction.AuctionEventDto.class
+        );
+        if (event.auctionId().equals(auctionId)) {
+            Platform.runLater(() -> {
+                this.statusLabel.setText("FINISHED");
+                updateStatusStyle("FINISHED");
+                bidAmountField.setDisable(true);
+                enableAutoBidButton.setDisable(true);
+                updateAutoBidButton.setDisable(true);
+                disableAutoBidButton.setDisable(true);
+                showManualMessage("This auction has ended.", true);
+                
+                if (event.winnerUsername() != null) {
+                    highestBidderLabel.setText(event.winnerUsername());
+                    if (event.winnerUsername().equals(SceneManager.getCurrentUsername())) {
+                        showManualMessage("Congratulations! You won this auction!", true);
+                    }
+                }
+            });
+        }
+    }
+
+    private void handleTimeExtended(Response<?> response) {
+        com.auction.common.dto.auction.AuctionEventDto event = JsonMapper.getInstance().convertData(
+            response.getData(),
+            com.auction.common.dto.auction.AuctionEventDto.class
+        );
+        if (event.auctionId().equals(auctionId)) {
+            Platform.runLater(() -> {
+                this.endTime = event.newEndTime();
+                showManualMessage("Time extended! More time to bid.", true);
+                updateCountdown();
+            });
+        }
     }
 }

@@ -104,6 +104,17 @@ public class BidService {
 
             // 6. Update auction state
             auction.updateHighestBid(bidderId, request.amount());
+            
+            // Time Extension Logic: If bid is placed within the last 1 minute, extend by 2 minutes
+            boolean timeExtended = false;
+            LocalDateTime now = LocalDateTime.now();
+            if (now.isAfter(auction.getEndTime().minusMinutes(1))) {
+                auction.setEndTime(auction.getEndTime().plusMinutes(2));
+                timeExtended = true;
+                logger.info("Auction {} extended to {} due to last-minute bid", 
+                    auction.getId(), auction.getEndTime());
+            }
+
             auctionDao.update(auction);
 
             // 7. Record bid transaction
@@ -112,7 +123,7 @@ public class BidService {
                 auction.getId(),
                 bidderId,
                 request.amount(),
-                LocalDateTime.now()
+                now
             );
             bidDao.create(transaction);
 
@@ -136,6 +147,21 @@ public class BidService {
                     auction.getEndTime()
                 )
             );
+
+            if (timeExtended) {
+                notificationService.broadcast(
+                    auction.getId(),
+                    com.auction.common.protocol.MessageType.TIME_EXTENDED,
+                    new com.auction.common.dto.auction.AuctionEventDto(
+                        auction.getId(),
+                        auction.getStatus(),
+                        "Auction extended due to last-minute bid!",
+                        null,
+                        null,
+                        auction.getEndTime()
+                    )
+                );
+            }
 
             return new PlaceBidResponse(
                 auction.getId(),
@@ -212,6 +238,38 @@ public class BidService {
         return bidDao.findByBidderId(userId).stream()
             .map(BidTransaction::getAuctionId)
             .distinct()
+            .collect(java.util.stream.Collectors.toList());
+    }
+
+    /**
+     * Gets detailed bid history for a user.
+     */
+    public java.util.List<com.auction.common.dto.bid.BidHistoryDto> getUserBidHistory(long userId) {
+        return bidDao.findByBidderId(userId).stream()
+            .map(bid -> {
+                com.auction.common.model.Auction auction = auctionDao.findById(bid.getAuctionId()).orElse(null);
+                String title = "Unknown Auction";
+                String result = "OUTBID";
+                
+                if (auction != null) {
+                    title = "Auction #" + auction.getId();
+                    
+                    if (auction.getStatus() == com.auction.common.enums.AuctionStatus.FINISHED) {
+                        result = userId == (auction.getHighestBidderId() != null ? auction.getHighestBidderId() : -1) ? "WON" : "LOST";
+                    } else {
+                        result = userId == (auction.getHighestBidderId() != null ? auction.getHighestBidderId() : -1) ? "WINNING" : "OUTBID";
+                    }
+                }
+                
+                return new com.auction.common.dto.bid.BidHistoryDto(
+                    bid.getId(),
+                    bid.getAuctionId(),
+                    title,
+                    bid.getAmount(),
+                    bid.getCreatedAt(),
+                    result
+                );
+            })
             .collect(java.util.stream.Collectors.toList());
     }
 

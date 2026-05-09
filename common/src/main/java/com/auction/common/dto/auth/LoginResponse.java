@@ -8,6 +8,7 @@ import com.auction.common.enums.Role;
 public record LoginResponse(
     long userId,
     String username,
+    String fullName,
     Role role,
     java.math.BigDecimal balance,
     String token

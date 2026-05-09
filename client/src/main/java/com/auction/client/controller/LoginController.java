@@ -59,6 +59,7 @@ public class LoginController {
                     if (response.isSuccess()) {
                         LoginResponse data = response.getData();
                         SceneManager.showAppShell(
+                            data.userId(),
                             data.role(),
                             data.username(),
                             data.balance()

@@ -127,6 +127,22 @@ public class AuctionClientService {
     }
 
     /**
+     * Fetches dashboard statistics.
+     */
+    public CompletableFuture<Response<com.auction.common.dto.dashboard.DashboardDto>> getDashboard() {
+        Request<Void> request = new Request<>(MessageType.GET_DASHBOARD, null, null, null);
+
+        return socketClient.<Void, com.auction.common.dto.dashboard.DashboardDto>sendRequest(request)
+            .thenApply(response -> {
+                if (response.isSuccess()) {
+                    com.auction.common.dto.dashboard.DashboardDto data = jsonMapper.convertData(response.getData(), com.auction.common.dto.dashboard.DashboardDto.class);
+                    response.setData(data);
+                }
+                return response;
+            });
+    }
+
+    /**
      * Fetches auctions where the current user has placed bids.
      */
     public CompletableFuture<Response<List<AuctionSummaryDto>>> getMyBids() {
@@ -136,6 +152,22 @@ public class AuctionClientService {
             .thenApply(response -> {
                 if (response.isSuccess()) {
                     List<AuctionSummaryDto> data = jsonMapper.convertList(response.getData(), AuctionSummaryDto.class);
+                    response.setData(data);
+                }
+                return response;
+            });
+    }
+
+    /**
+     * Fetches the detailed bid history for the current user.
+     */
+    public CompletableFuture<Response<List<com.auction.common.dto.bid.BidHistoryDto>>> getUserBidHistory() {
+        Request<Void> request = new Request<>(MessageType.GET_USER_BID_HISTORY, null, null, null);
+        
+        return socketClient.<Void, List<com.auction.common.dto.bid.BidHistoryDto>>sendRequest(request)
+            .thenApply(response -> {
+                if (response.isSuccess()) {
+                    List<com.auction.common.dto.bid.BidHistoryDto> data = jsonMapper.convertList(response.getData(), com.auction.common.dto.bid.BidHistoryDto.class);
                     response.setData(data);
                 }
                 return response;

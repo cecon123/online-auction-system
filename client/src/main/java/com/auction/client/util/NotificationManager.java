@@ -36,9 +36,12 @@ public final class NotificationManager {
      * Initializes global event listeners for notifications.
      */
     public static void initialize() {
-        SocketClient.getInstance().addEventListener(MessageType.BID_UPDATE, response -> {
+        JsonMapper mapper = JsonMapper.getInstance();
+        SocketClient socket = SocketClient.getInstance();
+
+        socket.addEventListener(MessageType.BID_UPDATE, response -> {
             try {
-                BidUpdateEvent event = JsonMapper.getInstance().convertData(response.getData(), BidUpdateEvent.class);
+                BidUpdateEvent event = mapper.convertData(response.getData(), BidUpdateEvent.class);
                 
                 // Don't show toast for own bids to avoid cluttering the UI
                 String currentUsername = SceneManager.getCurrentUsername();
@@ -56,6 +59,37 @@ public final class NotificationManager {
                 logger.error("Error processing BID_UPDATE for notification", e);
             }
         });
+
+        socket.addEventListener(MessageType.AUCTION_CLOSED, response -> {
+            try {
+                com.auction.common.dto.auction.AuctionEventDto event = mapper.convertData(response.getData(), com.auction.common.dto.auction.AuctionEventDto.class);
+                
+                String title = "Auction Ended!";
+                String message;
+                if (event.winnerUsername() != null) {
+                    message = String.format("Auction #%d closed. Winner: %s with %s", 
+                        event.auctionId(), event.winnerUsername(), CURRENCY_FORMAT.format(event.finalPrice()));
+                } else {
+                    message = String.format("Auction #%d closed with no winner.", event.auctionId());
+                }
+                showToast(title, message);
+            } catch (Exception e) {
+                logger.error("Error processing AUCTION_CLOSED for notification", e);
+            }
+        });
+
+        socket.addEventListener(MessageType.TIME_EXTENDED, response -> {
+            try {
+                com.auction.common.dto.auction.AuctionEventDto event = mapper.convertData(response.getData(), com.auction.common.dto.auction.AuctionEventDto.class);
+                
+                String title = "Time Extended!";
+                String message = String.format("Auction #%d time has been extended due to last-minute bidding!", event.auctionId());
+                showToast(title, message);
+            } catch (Exception e) {
+                logger.error("Error processing TIME_EXTENDED for notification", e);
+            }
+        });
+
         logger.info("NotificationManager initialized with global listeners.");
     }
 

@@ -8,12 +8,18 @@ import com.auction.server.socket.SocketServer;
 
 public class ServerMain {
     public static void main(String[] args) {
+        // Set default timezone to Vietnam
+        java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+        
         AppProperties appProperties = AppProperties.getInstance();
 
         SchemaInitializer.initialize();
 
         // Start background status manager
-        AuctionManagerService auctionManager = new AuctionManagerService(new SQLiteAuctionDao());
+        AuctionManagerService auctionManager = new AuctionManagerService(
+            new SQLiteAuctionDao(),
+            new com.auction.server.dao.sqlite.SQLiteUserDao()
+        );
         auctionManager.start();
 
         int port = appProperties.getServerPort();

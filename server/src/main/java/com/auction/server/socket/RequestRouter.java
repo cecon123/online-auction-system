@@ -227,6 +227,7 @@ public class RequestRouter {
                     );
                 }
                 case GET_MY_BIDS -> handleGetMyBids(request);
+                case GET_USER_BID_HISTORY -> handleGetUserBidHistory(request);
                 case GET_DASHBOARD -> handleGetDashboard(request);
                 case SET_AUTO_BID -> handleSetAutoBid(request);
                 case GET_AUTO_BID -> handleGetAutoBid(request);
@@ -278,8 +279,20 @@ public class RequestRouter {
 
         // Role-specific stats
         if (user.role() == Role.BIDDER) {
-            participatingAuctionsCount = bidService.getMyBids(userId).size();
-            winningAuctionsCount = auctionDao.findByBidderId(userId).size();
+            List<Long> joinedAuctionIds = bidService.getMyBids(userId);
+            List<Auction> joinedAuctions = joinedAuctionIds.stream()
+                .map(auctionDao::findById)
+                .filter(java.util.Optional::isPresent)
+                .map(java.util.Optional::get)
+                .toList();
+
+            participatingAuctionsCount = (int) joinedAuctions.stream()
+                .filter(a -> a.getStatus() == AuctionStatus.RUNNING || a.getStatus() == AuctionStatus.OPEN)
+                .count();
+            
+            winningAuctionsCount = (int) joinedAuctions.stream()
+                .filter(a -> a.getStatus() == AuctionStatus.RUNNING && userId.equals(a.getHighestBidderId()))
+                .count();
         } else if (user.role() == Role.SELLER) {
             List<Auction> sellerAuctions = auctionDao.findBySellerId(userId);
             totalAuctionsCount = sellerAuctions.size();
@@ -379,8 +392,9 @@ public class RequestRouter {
                     a.getId(),
                     title,
                     type,
+                    a.getCurrentPrice(), // Initial price not tracked in summary for now
                     a.getCurrentPrice(),
-                    a.getCurrentPrice(),
+                    a.getHighestBidderId(),
                     a.getStartTime(),
                     a.getEndTime(),
                     a.getStatus(),
@@ -596,8 +610,9 @@ public class RequestRouter {
                     a.getId(),
                     title,
                     type,
+                    a.getCurrentPrice(), // Initial price not tracked in summary for now
                     a.getCurrentPrice(),
-                    a.getCurrentPrice(),
+                    a.getHighestBidderId(),
                     a.getStartTime(),
                     a.getEndTime(),
                     a.getStatus(),
@@ -611,6 +626,41 @@ public class RequestRouter {
             request.getRequestId(),
             "My bids loaded",
             auctions
+        );
+    }
+
+    private Response<List<com.auction.common.dto.bid.BidHistoryDto>> handleGetUserBidHistory(Request<?> request) {
+        Long userId = sessionManager.getUserId(request.getToken());
+        if (userId == null) {
+            throw new IllegalStateException("Unauthorized. Please login.");
+        }
+
+        List<com.auction.common.dto.bid.BidHistoryDto> history = bidService.getUserBidHistory(userId);
+        
+        // Enrich with item names
+        List<com.auction.common.dto.bid.BidHistoryDto> enrichedHistory = history.stream()
+            .map(h -> {
+                String title = auctionDao.findById(h.auctionId())
+                    .flatMap(a -> itemDao.findById(a.getItemId()))
+                    .map(Item::getName)
+                    .orElse(h.auctionTitle());
+                
+                return new com.auction.common.dto.bid.BidHistoryDto(
+                    h.bidId(),
+                    h.auctionId(),
+                    title,
+                    h.amount(),
+                    h.timestamp(),
+                    h.result()
+                );
+            })
+            .toList();
+
+        return Response.ok(
+            MessageType.GET_USER_BID_HISTORY,
+            request.getRequestId(),
+            "User bid history loaded",
+            enrichedHistory
         );
     }
 
