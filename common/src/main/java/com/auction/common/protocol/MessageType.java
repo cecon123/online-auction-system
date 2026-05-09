@@ -45,6 +45,10 @@ public enum MessageType {
     DEPOSIT,
     WITHDRAW,
 
+    // Auto-bid
+    SET_AUTO_BID,
+    GET_AUTO_BID,
+
     // Admin
     ADMIN_GET_USERS,
     ADMIN_UPDATE_USER_STATUS,

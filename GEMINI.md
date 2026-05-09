@@ -44,10 +44,11 @@ AI Agent PHẢI tuân thủ quy trình sau trước khi thực hiện `commit`:
 - **Surgical Update:** Ưu tiên sử dụng công cụ `replace` chính xác thay vì ghi đè toàn bộ file lớn.
 - **Validation:** Luôn chạy `mvn test` để đảm bảo không có regressions.
 
-## 7. Cập nhật Tiến độ
-Sau mỗi task được merge vào `dev`:
-1.  Cập nhật trạng thái `[x]` vào mục **"16. Task Board"** trong `README.md`.
+## 7. Cập nhật Tiến độ (BẮT BUỘC)
+AI Agent và thành viên PHẢI thực hiện:
+1.  Cập nhật trạng thái `[x]` vào mục **"15. Task Board"** trong `README.md` ngay sau khi hoàn thành logic của mỗi Task và trước khi thực hiện `git commit`.
 2.  Ghi tóm tắt thay đổi vào nội dung commit.
+3.  Thông báo cho Lead sau khi đã Push và tạo PR.
 
 ## 8. Hướng dẫn Kiểm thử thủ công (Manual Testing Guide)
 ### 8.1 Chạy hệ thống

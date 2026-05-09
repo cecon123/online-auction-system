@@ -65,10 +65,12 @@ public class ConcurrentBidTest {
     void setUp() {
         auctionDao = new SQLiteAuctionDao();
         bidService = new BidService(
-            auctionDao,
+            new SQLiteAuctionDao(),
             new SQLiteBidDao(),
-            new SQLiteUserDao()
+            new SQLiteUserDao(),
+            new com.auction.server.dao.sqlite.SQLiteAutoBidDao()
         );
+
     }
 
     @Test

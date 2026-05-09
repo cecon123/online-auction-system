@@ -7,6 +7,7 @@ import com.auction.common.model.Auction;
 import com.auction.common.model.BidTransaction;
 import com.auction.server.concurrency.AuctionLockManager;
 import com.auction.server.dao.AuctionDao;
+import com.auction.server.dao.AutoBidDao;
 import com.auction.server.dao.BidDao;
 import java.time.LocalDateTime;
 import org.slf4j.Logger;
@@ -25,18 +26,21 @@ public class BidService {
     private final AuctionLockManager lockManager;
     private final AuctionDao auctionDao;
     private final BidDao bidDao;
+    private final AutoBidDao autoBidDao;
     private final com.auction.server.dao.UserDao userDao;
     private final NotificationService notificationService;
 
     public BidService(
         AuctionDao auctionDao,
         BidDao bidDao,
-        com.auction.server.dao.UserDao userDao
+        com.auction.server.dao.UserDao userDao,
+        AutoBidDao autoBidDao
     ) {
         this.lockManager = AuctionLockManager.getInstance();
         this.auctionDao = auctionDao;
         this.bidDao = bidDao;
         this.userDao = userDao;
+        this.autoBidDao = autoBidDao;
         this.notificationService = NotificationService.getInstance();
     }
 
@@ -48,7 +52,7 @@ public class BidService {
      * @return PlaceBidResponse on success.
      */
     public PlaceBidResponse placeBid(long bidderId, PlaceBidRequest request) {
-        return lockManager.executeLocked(request.auctionId(), () -> {
+        PlaceBidResponse response = lockManager.executeLocked(request.auctionId(), () -> {
             // 1. Fetch bidder and check balance
             com.auction.server.dao.UserDao.UserRecord bidder = userDao
                 .findById(bidderId)
@@ -140,6 +144,39 @@ public class BidService {
                 transaction.getCreatedAt()
             );
         });
+
+        // Trigger auto-bids for other users
+        triggerAutoBids(request.auctionId(), bidderId);
+
+        return response;
+    }
+
+    private void triggerAutoBids(long auctionId, long lastBidderId) {
+        java.util.List<com.auction.common.model.AutoBidRule> rules = autoBidDao.findActiveByAuction(auctionId);
+
+        for (com.auction.common.model.AutoBidRule rule : rules) {
+            if (rule.getBidderId() == lastBidderId) continue;
+
+            // Use lock to ensure we have the latest auction price
+            lockManager.executeLocked(auctionId, () -> {
+                Auction auction = auctionDao.findById(auctionId).orElse(null);
+                if (auction == null || auction.getStatus() != AuctionStatus.RUNNING) return null;
+
+                java.math.BigDecimal nextBid = auction.getCurrentPrice().add(rule.getIncrement());
+                if (rule.canBidUpTo(nextBid)) {
+                    try {
+                        logger.info("Server-side Auto-bid triggered for User {} on Auction {}", rule.getBidderId(), auctionId);
+                        // Recursively call placeBid. This will trigger the next auto-bid if needed.
+                        // We do this outside the current lock in placeBid to avoid nested locks if possible, 
+                        // but placeBid also uses executeLocked. ReentrantLock handles this.
+                        this.placeBid(rule.getBidderId(), new PlaceBidRequest(auctionId, nextBid));
+                    } catch (Exception e) {
+                        logger.warn("Auto-bid failed for User {}: {}", rule.getBidderId(), e.getMessage());
+                    }
+                }
+                return null;
+            });
+        }
     }
 
     /**
@@ -176,5 +213,40 @@ public class BidService {
             .map(BidTransaction::getAuctionId)
             .distinct()
             .collect(java.util.stream.Collectors.toList());
+    }
+
+    /**
+     * Sets or updates an auto-bid rule for a user.
+     */
+    public void setAutoBid(long userId, com.auction.common.dto.bid.SetAutoBidRequest request) {
+        com.auction.common.model.AutoBidRule rule = new com.auction.common.model.AutoBidRule(
+            0L, // ID ignored for createOrUpdate
+            request.auctionId(),
+            userId,
+            request.maxBid(),
+            request.increment(),
+            request.active(),
+            LocalDateTime.now()
+        );
+        autoBidDao.createOrUpdate(rule);
+        logger.info("Auto-bid rule set for User {} on Auction {}", userId, request.auctionId());
+
+        // Check if we should trigger it immediately
+        if (request.active()) {
+            triggerAutoBids(request.auctionId(), 0L); // 0L as lastBidderId to check everyone
+        }
+    }
+
+    /**
+     * Gets the current auto-bid rule for a user and auction.
+     */
+    public java.util.Optional<com.auction.common.dto.bid.AutoBidDto> getAutoBid(long userId, long auctionId) {
+        return autoBidDao.findByAuctionAndBidder(auctionId, userId)
+            .map(rule -> new com.auction.common.dto.bid.AutoBidDto(
+                rule.getAuctionId(),
+                rule.getMaxBid(),
+                rule.getIncrement(),
+                rule.isActive()
+            ));
     }
 }

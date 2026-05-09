@@ -9,8 +9,11 @@ import com.auction.common.dto.auth.RegisterRequest;
 import com.auction.common.dto.auth.RegisterResponse;
 import com.auction.common.dto.auth.UpdateUserStatusRequest;
 import com.auction.common.dto.auth.UserDto;
+import com.auction.common.dto.bid.AutoBidDto;
 import com.auction.common.dto.bid.PlaceBidRequest;
 import com.auction.common.dto.bid.PlaceBidResponse;
+import com.auction.common.dto.bid.SetAutoBidRequest;
+import com.auction.common.dto.dashboard.DashboardDto;
 import com.auction.common.enums.AuctionStatus;
 import com.auction.common.enums.ItemType;
 import com.auction.common.enums.Role;
@@ -20,6 +23,7 @@ import com.auction.common.protocol.MessageType;
 import com.auction.common.protocol.Request;
 import com.auction.common.protocol.Response;
 import com.auction.server.dao.AuctionDao;
+import com.auction.server.dao.AutoBidDao;
 import com.auction.server.dao.BidDao;
 import com.auction.server.dao.ItemDao;
 import com.auction.server.dao.UserDao;
@@ -71,10 +75,11 @@ public class RequestRouter {
         this.auctionDao = new SQLiteAuctionDao();
         this.itemDao = new SQLiteItemDao();
         BidDao bidDao = new SQLiteBidDao();
+        AutoBidDao autoBidDao = new com.auction.server.dao.sqlite.SQLiteAutoBidDao();
 
         // Initialize real services
         this.authService = new AuthService(userDao);
-        this.bidService = new BidService(auctionDao, bidDao, userDao);
+        this.bidService = new BidService(auctionDao, bidDao, userDao, autoBidDao);
         this.walletService = new WalletService(userDao);
         this.auctionService = new AuctionService(auctionDao, itemDao);
         this.notificationService = NotificationService.getInstance();
@@ -222,6 +227,9 @@ public class RequestRouter {
                     );
                 }
                 case GET_MY_BIDS -> handleGetMyBids(request);
+                case GET_DASHBOARD -> handleGetDashboard(request);
+                case SET_AUTO_BID -> handleSetAutoBid(request);
+                case GET_AUTO_BID -> handleGetAutoBid(request);
                 case ADMIN_GET_USERS -> {
                     requireAdmin(request);
                     yield handleAdminGetUsers(request);
@@ -250,6 +258,99 @@ public class RequestRouter {
                 "Server internal error: " + e.getMessage()
             );
         }
+    }
+
+    private Response<DashboardDto> handleGetDashboard(Request<?> request) {
+        Long userId = sessionManager.getUserId(request.getToken());
+        if (userId == null) {
+            throw new IllegalStateException("Unauthorized. Please login.");
+        }
+
+        UserDao.UserRecord user = userDao.findById(userId)
+            .orElseThrow(() -> new IllegalStateException("User not found."));
+
+        BigDecimal balance = user.balance();
+        int participatingAuctionsCount = 0;
+        int winningAuctionsCount = 0;
+        int activeAuctionsCount = 0;
+        int totalAuctionsCount = 0;
+        int totalUsersCount = 0;
+
+        // Role-specific stats
+        if (user.role() == Role.BIDDER) {
+            participatingAuctionsCount = bidService.getMyBids(userId).size();
+            winningAuctionsCount = auctionDao.findByBidderId(userId).size();
+        } else if (user.role() == Role.SELLER) {
+            List<Auction> sellerAuctions = auctionDao.findBySellerId(userId);
+            totalAuctionsCount = sellerAuctions.size();
+            activeAuctionsCount = (int) sellerAuctions.stream()
+                .filter(a -> a.getStatus() == AuctionStatus.RUNNING)
+                .count();
+        } else if (user.role() == Role.ADMIN) {
+            List<Auction> allAuctions = auctionDao.findAll();
+            totalAuctionsCount = allAuctions.size();
+            activeAuctionsCount = (int) allAuctions.stream()
+                .filter(a -> a.getStatus() == AuctionStatus.RUNNING)
+                .count();
+            totalUsersCount = userDao.findAll().size();
+        }
+
+        DashboardDto dashboard = new DashboardDto(
+            balance,
+            participatingAuctionsCount,
+            winningAuctionsCount,
+            activeAuctionsCount,
+            totalAuctionsCount,
+            totalUsersCount
+        );
+
+        return Response.ok(
+            MessageType.GET_DASHBOARD,
+            request.getRequestId(),
+            "Dashboard data loaded",
+            dashboard
+        );
+    }
+
+    private Response<Void> handleSetAutoBid(Request<?> request) {
+        Long userId = sessionManager.getUserId(request.getToken());
+        if (userId == null) {
+            throw new IllegalStateException("Unauthorized. Please login.");
+        }
+
+        SetAutoBidRequest data = requireData(
+            request,
+            SetAutoBidRequest.class,
+            "SET_AUTO_BID requires payload"
+        );
+
+        bidService.setAutoBid(userId, data);
+
+        return Response.ok(
+            MessageType.SET_AUTO_BID,
+            request.getRequestId(),
+            "Auto-bid rule saved",
+            null
+        );
+    }
+
+    private Response<AutoBidDto> handleGetAutoBid(Request<?> request) {
+        Long userId = sessionManager.getUserId(request.getToken());
+        if (userId == null) {
+            throw new IllegalStateException("Unauthorized. Please login.");
+        }
+
+        Long auctionId = jsonMapper.convertData(request.getData(), Long.class);
+        if (auctionId == null) {
+            throw new IllegalArgumentException("Missing auction ID");
+        }
+
+        return Response.ok(
+            MessageType.GET_AUTO_BID,
+            request.getRequestId(),
+            "Auto-bid rule loaded",
+            bidService.getAutoBid(userId, auctionId).orElse(null)
+        );
     }
 
     private Response<List<AuctionSummaryDto>> handleGetAuctions(

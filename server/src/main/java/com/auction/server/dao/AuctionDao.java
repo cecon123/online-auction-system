@@ -41,6 +41,11 @@ public interface AuctionDao {
     List<Auction> findByBidderId(long bidderId);
 
     /**
+     * Finds auctions created by the given seller.
+     */
+    List<Auction> findBySellerId(long sellerId);
+
+    /**
      * Updates an existing auction.
      * Implementations should use optimistic locking via the version field.
      * @param auction The auction to update.

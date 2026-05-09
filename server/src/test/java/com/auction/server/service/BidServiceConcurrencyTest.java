@@ -24,7 +24,8 @@ public class BidServiceConcurrencyTest {
         bidService = new BidService(
             new SQLiteAuctionDao(),
             new SQLiteBidDao(),
-            new SQLiteUserDao()
+            new SQLiteUserDao(),
+            new com.auction.server.dao.sqlite.SQLiteAutoBidDao()
         );
     }
 
