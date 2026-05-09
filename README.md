@@ -119,45 +119,33 @@ Sử dụng WAL mode để tăng hiệu năng concurrency.
 
 Các thành viên sử dụng **Gemini CLI** hãy tuân thủ nghiêm ngặt mọi quy tắc trong @GEMINI.md.
 
-### 🛡️ Huy (Lead)
-- **Branch:** `feature/huy/final-audit-demo`
-- **Tasks:**
-    - [ ] Review & Merge toàn bộ PR từ `dev` vào `main`.
-    - [ ] Xây dựng Demo Script (Kịch bản trình diễn các tính năng core).
-    - [ ] Kiểm tra bảo mật cuối (BCrypt, Session, SQL Injection).
-    - [ ] Tổng hợp báo cáo kết quả kiểm thử hệ thống.
-- **Gemini Prompt:**
-  > "Gemini, hãy giúp tôi rà soát toàn bộ code trên branch dev, kiểm tra các lỗ hổng bảo mật tiềm ẩn và chuẩn bị kịch bản demo (markdown) bao gồm các bước từ đăng ký đến kết thúc đấu giá."
-
 ### ⚙️ Mạnh (Backend)
-- **Branch:** `feature/manh/perf-docs`
+- **Branch:** `feature/manh/refactor-and-audit`
 - **Tasks:**
-    - [ ] Hoàn thiện JavaDoc cho toàn bộ các Service và DAO quan trọng.
-    - [ ] Tạo script/data mẫu (seed.sql) để demo nhanh các trạng thái đấu giá khác nhau.
-    - [ ] Kiểm tra lần cuối các edge case về Concurrency (Deadlock, Race condition).
-    - [ ] Tối ưu hóa log hệ thống để dễ dàng theo dõi trong buổi demo.
+    - [ ] **Refactor `LiveBiddingController`:** Tách logic Chart, Countdown và BidHistory sang các Manager/Helper độc lập để giảm kích thước file.
+    - [ ] **Database & Concurrency Audit:** Kiểm tra kích hoạt `WAL Mode` trong code, thêm index cho `auto_bids(bidder_id)` và đồng nhất logic `BigDecimal`.
+    - [ ] **Global Exception Handling:** Cài đặt bộ bắt lỗi tập trung (`UncaughtExceptionHandler`) tại Client và Server để tránh crash đột ngột.
+    - [ ] Hoàn thiện JavaDoc cho các Service core để hỗ trợ bảo trì lâu dài.
 - **Gemini Prompt:**
-  > "Gemini, hãy hoàn thiện JavaDoc cho các file trong gói service và dao. Sau đó, cập nhật file `seed.sql` với dữ liệu phong phú để demo, bao gồm các auction sắp kết thúc và các auction đã hoàn thành."
+  > "Gemini, hãy giúp tôi tách logic xử lý LineChart trong `LiveBiddingController` ra một class `PriceChartManager`. Sau đó, kiểm tra class `Database` xem lệnh `PRAGMA journal_mode=WAL` đã được thực thi khi khởi tạo kết nối chưa."
 
 ### 🎨 Linh (Frontend 1)
-- **Branch:** `feature/linh/ux-refinement`
+- **Branch:** `feature/linh/design-system`
 - **Tasks:**
-    - [ ] Tinh chỉnh hiệu ứng chuyển cảnh (Transitions) giữa các View.
-    - [ ] Cải thiện thông báo lỗi trên UI (Error dialogs/labels) tại Login/Register.
-    - [ ] Đảm bảo UI thống nhất về màu sắc và font chữ dựa trên `variables.css`.
-    - [ ] Xử lý "Empty State" (Khi danh sách auction hoặc bid trống).
+    - [ ] **Tokenize Design System:** Di chuyển toàn bộ màu sắc hardcoded trong CSS vào `.root` của `variables.css` (primary, success, danger, surface colors).
+    - [ ] **Wallet Refinement:** Sử dụng `NumberFormat.getCurrencyInstance()` cho toàn bộ hiển thị tiền tệ và cải thiện Validation/Error messages.
+    - [ ] **Empty States & Transitions:** Thêm các placeholder trực quan khi danh sách trống và mượt hóa hiệu ứng chuyển View.
 - **Gemini Prompt:**
-  > "Gemini, hãy rà soát các Controller JavaFX, thêm hiệu ứng Fade transition khi chuyển scene. Sau đó, cải thiện logic validation tại RegisterController để hiển thị thông báo lỗi chi tiết hơn trên UI."
+  > "Gemini, hãy rà soát `variables.css` và định nghĩa các looked-up colors chuẩn. Sau đó, thay thế các mã hex trong `common.css` và `auth.css` bằng các biến vừa định nghĩa. Cuối cùng, cập nhật `WalletController` để format tiền theo chuẩn USD."
 
 ### 🚀 Hải Anh (Frontend 2)
-- **Branch:** `feature/haianh/realtime-viz`
+- **Branch:** `feature/haianh/realtime-polish`
 - **Tasks:**
-    - [ ] Hoàn thiện biểu đồ biến động giá (Real-time Line Chart) trong Auction Detail.
-    - [ ] Tối ưu hệ thống Toast notification (Vị trí, màu sắc theo loại thông báo).
-    - [ ] Thêm các widget trực quan (Charts/Stats) vào Admin Dashboard.
-    - [ ] Chỉnh sửa giao diện Live Bidding để hiển thị danh sách người bid gần nhất sinh động hơn.
+    - [ ] **Live UI Polish:** Cập nhật `live-bidding.css` theo Design System mới. Thêm `accessibleText` và tooltip cho toàn bộ icon điều khiển.
+    - [ ] **Socket Resilience:** Xử lý sự kiện ngắt kết nối socket, hiển thị Banner cảnh báo "Disconnected" và cơ chế retry UI.
+    - [ ] **Visual Feedback:** Thêm hiệu ứng Animation (ví dụ: Scale hoặc Color flash) khi giá tiền thay đổi realtime.
 - **Gemini Prompt:**
-  > "Gemini, hãy giúp tôi hoàn thiện `LiveBiddingController` để tích hợp `LineChart` hiển thị lịch sử đặt giá. Sau đó, tinh chỉnh `NotificationManager` để các Toast thông báo thắng cuộc có màu sắc nổi bật (Success theme)."
+  > "Gemini, hãy giúp tôi cập nhật `LiveBiddingView.fxml` để thêm Tooltip cho các nút Auto-bid. Sau đó, viết logic trong `LiveBiddingController` để khi nhận `BID_UPDATE`, nhãn giá tiền sẽ nhấp nháy màu xanh trong 0.5s để thu hút sự chú ý."
 
 ---
 
