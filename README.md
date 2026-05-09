@@ -37,8 +37,8 @@
 - [x] SQLite Persistence: Lưu trữ dữ liệu an toàn.
 
 ### 3.2 Chức năng đang hoàn thiện (In Progress)
-- [ ] Filter & Search: Lọc theo danh mục và trạng thái tại Auction List.
-- [ ] My Bids: Xem lại các phiên đấu giá đã tham gia.
+- [x] Filter & Search: Lọc theo danh mục và trạng thái tại Auction List.
+- [x] My Bids: Xem lại các phiên đấu giá đã tham gia.
 - [ ] Notification System: Thông báo Toast khi bị vượt giá hoặc đấu giá kết thúc.
 - [ ] Admin Panel: Quản lý người dùng và phiên đấu giá.
 
@@ -128,9 +128,9 @@ Các thành viên sử dụng **Gemini CLI** hãy copy prompt tương ứng bên
 
 #### 🟡 ƯU TIÊN 2: UI Logic & Search/Filter
 - **Linh:**
-    - [ ] Task: Filter/Search tại `AuctionList` & `MyBidsController` implementation.
-    - [ ] Task: Cài đặt và sử dụng **Ikonli** để thay thế các text placeholder bằng icon.
-    - [ ] **Gemini Prompt:** `Tôi là Linh. Hãy thực hiện Task: 1. Code logic lọc danh sách tại 'AuctionListController.java'. 2. Triển khai 'MyBidsController.java' hiển thị lịch sử thầu. 3. Sử dụng Ikonli (FontAwesome5/MaterialDesign2) cho Sidebar/Buttons. QUY TRÌNH: Tạo branch 'feature/linh/ui-logic', tuân thủ @GEMINI.md, sau khi xong nhắc tôi chạy 'mvn clean install' và test thực tế. Chỉ commit/push khi hệ thống ổn định và nhắc tôi tạo PR cho Huy (Lead) review.`
+    - [x] Task: Filter/Search tại `AuctionList` & `MyBidsController` implementation.
+    - [x] Task: Cài đặt và sử dụng **Ikonli** để thay thế các text placeholder bằng icon.
+    - [x] **Gemini Prompt:** `Tôi là Linh. Hãy thực hiện Task: 1. Code logic lọc danh sách tại 'AuctionListController.java'. 2. Triển khai 'MyBidsController.java' hiển thị lịch sử thầu. 3. Sử dụng Ikonli (FontAwesome5/MaterialDesign2) cho Sidebar/Buttons. QUY TRÌNH: Tạo branch 'feature/linh/ui-logic', tuân thủ @GEMINI.md, sau khi xong nhắc tôi chạy 'mvn clean install' và test thực tế. Chỉ commit/push khi hệ thống ổn định và nhắc tôi tạo PR cho Huy (Lead) review.`
 - **Mạnh:**
     - [ ] Task: `findByBidderId` in DAO & Concurrency Stress Test.
     - [ ] **Gemini Prompt:** `Tôi là Mạnh. Hãy thực hiện Task: 1. Thêm 'findByBidderId' vào 'AuctionDao'/'SQLiteAuctionDao'. 2. Tạo test 'ConcurrentBidTest.java' (JUnit 5) giả lập 20 thread cùng bid. 3. Thêm Index tối ưu trong 'schema.sql'. QUY TRÌNH: Tạo branch 'feature/manh/stress-test-db', tuân thủ @GEMINI.md, sau khi xong nhắc tôi chạy 'mvn clean install' và 'mvn test'. Chỉ commit/push khi hệ thống ổn định và nhắc tôi tạo PR cho Huy (Lead) review.`
