@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
     full_name TEXT NOT NULL,
     role TEXT NOT NULL CHECK (role IN ('BIDDER', 'SELLER', 'ADMIN')),
     balance TEXT NOT NULL DEFAULT '0.00',
+    locked_balance TEXT NOT NULL DEFAULT '0.00',
     active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
     created_at TEXT NOT NULL
 );
@@ -29,6 +30,7 @@ CREATE TABLE IF NOT EXISTS items (
     manufacturer TEXT,
     vehicle_year INTEGER,
 
+    deleted INTEGER NOT NULL DEFAULT 0 CHECK (deleted IN (0, 1)),
     created_at TEXT NOT NULL,
 
     FOREIGN KEY (seller_id) REFERENCES users(id) ON DELETE CASCADE
@@ -39,6 +41,8 @@ CREATE TABLE IF NOT EXISTS auctions (
     item_id INTEGER NOT NULL UNIQUE,
     seller_id INTEGER NOT NULL,
     current_price TEXT NOT NULL,
+    highest_max_bid TEXT NOT NULL DEFAULT '0.00',
+    reserve_price TEXT,
     highest_bidder_id INTEGER,
     start_time TEXT NOT NULL,
     end_time TEXT NOT NULL,

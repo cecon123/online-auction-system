@@ -173,6 +173,18 @@
                             />
                         </VBox>
 
+                        <VBox spacing="4">
+                            <Label
+                                text="RESERVE PRICE"
+                                styleClass="create-form-label"
+                            />
+                            <TextField
+                                fx:id="reservePriceField"
+                                promptText="Optional: Minimum Price to Sell"
+                                styleClass="create-input"
+                            />
+                        </VBox>
+
                         <HBox spacing="10">
                             <VBox spacing="4" HBox.hgrow="ALWAYS">
                                 <Label

@@ -16,9 +16,11 @@ public class ServerMain {
         SchemaInitializer.initialize();
 
         // Start background status manager
+        com.auction.server.dao.UserDao userDao = new com.auction.server.dao.sqlite.SQLiteUserDao();
         AuctionManagerService auctionManager = new AuctionManagerService(
             new SQLiteAuctionDao(),
-            new com.auction.server.dao.sqlite.SQLiteUserDao()
+            userDao,
+            new com.auction.server.service.WalletService(userDao)
         );
         auctionManager.start();
 

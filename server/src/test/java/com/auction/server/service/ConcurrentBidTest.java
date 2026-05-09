@@ -64,13 +64,15 @@ public class ConcurrentBidTest {
     @BeforeEach
     void setUp() {
         auctionDao = new SQLiteAuctionDao();
+        SQLiteUserDao userDao = new SQLiteUserDao();
+        WalletService walletService = new WalletService(userDao);
         bidService = new BidService(
-            new SQLiteAuctionDao(),
+            auctionDao,
             new SQLiteBidDao(),
-            new SQLiteUserDao(),
-            new com.auction.server.dao.sqlite.SQLiteAutoBidDao()
+            userDao,
+            new com.auction.server.dao.sqlite.SQLiteAutoBidDao(),
+            walletService
         );
-
     }
 
     @Test

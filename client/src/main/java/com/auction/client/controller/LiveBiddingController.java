@@ -7,6 +7,7 @@ import com.auction.client.util.SceneManager;
 import com.auction.common.dto.auction.AuctionDetailDto;
 import com.auction.common.dto.bid.BidUpdateEvent;
 import com.auction.common.dto.bid.PlaceBidResponse;
+import com.auction.common.dto.dashboard.DashboardDto;
 import com.auction.common.protocol.MessageType;
 import com.auction.common.protocol.Response;
 import java.math.BigDecimal;
@@ -65,6 +66,9 @@ public class LiveBiddingController {
 
     @FXML
     private Label highestBidderLabel;
+
+    @FXML
+    private Label reservePriceLabel;
 
     @FXML
     private TextField bidAmountField;
@@ -272,6 +276,11 @@ public class LiveBiddingController {
                                 ? detail.highestBidderUsername()
                                 : "No bids"
                         );
+                        if (detail.reservePrice() != null) {
+                            this.reservePriceLabel.setText(formatMoney(detail.reservePrice()));
+                        } else {
+                            this.reservePriceLabel.setText("None");
+                        }
                         refreshCurrentPrice();
                         refreshAutoBidPanel();
                         autoBidMessageLabel.setText("Realtime updates active.");
@@ -373,11 +382,15 @@ public class LiveBiddingController {
                         showManualMessage("Bid placed successfully!", true);
                         bidAmountField.clear();
                         
-                        // Deduct from local balance for immediate feedback 
-                        // (Server should eventually send an official balance update)
-                        BigDecimal currentBalance = SceneManager.getCurrentBalance();
-                        BigDecimal newBalance = currentBalance.subtract(manualBid);
-                        SceneManager.setCurrentBalance(newBalance);
+                        // Request dashboard refresh to show new locked balance
+                        auctionService.getDashboard().thenAccept(dashResponse -> {
+                            if (dashResponse.isSuccess()) {
+                                DashboardDto stats = dashResponse.getData();
+                                Platform.runLater(() -> {
+                                    SceneManager.setCurrentBalances(stats.balance(), stats.lockedBalance());
+                                });
+                            }
+                        });
                     } else {
                         showManualMessage("Error: " + response.getMessage(), false);
                     }

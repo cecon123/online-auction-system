@@ -23,12 +23,18 @@ public class AuctionManagerService {
 
     private final AuctionDao auctionDao;
     private final com.auction.server.dao.UserDao userDao;
+    private final WalletService walletService;
     private final NotificationService notificationService;
     private final ScheduledExecutorService scheduler;
 
-    public AuctionManagerService(AuctionDao auctionDao, com.auction.server.dao.UserDao userDao) {
+    public AuctionManagerService(
+        AuctionDao auctionDao,
+        com.auction.server.dao.UserDao userDao,
+        WalletService walletService
+    ) {
         this.auctionDao = auctionDao;
         this.userDao = userDao;
+        this.walletService = walletService;
         this.notificationService = NotificationService.getInstance();
         this.scheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
             Thread thread = new Thread(runnable, "AuctionManager-Thread");
@@ -74,43 +80,88 @@ public class AuctionManagerService {
         if (currentStatus == AuctionStatus.OPEN && !now.isBefore(auction.getStartTime())) {
             newStatus = AuctionStatus.RUNNING;
         } else if (currentStatus == AuctionStatus.RUNNING && now.isAfter(auction.getEndTime())) {
-            newStatus = AuctionStatus.FINISHED;
+            // Check reserve price when finished
+            if (auction.getHighestBidderId() != null) {
+                // Determine if reserve met (if null reserve, it's always met)
+                boolean reserveMet = auction.getReservePrice() == null || 
+                                   auction.getCurrentPrice().compareTo(auction.getReservePrice()) >= 0;
+                
+                if (reserveMet) {
+                    newStatus = AuctionStatus.FINISHED;
+                } else {
+                    newStatus = AuctionStatus.CANCELED;
+                }
+            } else {
+                // No bids at all
+                newStatus = AuctionStatus.CANCELED;
+            }
         }
 
         if (newStatus != currentStatus) {
             try {
+                logger.info("Transitioning Auction {} from {} to {}.", auction.getId(), currentStatus, newStatus);
+                
+                // ESCROW SETTLEMENT LOGIC
+                if (newStatus == AuctionStatus.FINISHED) {
+                    Long winnerId = auction.getHighestBidderId();
+                    java.math.BigDecimal finalPrice = auction.getCurrentPrice();
+                    java.math.BigDecimal maxLocked = auction.getHighestMaxBid();
+
+                    logger.info("Settling Auction {}: Winner={}, Price={}, MaxLocked={}", 
+                        auction.getId(), winnerId, finalPrice, maxLocked);
+
+                    // Success: Transfer funds from winner to seller
+                    walletService.settleAuction(
+                        winnerId,
+                        auction.getSellerId(),
+                        finalPrice
+                    );
+                    
+                    // Release the leftover max bid if any (Model 1: Full Max Lock)
+                    java.math.BigDecimal leftover = maxLocked.subtract(finalPrice);
+                    if (leftover.compareTo(java.math.BigDecimal.ZERO) > 0) {
+                        logger.info("Releasing leftover Proxy funds: {}", leftover);
+                        walletService.releaseFunds(winnerId, leftover);
+                    }
+                } else if (newStatus == AuctionStatus.CANCELED && auction.getHighestBidderId() != null) {
+                    // Failure (reserve not met): Refund highest bidder their full locked max bid
+                    logger.info("Auction {} canceled. Refunding {} to User {}", 
+                        auction.getId(), auction.getHighestMaxBid(), auction.getHighestBidderId());
+                    walletService.releaseFunds(
+                        auction.getHighestBidderId(),
+                        auction.getHighestMaxBid()
+                    );
+                }
+
                 auction.setStatus(newStatus);
                 auctionDao.update(auction);
-                logger.info("Auction {} status changed from {} to {}", 
-                    auction.getId(), currentStatus, newStatus);
 
                 // Broadcast status change
-                String winner = null;
-                if (newStatus == AuctionStatus.FINISHED && auction.getHighestBidderId() != null) {
-                    winner = userDao.findById(auction.getHighestBidderId())
+                String winnerUsername = null;
+                if (auction.getHighestBidderId() != null) {
+                    winnerUsername = userDao.findById(auction.getHighestBidderId())
                         .map(com.auction.server.dao.UserDao.UserRecord::username)
                         .orElse("Unknown");
                 }
 
+                String message = "Auction " + (newStatus == AuctionStatus.FINISHED ? "sold successfully!" : "ended without sale.");
+
                 notificationService.broadcast(
                     auction.getId(),
-                    newStatus == AuctionStatus.FINISHED ? 
-                        com.auction.common.protocol.MessageType.AUCTION_CLOSED : 
-                        com.auction.common.protocol.MessageType.BID_UPDATE, // Reuse for RUNNING status change
+                    com.auction.common.protocol.MessageType.AUCTION_CLOSED,
                     new com.auction.common.dto.auction.AuctionEventDto(
                         auction.getId(),
                         newStatus,
-                        "Auction status changed to " + newStatus,
-                        winner,
+                        message,
+                        winnerUsername,
                         auction.getCurrentPrice(),
                         auction.getEndTime()
                     )
                 );
             } catch (IllegalStateException e) {
-                // Optimistic locking failure - someone else might have updated it
-                logger.warn("Optimistic locking failure while updating status for Auction {}", auction.getId());
+                logger.warn("Status update failed for Auction {}: {}", auction.getId(), e.getMessage());
             } catch (Exception e) {
-                logger.error("Failed to update status for Auction {}", auction.getId(), e);
+                logger.error("Error updating status for Auction {}", auction.getId(), e);
             }
         }
     }

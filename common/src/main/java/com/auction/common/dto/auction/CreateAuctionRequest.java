@@ -22,6 +22,7 @@ public record CreateAuctionRequest(
     String condition,
     String description,
     BigDecimal startingPrice,
+    BigDecimal reservePrice,
     LocalDateTime startTime,
     LocalDateTime endTime,
     String imagePath

@@ -29,9 +29,10 @@ public final class SceneManager {
     private static String currentUsername = "guest";
     private static long currentUserId = -1;
     private static BigDecimal currentBalance = new BigDecimal("45000");
+    private static BigDecimal currentLockedBalance = BigDecimal.ZERO;
 
     private static Long lastSelectedAuctionId;
-    private static Runnable balanceListener;
+    private static final java.util.List<Runnable> balanceListeners = new java.util.ArrayList<>();
 
     private SceneManager() {}
 
@@ -39,8 +40,10 @@ public final class SceneManager {
         return currentUserId;
     }
 
-    public static void setBalanceListener(Runnable listener) {
-        balanceListener = listener;
+    public static void addBalanceListener(Runnable listener) {
+        if (listener != null) {
+            balanceListeners.add(listener);
+        }
     }
 
     public static void initialize(Stage stage) {
@@ -60,12 +63,30 @@ public final class SceneManager {
         return currentBalance;
     }
 
+    public static BigDecimal getCurrentLockedBalance() {
+        return currentLockedBalance;
+    }
+
+    public static BigDecimal getAvailableBalance() {
+        return currentBalance.subtract(currentLockedBalance);
+    }
+
     public static void setCurrentBalance(BigDecimal balance) {
         if (balance != null) {
             currentBalance = balance;
-            if (balanceListener != null) {
-                balanceListener.run();
-            }
+            notifyBalanceListeners();
+        }
+    }
+
+    public static void setCurrentBalances(BigDecimal balance, BigDecimal lockedBalance) {
+        if (balance != null) currentBalance = balance;
+        if (lockedBalance != null) currentLockedBalance = lockedBalance;
+        notifyBalanceListeners();
+    }
+
+    private static void notifyBalanceListeners() {
+        for (Runnable listener : balanceListeners) {
+            listener.run();
         }
     }
 
@@ -93,13 +114,15 @@ public final class SceneManager {
         long userId,
         Role role,
         String username,
-        BigDecimal balance
+        BigDecimal balance,
+        BigDecimal lockedBalance
     ) {
         currentUserId = userId;
         currentRole = role == null ? Role.BIDDER : role;
         currentUsername =
             username == null || username.isBlank() ? "guest" : username.trim();
         currentBalance = balance == null ? BigDecimal.ZERO : balance;
+        currentLockedBalance = lockedBalance == null ? BigDecimal.ZERO : lockedBalance;
 
         Parent root = loadFxml("/fxml/AppShell.fxml");
         BorderPane foundContentRoot = (BorderPane) root.lookup("#contentRoot");

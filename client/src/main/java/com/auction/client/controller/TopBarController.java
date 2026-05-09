@@ -40,7 +40,7 @@ public class TopBarController {
         updateBalanceLabel();
 
         // Register listener for balance updates
-        SceneManager.setBalanceListener(() -> {
+        SceneManager.addBalanceListener(() -> {
             javafx.application.Platform.runLater(this::updateBalanceLabel);
         });
 

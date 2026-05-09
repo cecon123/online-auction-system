@@ -9,10 +9,8 @@ import com.auction.common.dto.auth.RegisterRequest;
 import com.auction.common.dto.auth.RegisterResponse;
 import com.auction.common.dto.auth.UpdateUserStatusRequest;
 import com.auction.common.dto.auth.UserDto;
-import com.auction.common.dto.bid.AutoBidDto;
 import com.auction.common.dto.bid.PlaceBidRequest;
 import com.auction.common.dto.bid.PlaceBidResponse;
-import com.auction.common.dto.bid.SetAutoBidRequest;
 import com.auction.common.dto.dashboard.DashboardDto;
 import com.auction.common.enums.AuctionStatus;
 import com.auction.common.enums.ItemType;
@@ -79,8 +77,8 @@ public class RequestRouter {
 
         // Initialize real services
         this.authService = new AuthService(userDao);
-        this.bidService = new BidService(auctionDao, bidDao, userDao, autoBidDao);
         this.walletService = new WalletService(userDao);
+        this.bidService = new BidService(auctionDao, bidDao, userDao, autoBidDao, walletService);
         this.auctionService = new AuctionService(auctionDao, itemDao);
         this.notificationService = NotificationService.getInstance();
         this.sessionManager = SessionManager.getInstance();
@@ -163,6 +161,7 @@ public class RequestRouter {
                     );
                 }
                 case GET_AUCTIONS -> handleGetAuctions(request);
+                case GET_SELLER_AUCTIONS -> handleGetSellerAuctions(request);
                 case GET_AUCTION_DETAIL -> handleGetAuctionDetail(request);
                 case CREATE_AUCTION -> handleCreateAuction(request);
                 case DEPOSIT -> handleDeposit(request);
@@ -310,6 +309,7 @@ public class RequestRouter {
 
         DashboardDto dashboard = new DashboardDto(
             balance,
+            user.lockedBalance(),
             participatingAuctionsCount,
             winningAuctionsCount,
             activeAuctionsCount,
@@ -331,9 +331,9 @@ public class RequestRouter {
             throw new IllegalStateException("Unauthorized. Please login.");
         }
 
-        SetAutoBidRequest data = requireData(
+        com.auction.common.dto.bid.SetAutoBidRequest data = requireData(
             request,
-            SetAutoBidRequest.class,
+            com.auction.common.dto.bid.SetAutoBidRequest.class,
             "SET_AUTO_BID requires payload"
         );
 
@@ -342,12 +342,12 @@ public class RequestRouter {
         return Response.ok(
             MessageType.SET_AUTO_BID,
             request.getRequestId(),
-            "Auto-bid rule saved",
+            "Auto-bid limit saved",
             null
         );
     }
 
-    private Response<AutoBidDto> handleGetAutoBid(Request<?> request) {
+    private Response<com.auction.common.dto.bid.AutoBidDto> handleGetAutoBid(Request<?> request) {
         Long userId = sessionManager.getUserId(request.getToken());
         if (userId == null) {
             throw new IllegalStateException("Unauthorized. Please login.");
@@ -361,7 +361,7 @@ public class RequestRouter {
         return Response.ok(
             MessageType.GET_AUTO_BID,
             request.getRequestId(),
-            "Auto-bid rule loaded",
+            "Auto-bid limit loaded",
             bidService.getAutoBid(userId, auctionId).orElse(null)
         );
     }
@@ -370,6 +370,26 @@ public class RequestRouter {
         Request<?> request
     ) {
         List<Auction> auctionList = auctionDao.findAll();
+        return mapToAuctionSummaries(auctionList, request.getRequestId());
+    }
+
+    private Response<List<AuctionSummaryDto>> handleGetSellerAuctions(
+        Request<?> request
+    ) {
+        Long userId = sessionManager.getUserId(request.getToken());
+        if (userId == null) {
+            throw new IllegalStateException("Unauthorized. Please login.");
+        }
+
+        List<Auction> auctionList = auctionDao.findBySellerId(userId);
+        return mapToAuctionSummaries(auctionList, MessageType.GET_SELLER_AUCTIONS, "Seller auctions loaded", request.getRequestId());
+    }
+
+    private Response<List<AuctionSummaryDto>> mapToAuctionSummaries(List<Auction> auctionList, String requestId) {
+        return mapToAuctionSummaries(auctionList, MessageType.GET_AUCTIONS, "Auctions loaded", requestId);
+    }
+
+    private Response<List<AuctionSummaryDto>> mapToAuctionSummaries(List<Auction> auctionList, MessageType type, String message, String requestId) {
         List<Item> itemList = itemDao.findAll();
 
         java.util.Map<Long, Item> itemMap = itemList
@@ -383,7 +403,7 @@ public class RequestRouter {
                 String title = (item != null)
                     ? item.getName()
                     : "Unknown Item";
-                ItemType type = (item != null)
+                ItemType itemType = (item != null)
                     ? item.getItemType()
                     : ItemType.ELECTRONICS;
                 String image = (item != null) ? item.getImagePath() : null;
@@ -391,7 +411,7 @@ public class RequestRouter {
                 return new AuctionSummaryDto(
                     a.getId(),
                     title,
-                    type,
+                    itemType,
                     a.getCurrentPrice(), // Initial price not tracked in summary for now
                     a.getCurrentPrice(),
                     a.getHighestBidderId(),
@@ -404,9 +424,9 @@ public class RequestRouter {
             .toList();
 
         return Response.ok(
-            MessageType.GET_AUCTIONS,
-            request.getRequestId(),
-            "Auctions loaded",
+            type,
+            requestId,
+            message,
             auctions
         );
     }
@@ -455,8 +475,9 @@ public class RequestRouter {
             item.getItemType(),
             item.getCondition(),
             item.getDescription(),
+            auction.getCurrentPrice(), // startingPrice (should ideally be from auction too if tracked)
             auction.getCurrentPrice(),
-            auction.getCurrentPrice(),
+            auction.getReservePrice(),
             highestBidder,
             auction.getStartTime(),
             auction.getEndTime(),
@@ -686,6 +707,7 @@ public class RequestRouter {
                 u.fullName(),
                 u.role(),
                 u.balance(),
+                u.lockedBalance(),
                 u.active(),
                 u.createdAt()
             ))

@@ -33,9 +33,9 @@ public class SQLiteAuctionDao implements AuctionDao {
     public long create(Auction auction) {
         String sql = """
                 INSERT INTO auctions (
-                    item_id, seller_id, current_price, highest_bidder_id,
+                    item_id, seller_id, current_price, highest_max_bid, reserve_price, highest_bidder_id,
                     start_time, end_time, status, version, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
         try (Connection connection = database.getConnection();
@@ -43,17 +43,23 @@ public class SQLiteAuctionDao implements AuctionDao {
 
             statement.setLong(1, auction.getItemId());
             statement.setLong(2, auction.getSellerId());
-            statement.setString(3, auction.getCurrentPrice().toString());
-            if (auction.getHighestBidderId() != null) {
-                statement.setLong(4, auction.getHighestBidderId());
+            statement.setString(3, auction.getCurrentPrice().toPlainString());
+            statement.setString(4, auction.getHighestMaxBid().toPlainString());
+            if (auction.getReservePrice() != null) {
+                statement.setString(5, auction.getReservePrice().toPlainString());
             } else {
-                statement.setNull(4, java.sql.Types.INTEGER);
+                statement.setNull(5, java.sql.Types.VARCHAR);
             }
-            statement.setString(5, auction.getStartTime().toString());
-            statement.setString(6, auction.getEndTime().toString());
-            statement.setString(7, auction.getStatus().name());
-            statement.setLong(8, auction.getVersion());
-            statement.setString(9, LocalDateTime.now().toString());
+            if (auction.getHighestBidderId() != null) {
+                statement.setLong(6, auction.getHighestBidderId());
+            } else {
+                statement.setNull(6, java.sql.Types.INTEGER);
+            }
+            statement.setString(7, auction.getStartTime().toString());
+            statement.setString(8, auction.getEndTime().toString());
+            statement.setString(9, auction.getStatus().name());
+            statement.setLong(10, auction.getVersion());
+            statement.setString(11, LocalDateTime.now().toString());
 
             statement.executeUpdate();
 
@@ -203,7 +209,7 @@ public class SQLiteAuctionDao implements AuctionDao {
     public void update(Auction auction) {
         String sql = """
                 UPDATE auctions
-                SET current_price = ?, highest_bidder_id = ?, start_time = ?, end_time = ?, status = ?, version = ?
+                SET current_price = ?, highest_max_bid = ?, reserve_price = ?, highest_bidder_id = ?, start_time = ?, end_time = ?, status = ?, version = ?
                 WHERE id = ? AND version = ?
                 """;
 
@@ -211,26 +217,29 @@ public class SQLiteAuctionDao implements AuctionDao {
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             long oldVersion = auction.getVersion();
-            auction.increaseVersion(); // This is a bit tricky if we want to follow the auction object state.
-            // Actually, the model has increaseVersion() method.
+            auction.increaseVersion();
 
-            statement.setString(1, auction.getCurrentPrice().toString());
-            if (auction.getHighestBidderId() != null) {
-                statement.setLong(2, auction.getHighestBidderId());
+            statement.setString(1, auction.getCurrentPrice().toPlainString());
+            statement.setString(2, auction.getHighestMaxBid().toPlainString());
+            if (auction.getReservePrice() != null) {
+                statement.setString(3, auction.getReservePrice().toPlainString());
             } else {
-                statement.setNull(2, java.sql.Types.INTEGER);
+                statement.setNull(3, java.sql.Types.VARCHAR);
             }
-            statement.setString(3, auction.getStartTime().toString());
-            statement.setString(4, auction.getEndTime().toString());
-            statement.setString(5, auction.getStatus().name());
-            statement.setLong(6, auction.getVersion());
-            statement.setLong(7, auction.getId());
-            statement.setLong(8, oldVersion);
+            if (auction.getHighestBidderId() != null) {
+                statement.setLong(4, auction.getHighestBidderId());
+            } else {
+                statement.setNull(4, java.sql.Types.INTEGER);
+            }
+            statement.setString(5, auction.getStartTime().toString());
+            statement.setString(6, auction.getEndTime().toString());
+            statement.setString(7, auction.getStatus().name());
+            statement.setLong(8, auction.getVersion());
+            statement.setLong(9, auction.getId());
+            statement.setLong(10, oldVersion);
 
             int affectedRows = statement.executeUpdate();
             if (affectedRows == 0) {
-                // Revert version if update failed
-                // Actually, it's better to just throw and let the caller handle it.
                 throw new IllegalStateException("Optimistic locking failure for Auction ID: " + auction.getId());
             }
         } catch (SQLException e) {
@@ -243,11 +252,16 @@ public class SQLiteAuctionDao implements AuctionDao {
         long bidderId = rs.getLong("highest_bidder_id");
         Long highestBidderId = rs.wasNull() ? null : bidderId;
 
+        String reservePriceStr = rs.getString("reserve_price");
+        BigDecimal reservePrice = (reservePriceStr == null) ? null : new BigDecimal(reservePriceStr);
+
         return new Auction(
             rs.getLong("id"),
             rs.getLong("item_id"),
             rs.getLong("seller_id"),
             new BigDecimal(rs.getString("current_price")),
+            new BigDecimal(rs.getString("highest_max_bid")),
+            reservePrice,
             highestBidderId,
             LocalDateTime.parse(rs.getString("start_time")),
             LocalDateTime.parse(rs.getString("end_time")),

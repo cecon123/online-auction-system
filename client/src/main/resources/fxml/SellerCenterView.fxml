@@ -32,33 +32,15 @@
         />
     </HBox>
 
-    <VBox styleClass="card" spacing="12">
-        <padding>
-            <Insets top="20" right="20" bottom="20" left="20" />
-        </padding>
-
-        <Label text="Active Listings" styleClass="section-title" />
-
-        <HBox spacing="24">
-            <Label text="Vintage Omega Seamaster" prefWidth="260" />
-            <Label text="\$1,200.00" prefWidth="140" />
-            <Label text="\$3,450.00" prefWidth="140" />
-            <Label text="Active" styleClass="status-running" />
-        </HBox>
-
-        <HBox spacing="24">
-            <Label text="Leica M3 Rangefinder" prefWidth="260" />
-            <Label text="\$800.00" prefWidth="140" />
-            <Label text="\$800.00" prefWidth="140" />
-            <Label text="Draft" styleClass="page-subtitle" />
-        </HBox>
-    </VBox>
-
-    <VBox styleClass="card" spacing="12" alignment="CENTER" prefHeight="220">
-        <Label text="No Past Auctions" styleClass="section-title" />
-        <Label
-            text="Completed auctions will appear here."
-            styleClass="page-subtitle"
-        />
-    </VBox>
+    <ScrollPane fitToWidth="true" styleClass="card-scroll" VBox.vgrow="ALWAYS">
+        <VBox fx:id="auctionListContainer" spacing="12" styleClass="card">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20" />
+            </padding>
+            <Label text="Your Auctions" styleClass="section-title" />
+            
+            <!-- Dynamic items will be added here -->
+            <Label fx:id="emptyLabel" text="You haven't created any auctions yet." styleClass="page-subtitle" visible="false" managed="false"/>
+        </VBox>
+    </ScrollPane>
 </VBox>

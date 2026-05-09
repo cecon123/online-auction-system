@@ -6,5 +6,6 @@ public record RegisterResponse(
     long userId,
     String username,
     Role role,
-    java.math.BigDecimal balance
+    java.math.BigDecimal balance,
+    java.math.BigDecimal lockedBalance
 ) {}

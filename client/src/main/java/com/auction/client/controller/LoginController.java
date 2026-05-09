@@ -62,7 +62,8 @@ public class LoginController {
                             data.userId(),
                             data.role(),
                             data.username(),
-                            data.balance()
+                            data.balance(),
+                            data.lockedBalance()
                         );
                     } else {
                         showError(response.getMessage());

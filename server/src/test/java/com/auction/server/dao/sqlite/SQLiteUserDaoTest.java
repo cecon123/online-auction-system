@@ -35,7 +35,8 @@ class SQLiteUserDaoTest {
             "hashed-password",
             "Nguyen Huy",
             Role.BIDDER,
-            new java.math.BigDecimal("1000")
+            new java.math.BigDecimal("1000"),
+            java.math.BigDecimal.ZERO
         );
 
         assertTrue(userId > 0);
@@ -48,7 +49,8 @@ class SQLiteUserDaoTest {
             "hashed-password",
             "Nguyen Manh",
             Role.SELLER,
-            new java.math.BigDecimal("2000")
+            new java.math.BigDecimal("2000"),
+            java.math.BigDecimal.ZERO
         );
 
         Optional<UserDao.UserRecord> user = userDao.findByUsername("manh");
@@ -76,6 +78,7 @@ class SQLiteUserDaoTest {
             "hashed-password",
             "Nguyen Linh",
             Role.BIDDER,
+            java.math.BigDecimal.ZERO,
             java.math.BigDecimal.ZERO
         );
 
@@ -94,6 +97,7 @@ class SQLiteUserDaoTest {
             "p",
             "Name",
             Role.BIDDER,
+            java.math.BigDecimal.ZERO,
             java.math.BigDecimal.ZERO
         );
 
@@ -111,6 +115,7 @@ class SQLiteUserDaoTest {
             "hash1",
             "User One",
             Role.BIDDER,
+            java.math.BigDecimal.ZERO,
             java.math.BigDecimal.ZERO
         );
         userDao.create(
@@ -118,6 +123,7 @@ class SQLiteUserDaoTest {
             "hash2",
             "User Two",
             Role.SELLER,
+            java.math.BigDecimal.ZERO,
             java.math.BigDecimal.ZERO
         );
 

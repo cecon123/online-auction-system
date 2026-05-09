@@ -3,6 +3,7 @@ package com.auction.server.service;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.auction.common.dto.bid.PlaceBidRequest;
+import com.auction.server.dao.UserDao;
 import com.auction.server.dao.sqlite.SQLiteAuctionDao;
 import com.auction.server.dao.sqlite.SQLiteBidDao;
 import com.auction.server.dao.sqlite.SQLiteUserDao;
@@ -20,12 +21,15 @@ public class BidServiceConcurrencyTest {
 
     @BeforeEach
     void setUp() {
+        UserDao userDao = new SQLiteUserDao();
+        WalletService walletService = new WalletService(userDao);
         // Now requires real or mock DAOs
         bidService = new BidService(
             new SQLiteAuctionDao(),
             new SQLiteBidDao(),
-            new SQLiteUserDao(),
-            new com.auction.server.dao.sqlite.SQLiteAutoBidDao()
+            userDao,
+            new com.auction.server.dao.sqlite.SQLiteAutoBidDao(),
+            walletService
         );
     }
 

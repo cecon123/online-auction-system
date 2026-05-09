@@ -16,7 +16,8 @@ public interface UserDao {
         String passwordHash,
         String fullName,
         Role role,
-        java.math.BigDecimal balance
+        java.math.BigDecimal balance,
+        java.math.BigDecimal lockedBalance
     );
 
     Optional<UserRecord> findByUsername(String username);
@@ -29,6 +30,10 @@ public interface UserDao {
 
     void updateBalance(long userId, java.math.BigDecimal balance);
 
+    void updateLockedBalance(long userId, java.math.BigDecimal lockedBalance);
+
+    void updateBalances(long userId, java.math.BigDecimal balance, java.math.BigDecimal lockedBalance);
+
     record UserRecord(
         long id,
         String username,
@@ -36,6 +41,7 @@ public interface UserDao {
         String fullName,
         Role role,
         java.math.BigDecimal balance,
+        java.math.BigDecimal lockedBalance,
         boolean active,
         LocalDateTime createdAt
     ) {}

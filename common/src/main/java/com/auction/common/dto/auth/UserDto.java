@@ -10,6 +10,7 @@ public record UserDto(
     String fullName,
     Role role,
     BigDecimal balance,
+    BigDecimal lockedBalance,
     boolean active,
     LocalDateTime createdAt
 ) {}

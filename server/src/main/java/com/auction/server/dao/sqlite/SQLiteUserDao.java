@@ -36,11 +36,12 @@ public class SQLiteUserDao implements UserDao {
         String passwordHash,
         String fullName,
         Role role,
-        java.math.BigDecimal balance
+        java.math.BigDecimal balance,
+        java.math.BigDecimal lockedBalance
     ) {
         String sql = """
-            INSERT INTO users(username, password_hash, full_name, role, balance, active, created_at)
-            VALUES (?, ?, ?, ?, ?, 1, ?)
+            INSERT INTO users(username, password_hash, full_name, role, balance, locked_balance, active, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, 1, ?)
             """;
 
         try (
@@ -55,7 +56,8 @@ public class SQLiteUserDao implements UserDao {
             statement.setString(3, fullName);
             statement.setString(4, role.name());
             statement.setString(5, balance.toPlainString());
-            statement.setString(6, LocalDateTime.now().toString());
+            statement.setString(6, lockedBalance.toPlainString());
+            statement.setString(7, LocalDateTime.now().toString());
 
             statement.executeUpdate();
 
@@ -80,7 +82,7 @@ public class SQLiteUserDao implements UserDao {
     @Override
     public Optional<UserRecord> findByUsername(String username) {
         String sql = """
-            SELECT id, username, password_hash, full_name, role, balance, active, created_at
+            SELECT id, username, password_hash, full_name, role, balance, locked_balance, active, created_at
             FROM users
             WHERE username = ?
             """;
@@ -110,7 +112,7 @@ public class SQLiteUserDao implements UserDao {
     @Override
     public Optional<UserRecord> findById(long id) {
         String sql = """
-            SELECT id, username, password_hash, full_name, role, balance, active, created_at
+            SELECT id, username, password_hash, full_name, role, balance, locked_balance, active, created_at
             FROM users
             WHERE id = ?
             """;
@@ -140,7 +142,7 @@ public class SQLiteUserDao implements UserDao {
     @Override
     public List<UserRecord> findAll() {
         String sql = """
-            SELECT id, username, password_hash, full_name, role, balance, active, created_at
+            SELECT id, username, password_hash, full_name, role, balance, locked_balance, active, created_at
             FROM users
             ORDER BY id ASC
             """;
@@ -211,6 +213,62 @@ public class SQLiteUserDao implements UserDao {
         }
     }
 
+    @Override
+    public void updateLockedBalance(
+        long userId,
+        java.math.BigDecimal lockedBalance
+    ) {
+        String sql = """
+            UPDATE users
+            SET locked_balance = ?
+            WHERE id = ?
+            """;
+
+        try (
+            Connection connection = database.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sql)
+        ) {
+            statement.setString(1, lockedBalance.toPlainString());
+            statement.setLong(2, userId);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            logger.error("Database error during updateLockedBalance: {}", userId, e);
+            throw new IllegalStateException(
+                "Could not update user locked balance: " + userId,
+                e
+            );
+        }
+    }
+
+    @Override
+    public void updateBalances(
+        long userId,
+        java.math.BigDecimal balance,
+        java.math.BigDecimal lockedBalance
+    ) {
+        String sql = """
+            UPDATE users
+            SET balance = ?, locked_balance = ?
+            WHERE id = ?
+            """;
+
+        try (
+            Connection connection = database.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sql)
+        ) {
+            statement.setString(1, balance.toPlainString());
+            statement.setString(2, lockedBalance.toPlainString());
+            statement.setLong(3, userId);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            logger.error("Database error during updateBalances: {}", userId, e);
+            throw new IllegalStateException(
+                "Could not update user balances: " + userId,
+                e
+            );
+        }
+    }
+
     private UserRecord mapRow(ResultSet resultSet) throws SQLException {
         return new UserRecord(
             resultSet.getLong("id"),
@@ -219,6 +277,7 @@ public class SQLiteUserDao implements UserDao {
             resultSet.getString("full_name"),
             Role.valueOf(resultSet.getString("role")),
             new java.math.BigDecimal(resultSet.getString("balance")),
+            new java.math.BigDecimal(resultSet.getString("locked_balance")),
             resultSet.getInt("active") == 1,
             LocalDateTime.parse(resultSet.getString("created_at"))
         );

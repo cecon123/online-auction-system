@@ -35,7 +35,7 @@ public class BidderDashboardController {
         refreshDashboard();
         
         // Listen for balance changes
-        SceneManager.setBalanceListener(() -> {
+        SceneManager.addBalanceListener(() -> {
             Platform.runLater(this::updateBalanceDisplay);
         });
     }
@@ -53,7 +53,7 @@ public class BidderDashboardController {
                     
                     // Update user balance globally if it changed
                     if (stats.balance() != null) {
-                        SceneManager.setCurrentBalance(stats.balance());
+                        SceneManager.setCurrentBalances(stats.balance(), stats.lockedBalance());
                     }
                     updateBalanceDisplay();
                 });
@@ -62,7 +62,8 @@ public class BidderDashboardController {
     }
 
     private void updateBalanceDisplay() {
-        balanceLabel.setText(CURRENCY_FORMAT.format(SceneManager.getCurrentBalance()));
+        BigDecimal balance = SceneManager.getCurrentBalance();
+        balanceLabel.setText(CURRENCY_FORMAT.format(balance));
     }
 
     @FXML

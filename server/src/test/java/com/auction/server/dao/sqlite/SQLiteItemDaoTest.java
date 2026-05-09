@@ -44,6 +44,7 @@ class SQLiteItemDaoTest {
             "pass",
             "The Seller",
             Role.SELLER,
+            java.math.BigDecimal.ZERO,
             java.math.BigDecimal.ZERO
         );
     }
@@ -131,6 +132,7 @@ class SQLiteItemDaoTest {
             "pass",
             "Other Seller",
             Role.SELLER,
+            java.math.BigDecimal.ZERO,
             java.math.BigDecimal.ZERO
         );
 

@@ -49,6 +49,7 @@ class SQLiteBidDaoTest {
             "pass",
             "The Seller",
             Role.SELLER,
+            java.math.BigDecimal.ZERO,
             java.math.BigDecimal.ZERO
         );
         bidderId = userDao.create(
@@ -56,7 +57,8 @@ class SQLiteBidDaoTest {
             "pass",
             "The Bidder",
             Role.BIDDER,
-            new java.math.BigDecimal("1000")
+            new java.math.BigDecimal("1000"),
+            java.math.BigDecimal.ZERO
         );
         long itemId = itemDao.create(
             new Electronics(
@@ -78,7 +80,9 @@ class SQLiteBidDaoTest {
                 itemId,
                 sellerId,
                 new BigDecimal("100"),
-                null,
+                new BigDecimal("100"), // highestMaxBid
+                null, // reservePrice
+                null, // highestBidderId
                 LocalDateTime.now(),
                 LocalDateTime.now().plusDays(1),
                 AuctionStatus.RUNNING,

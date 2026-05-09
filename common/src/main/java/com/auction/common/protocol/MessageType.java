@@ -24,6 +24,7 @@ public enum MessageType {
     UPDATE_ITEM,
     DELETE_ITEM,
     CREATE_AUCTION,
+    GET_SELLER_AUCTIONS,
     UPDATE_AUCTION,
     CANCEL_AUCTION,
 

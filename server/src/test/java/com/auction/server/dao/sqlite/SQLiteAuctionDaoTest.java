@@ -45,6 +45,7 @@ class SQLiteAuctionDaoTest {
             "pass",
             "The Seller",
             Role.SELLER,
+            java.math.BigDecimal.ZERO,
             java.math.BigDecimal.ZERO
         );
         itemId = itemDao.create(
@@ -70,7 +71,9 @@ class SQLiteAuctionDaoTest {
             itemId,
             sellerId,
             new BigDecimal("100"),
-            null,
+            new BigDecimal("100"), // highestMaxBid
+            null, // reservePrice
+            null, // highestBidderId
             LocalDateTime.now(),
             LocalDateTime.now().plusDays(1),
             AuctionStatus.OPEN,
@@ -94,7 +97,9 @@ class SQLiteAuctionDaoTest {
             itemId,
             sellerId,
             new BigDecimal("100"),
-            null,
+            new BigDecimal("100"), // highestMaxBid
+            null, // reservePrice
+            null, // highestBidderId
             LocalDateTime.now(),
             LocalDateTime.now().plusDays(1),
             AuctionStatus.OPEN,
@@ -119,7 +124,9 @@ class SQLiteAuctionDaoTest {
             itemId,
             sellerId,
             new BigDecimal("100"),
-            null,
+            new BigDecimal("100"), // highestMaxBid
+            null, // reservePrice
+            null, // highestBidderId
             LocalDateTime.now(),
             LocalDateTime.now().plusDays(1),
             AuctionStatus.OPEN,

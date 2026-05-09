@@ -19,6 +19,7 @@ public record AuctionDetailDto(
     String description,
     BigDecimal startingPrice,
     BigDecimal currentPrice,
+    BigDecimal reservePrice,
     String highestBidderUsername,
     LocalDateTime startTime,
     LocalDateTime endTime,

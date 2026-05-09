@@ -46,6 +46,9 @@ public class CreateAuctionController {
     private TextField startingPriceField;
 
     @FXML
+    private TextField reservePriceField;
+
+    @FXML
     private TextField startTimeField;
 
     @FXML
@@ -145,6 +148,12 @@ public class CreateAuctionController {
             return;
         }
 
+        BigDecimal reservePrice = parsePositiveMoney(getText(reservePriceField));
+        if (reservePrice != null && reservePrice.compareTo(startingPrice) < 0) {
+            showError("Reserve price must be greater than or equal to starting price.");
+            return;
+        }
+
         LocalDateTime startTime = parseDateTime(startTimeText, "Start time");
         if (startTime == null) {
             return;
@@ -171,6 +180,7 @@ public class CreateAuctionController {
             conditionComboBox.getValue(),
             description,
             startingPrice,
+            reservePrice,
             startTime,
             endTime,
             selectedImageFile.getAbsolutePath()

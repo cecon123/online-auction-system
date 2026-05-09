@@ -15,18 +15,26 @@ public class WalletController {
     private Label balanceLabel;
 
     @FXML
+    private Label availableLabel;
+
+    @FXML
+    private Label lockedLabel;
+
+    @FXML
     private TextField amountField;
 
     @FXML
     private Label messageLabel;
 
     private BigDecimal balance;
+    private BigDecimal lockedBalance;
     private final WalletClientService walletService = new WalletClientService();
     private final JsonMapper jsonMapper = JsonMapper.getInstance();
 
     @FXML
     private void initialize() {
         balance = SceneManager.getCurrentBalance();
+        lockedBalance = SceneManager.getCurrentLockedBalance();
         refreshBalance();
         messageLabel.setText("");
     }
@@ -73,8 +81,9 @@ public class WalletController {
             return;
         }
 
-        if (amount.compareTo(balance) > 0) {
-            messageLabel.setText("Cannot withdraw more than current balance.");
+        BigDecimal available = balance.subtract(lockedBalance);
+        if (amount.compareTo(available) > 0) {
+            messageLabel.setText("Cannot withdraw more than available balance.");
             return;
         }
 
@@ -130,5 +139,7 @@ public class WalletController {
 
     private void refreshBalance() {
         balanceLabel.setText("$" + balance.toPlainString());
+        availableLabel.setText("$" + balance.subtract(lockedBalance).toPlainString());
+        lockedLabel.setText("$" + lockedBalance.toPlainString());
     }
 }

@@ -69,6 +69,10 @@
                     <Label fx:id="startingPriceLabel" text="\$10,000.00" styleClass="page-subtitle"/>
                 </HBox>
                 <HBox spacing="10">
+                    <Label text="Reserve Price:" styleClass="form-label" prefWidth="100"/>
+                    <Label fx:id="reservePriceLabel" text="\$12,000.00" styleClass="page-subtitle"/>
+                </HBox>
+                <HBox spacing="10">
                     <Label text="Seller:" styleClass="form-label" prefWidth="100"/>
                     <Label fx:id="sellerLabel" text="Premium_Seller" styleClass="page-subtitle"/>
                 </HBox>

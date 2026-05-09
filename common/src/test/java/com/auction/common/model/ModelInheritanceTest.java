@@ -21,6 +21,7 @@ class ModelInheritanceTest {
             "hash",
             "Bidder One",
             new BigDecimal("100.00"),
+            BigDecimal.ZERO,
             true,
             now
         );
@@ -31,6 +32,7 @@ class ModelInheritanceTest {
             "hash",
             "Seller One",
             new BigDecimal("200.00"),
+            BigDecimal.ZERO,
             true,
             now
         );
@@ -40,6 +42,7 @@ class ModelInheritanceTest {
             "admin01",
             "hash",
             "Admin One",
+            BigDecimal.ZERO,
             BigDecimal.ZERO,
             true,
             now

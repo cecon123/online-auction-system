@@ -13,6 +13,8 @@ public class Auction extends Entity {
     private long itemId;
     private long sellerId;
     private BigDecimal currentPrice;
+    private BigDecimal highestMaxBid;
+    private BigDecimal reservePrice;
     private Long highestBidderId;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
@@ -24,6 +26,8 @@ public class Auction extends Entity {
         long itemId,
         long sellerId,
         BigDecimal currentPrice,
+        BigDecimal highestMaxBid,
+        BigDecimal reservePrice,
         Long highestBidderId,
         LocalDateTime startTime,
         LocalDateTime endTime,
@@ -35,6 +39,8 @@ public class Auction extends Entity {
         setItemId(itemId);
         setSellerId(sellerId);
         setCurrentPrice(currentPrice);
+        setHighestMaxBid(highestMaxBid != null ? highestMaxBid : currentPrice);
+        setReservePrice(reservePrice);
         this.highestBidderId = highestBidderId;
         setStartTime(startTime);
         setEndTime(endTime);
@@ -77,6 +83,29 @@ public class Auction extends Entity {
             );
         }
         this.currentPrice = currentPrice;
+    }
+
+    public BigDecimal getHighestMaxBid() {
+        return highestMaxBid;
+    }
+
+    public void setHighestMaxBid(BigDecimal highestMaxBid) {
+        if (highestMaxBid != null && highestMaxBid.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("highestMaxBid must be non-negative.");
+        }
+        this.highestMaxBid = highestMaxBid;
+    }
+
+    public BigDecimal getReservePrice() {
+        return reservePrice;
+    }
+
+    public void setReservePrice(BigDecimal reservePrice) {
+        this.reservePrice = reservePrice;
+    }
+
+    public boolean isReserveMet() {
+        return reservePrice == null || (currentPrice != null && currentPrice.compareTo(reservePrice) >= 0);
     }
 
     public Long getHighestBidderId() {

@@ -16,11 +16,13 @@ public abstract class User extends Entity {
     private String fullName;
     private Role role;
     private java.math.BigDecimal balance;
+    private java.math.BigDecimal lockedBalance;
     private boolean active;
 
     protected User() {
         super();
         this.balance = java.math.BigDecimal.ZERO;
+        this.lockedBalance = java.math.BigDecimal.ZERO;
         this.active = true;
     }
 
@@ -31,6 +33,7 @@ public abstract class User extends Entity {
         String fullName,
         Role role,
         java.math.BigDecimal balance,
+        java.math.BigDecimal lockedBalance,
         boolean active,
         java.time.LocalDateTime createdAt
     ) {
@@ -40,6 +43,7 @@ public abstract class User extends Entity {
         this.fullName = requireText(fullName, "fullName");
         this.role = Objects.requireNonNull(role, "role must not be null");
         this.balance = balance == null ? java.math.BigDecimal.ZERO : balance;
+        this.lockedBalance = lockedBalance == null ? java.math.BigDecimal.ZERO : lockedBalance;
         this.active = active;
     }
 
@@ -49,6 +53,18 @@ public abstract class User extends Entity {
 
     public void setBalance(java.math.BigDecimal balance) {
         this.balance = balance == null ? java.math.BigDecimal.ZERO : balance;
+    }
+
+    public java.math.BigDecimal getLockedBalance() {
+        return lockedBalance;
+    }
+
+    public void setLockedBalance(java.math.BigDecimal lockedBalance) {
+        this.lockedBalance = lockedBalance == null ? java.math.BigDecimal.ZERO : lockedBalance;
+    }
+
+    public java.math.BigDecimal getAvailableBalance() {
+        return balance.subtract(lockedBalance);
     }
 
     public String getUsername() {

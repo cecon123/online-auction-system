@@ -45,12 +45,14 @@ public class AuthService {
 
         // 3. Store in DB
         BigDecimal initialBalance = BigDecimal.ZERO;
+        BigDecimal initialLocked = BigDecimal.ZERO;
         long id = userDao.create(
             request.username(),
             hashed,
             request.fullName(),
             request.role(),
-            initialBalance
+            initialBalance,
+            initialLocked
         );
 
         logger.info(
@@ -63,7 +65,8 @@ public class AuthService {
             id,
             request.username(),
             request.role(),
-            initialBalance
+            initialBalance,
+            initialLocked
         );
     }
 
@@ -107,6 +110,7 @@ public class AuthService {
             user.fullName(),
             user.role(),
             user.balance(),
+            user.lockedBalance(),
             token
         );
     }

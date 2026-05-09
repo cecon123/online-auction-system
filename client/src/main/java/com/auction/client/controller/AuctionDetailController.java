@@ -37,6 +37,8 @@ public class AuctionDetailController {
     @FXML
     private Label startingPriceLabel;
     @FXML
+    private Label reservePriceLabel;
+    @FXML
     private Label sellerLabel;
     @FXML
     private Label startTimeLabel;
@@ -90,6 +92,11 @@ public class AuctionDetailController {
         itemTypeLabel.setText(detail.itemType().name());
         conditionLabel.setText(detail.condition());
         startingPriceLabel.setText(CURRENCY_FORMAT.format(detail.startingPrice()));
+        if (detail.reservePrice() != null) {
+            reservePriceLabel.setText(CURRENCY_FORMAT.format(detail.reservePrice()));
+        } else {
+            reservePriceLabel.setText("None");
+        }
         sellerLabel.setText(detail.sellerUsername());
         
         if (detail.startTime() != null) {

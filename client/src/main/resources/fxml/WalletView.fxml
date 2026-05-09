@@ -28,8 +28,19 @@
             <Insets top="24" right="24" bottom="24" left="24"/>
         </padding>
 
-        <Label text="CURRENT BALANCE" styleClass="form-label"/>
+        <Label text="TOTAL BALANCE" styleClass="form-label"/>
         <Label fx:id="balanceLabel" styleClass="money-large"/>
+
+        <HBox spacing="30">
+            <VBox spacing="4">
+                <Label text="AVAILABLE" styleClass="form-label-small"/>
+                <Label fx:id="availableLabel" styleClass="money-medium"/>
+            </VBox>
+            <VBox spacing="4">
+                <Label text="LOCKED / ESCROW" styleClass="form-label-small"/>
+                <Label fx:id="lockedLabel" styleClass="money-medium-alt"/>
+            </VBox>
+        </HBox>
 
         <Label text="Amount" styleClass="form-label"/>
         <TextField fx:id="amountField" promptText="Enter amount"/>

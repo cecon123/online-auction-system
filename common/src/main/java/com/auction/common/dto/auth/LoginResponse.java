@@ -11,5 +11,6 @@ public record LoginResponse(
     String fullName,
     Role role,
     java.math.BigDecimal balance,
+    java.math.BigDecimal lockedBalance,
     String token
 ) {}

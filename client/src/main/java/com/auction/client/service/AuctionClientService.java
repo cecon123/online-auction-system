@@ -127,6 +127,22 @@ public class AuctionClientService {
     }
 
     /**
+     * Fetches auctions created by the current user.
+     */
+    public CompletableFuture<Response<List<AuctionSummaryDto>>> getSellerAuctions() {
+        Request<Void> request = new Request<>(MessageType.GET_SELLER_AUCTIONS, null, null, null);
+
+        return socketClient.<Void, List<AuctionSummaryDto>>sendRequest(request)
+            .thenApply(response -> {
+                if (response.isSuccess()) {
+                    List<AuctionSummaryDto> data = jsonMapper.convertList(response.getData(), AuctionSummaryDto.class);
+                    response.setData(data);
+                }
+                return response;
+            });
+    }
+
+    /**
      * Fetches dashboard statistics.
      */
     public CompletableFuture<Response<com.auction.common.dto.dashboard.DashboardDto>> getDashboard() {

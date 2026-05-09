@@ -79,6 +79,8 @@ public class AuctionService {
             itemId,
             sellerId,
             request.startingPrice(),
+            request.startingPrice(), // highestMaxBid = startingPrice
+            request.reservePrice(),
             null, // No highest bidder yet
             request.startTime(),
             request.endTime(),

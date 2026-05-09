@@ -8,6 +8,7 @@ import java.math.BigDecimal;
  */
 public record DashboardDto(
     BigDecimal balance,
+    BigDecimal lockedBalance,
     int participatingAuctionsCount, // Number of auctions the bidder is participating in
     int winningAuctionsCount,       // Number of auctions where the bidder is currently the highest bidder
     int activeAuctionsCount,        // Number of auctions currently RUNNING (for Seller/Admin)

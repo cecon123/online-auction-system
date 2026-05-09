@@ -83,6 +83,18 @@
                             />
                         </VBox>
 
+                        <VBox spacing="3" minWidth="120">
+                            <Label
+                                text="RESERVE PRICE"
+                                styleClass="live-form-label"
+                            />
+                            <Label
+                                fx:id="reservePriceLabel"
+                                text="-"
+                                styleClass="live-bidder-name-compact"
+                            />
+                        </VBox>
+
                         <VBox spacing="3" minWidth="150">
                             <Label
                                 text="HIGHEST BIDDER"

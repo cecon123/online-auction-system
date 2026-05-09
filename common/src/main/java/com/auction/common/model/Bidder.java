@@ -14,6 +14,7 @@ public class Bidder extends User {
         String passwordHash,
         String fullName,
         java.math.BigDecimal balance,
+        java.math.BigDecimal lockedBalance,
         boolean active,
         LocalDateTime createdAt
     ) {
@@ -24,6 +25,7 @@ public class Bidder extends User {
             fullName,
             Role.BIDDER,
             balance,
+            lockedBalance,
             active,
             createdAt
         );

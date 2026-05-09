@@ -107,7 +107,7 @@ public class SQLiteItemDao implements ItemDao {
 
     @Override
     public Optional<Item> findById(long id) {
-        String sql = "SELECT * FROM items WHERE id = ?";
+        String sql = "SELECT * FROM items WHERE id = ? AND deleted = 0";
 
         try (Connection connection = database.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -129,7 +129,7 @@ public class SQLiteItemDao implements ItemDao {
 
     @Override
     public List<Item> findBySellerId(long sellerId) {
-        String sql = "SELECT * FROM items WHERE seller_id = ? ORDER BY created_at DESC";
+        String sql = "SELECT * FROM items WHERE seller_id = ? AND deleted = 0 ORDER BY created_at DESC";
         List<Item> items = new ArrayList<>();
 
         try (Connection connection = database.getConnection();
@@ -151,7 +151,7 @@ public class SQLiteItemDao implements ItemDao {
 
     @Override
     public List<Item> findAll() {
-        String sql = "SELECT * FROM items ORDER BY created_at DESC";
+        String sql = "SELECT * FROM items WHERE deleted = 0 ORDER BY created_at DESC";
         List<Item> items = new ArrayList<>();
 
         try (Connection connection = database.getConnection();
@@ -170,7 +170,7 @@ public class SQLiteItemDao implements ItemDao {
 
     @Override
     public void delete(long id) {
-        String sql = "DELETE FROM items WHERE id = ?";
+        String sql = "UPDATE items SET deleted = 1 WHERE id = ?";
 
         try (Connection connection = database.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -178,8 +178,8 @@ public class SQLiteItemDao implements ItemDao {
             statement.setLong(1, id);
             statement.executeUpdate();
         } catch (SQLException e) {
-            logger.error("Database error during delete item: {}", id, e);
-            throw new IllegalStateException("Could not delete item: " + id, e);
+            logger.error("Database error during soft delete item: {}", id, e);
+            throw new IllegalStateException("Could not soft delete item: " + id, e);
         }
     }
 

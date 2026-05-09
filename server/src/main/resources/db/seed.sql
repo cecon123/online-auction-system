@@ -18,22 +18,22 @@ INSERT INTO items (seller_id, item_type, name, description, condition_text, star
 (2, 'ELECTRONICS', 'Quick Test Phone', 'Used for rapid testing of countdown and extension.', 'Used - Fair', '300.00', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours'));
 
 -- 3. Insert Auctions
--- Auction 1: Vintage Camera (Ends in 24 hours)
-INSERT INTO auctions (item_id, seller_id, current_price, start_time, end_time, status, created_at) VALUES
-(1, 2, '12500.00', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '-1 day'), STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '+1 day'), 'RUNNING', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours'));
+-- Auction 1: Vintage Camera - Reserve $13,000 (Current $12,500) - Ends in 5 mins
+INSERT INTO auctions (item_id, seller_id, current_price, highest_max_bid, reserve_price, start_time, end_time, status, created_at) VALUES
+(1, 2, '12500.00', '12500.00', '13000.00', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '-1 hour'), STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '+5 minutes'), 'RUNNING', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours'));
 
--- Auction 2: Abstract Painting (Ends in 10 minutes)
-INSERT INTO auctions (item_id, seller_id, current_price, start_time, end_time, status, created_at) VALUES
-(2, 3, '8200.00', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '-2 hours'), STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '+10 minutes'), 'RUNNING', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours'));
+-- Auction 2: Abstract Painting - Reserve $9,000 (Current $8,200) - Ends in 3 mins
+INSERT INTO auctions (item_id, seller_id, current_price, highest_max_bid, reserve_price, start_time, end_time, status, created_at) VALUES
+(2, 3, '8200.00', '8200.00', '9000.00', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '-2 hours'), STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '+3 minutes'), 'RUNNING', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours'));
 
--- Auction 3: Classic Scooter (Upcoming - Starts in 2 hours)
-INSERT INTO auctions (item_id, seller_id, current_price, start_time, end_time, status, created_at) VALUES
-(3, 2, '20000.00', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '+2 hours'), STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '+2 days'), 'OPEN', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours'));
+-- Auction 3: Classic Scooter - Starts in 10 seconds, Ends in 10 mins
+INSERT INTO auctions (item_id, seller_id, current_price, highest_max_bid, reserve_price, start_time, end_time, status, created_at) VALUES
+(3, 2, '20000.00', '20000.00', '25000.00', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '+10 seconds'), STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '+10 minutes'), 'OPEN', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours'));
 
--- Auction 4: Sculpture Replica (Finished - Ended 1 hour ago)
-INSERT INTO auctions (item_id, seller_id, current_price, start_time, end_time, status, created_at) VALUES
-(4, 3, '5500.00', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '-5 hours'), STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '-1 hour'), 'FINISHED', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours'));
+-- Auction 4: Sculpture Replica - Finished
+INSERT INTO auctions (item_id, seller_id, current_price, highest_max_bid, reserve_price, start_time, end_time, status, created_at) VALUES
+(4, 3, '5500.00', '5500.00', '5500.00', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '-5 hours'), STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '-1 hour'), 'FINISHED', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours'));
 
--- Auction 5: Quick Test Phone (Ends in 1 minute - IDEAL FOR SCENARIO 2 & 3)
-INSERT INTO auctions (item_id, seller_id, current_price, start_time, end_time, status, created_at) VALUES
-(5, 2, '350.00', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '-10 minutes'), STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '+1 minute'), 'RUNNING', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours'));
+-- Auction 5: Quick Test Phone - Reserve $1000 (Current $350) - Ends in 2 mins
+INSERT INTO auctions (item_id, seller_id, current_price, highest_max_bid, reserve_price, start_time, end_time, status, created_at) VALUES
+(5, 2, '350.00', '350.00', '1000.00', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '-10 minutes'), STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '+2 minutes'), 'RUNNING', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours'));
