@@ -115,29 +115,39 @@ Sử dụng WAL mode để tăng hiệu năng concurrency.
 
 ---
 
-## 15. Task Board (Sprint Week 14: Integration & Polishing)
+## 15. Task Board (Sprint Week 14: Final Integration)
 
-Các thành viên sử dụng **Gemini CLI** hãy copy prompt tương ứng bên dưới. **Yêu cầu BẮT BUỘC: Tuân thủ nghiêm ngặt mọi quy tắc trong @GEMINI.md.**
+Các thành viên sử dụng **Gemini CLI** hãy tuân thủ nghiêm ngặt mọi quy tắc trong @GEMINI.md.
 
-#### 🔴 ƯU TIÊN 1: Hoàn thiện Logic Nghiệp vụ & Realtime
+#### 🔴 ƯU TIÊN 1: Hoàn thiện Logic Nghiệp vụ & Dashboard (Core)
 - **Huy (Lead):**
-    - [x] Task: `GET_MY_BIDS` API & Admin Logic (`GET_USERS`, `LOCK_USER`).
+    - [x] Task: `GET_MY_BIDS` API & Admin Logic.
+    - [ ] Task: Triển khai `GET_DASHBOARD` API (trả về stats thực tế cho từng role).
+    - [ ] Task: Chuyển Auto-bid logic từ Client lên Server-side để đảm bảo an toàn.
+    - [ ] **Gemini Prompt:** `Tôi là Huy (Lead). Hãy thực hiện Task: 1. Tạo 'DashboardDto.java' trong module common chứa stats. 2. Triển khai handler 'GET_DASHBOARD' trong 'RequestRouter.java'. 3. Chuyển Auto-bid logic lên Server-side (lưu vào 'auto_bids' và tự động đặt giá khi có 'BID_UPDATE'). QUY TRÌNH: Tạo branch 'feature/huy/server-logic', tuân thủ @GEMINI.md, chỉ commit khi hệ thống ổn định và nhắc tôi chạy 'mvn clean install'.`
 - **Hải Anh:**
-    - [x] Task: Auction Detail Data Binding & `NotificationManager` (Toast system).
-    - [ ] **Gemini Prompt:** `Tôi là Hải Anh. Hãy thực hiện Task: 1. Code 'AuctionDetailController.java' để map 'AuctionDetailDto' vào FXML. 2. Xây dựng 'NotificationManager.java' hiển thị Toast khi nhận 'BID_UPDATE'. QUY TRÌNH: Tạo branch 'feature/haianh/detail-notif', tuân thủ @GEMINI.md, sau khi xong nhắc tôi chạy 'mvn clean install' và test thực tế. Chỉ commit/push khi hệ thống ổn định và nhắc tôi tạo PR cho Huy (Lead) review.`
+    - [x] Task: Auction Detail Data Binding & `NotificationManager`.
+    - [ ] Task: Hoàn thiện Admin Panel UI (Kết nối API `ADMIN_GET_USERS` và `ADMIN_UPDATE_USER_STATUS`).
+    - [ ] Task: Xử lý sự kiện realtime `AUCTION_CLOSED` và `TIME_EXTENDED` trên UI.
+    - [ ] **Gemini Prompt:** `Tôi là Hải Anh. Hãy thực hiện Task: 1. Hoàn thiện 'AdminPanelController.java' kết nối API 'ADMIN_GET_USERS' và 'ADMIN_UPDATE_USER_STATUS'. 2. Xử lý sự kiện 'AUCTION_CLOSED' và 'TIME_EXTENDED' trong 'LiveBiddingController.java' để cập nhật UI realtime. QUY TRÌNH: Tạo branch 'feature/haianh/admin-realtime', tuân thủ @GEMINI.md, chỉ commit khi hệ thống ổn định và nhắc tôi tạo PR cho Huy (Lead) review.`
 
-#### 🟡 ƯU TIÊN 2: UI Logic & Search/Filter
+#### 🟡 ƯU TIÊN 2: Seller Features & UX Refinement
 - **Linh:**
     - [x] Task: Filter/Search tại `AuctionList` & `MyBidsController` implementation.
-    - [x] Task: Cài đặt và sử dụng **Ikonli** để thay thế các text placeholder bằng icon.
-    - [x] **Gemini Prompt:** `Tôi là Linh. Hãy thực hiện Task: 1. Code logic lọc danh sách tại 'AuctionListController.java'. 2. Triển khai 'MyBidsController.java' hiển thị lịch sử thầu. 3. Sử dụng Ikonli (FontAwesome5/MaterialDesign2) cho Sidebar/Buttons. QUY TRÌNH: Tạo branch 'feature/linh/ui-logic', tuân thủ @GEMINI.md, sau khi xong nhắc tôi chạy 'mvn clean install' và test thực tế. Chỉ commit/push khi hệ thống ổn định và nhắc tôi tạo PR cho Huy (Lead) review.`
+    - [x] Task: Cài đặt và sử dụng **Ikonli** cho toàn bộ UI.
+    - [ ] Task: Cập nhật Seller Center: Hiển thị danh sách Auction của chính mình.
+    - [ ] Task: Chính xác hóa trạng thái "Winning/Outbid" trong My Bids dựa trên `highestBidderId`.
+    - [ ] **Gemini Prompt:** `Tôi là Linh. Hãy thực hiện Task: 1. Cập nhật 'SellerCenterController.java' hiển thị danh sách Auction của tôi (lọc theo sellerId). 2. Sửa 'MyBidsController.java' để so sánh 'highestBidderId' với ID của tôi để hiển thị đúng 'Winning/Outbid'. QUY TRÌNH: Tạo branch 'feature/linh/seller-mybids', tuân thủ @GEMINI.md, chỉ commit khi hệ thống ổn định và nhắc tôi tạo PR cho Huy (Lead) review.`
 - **Mạnh:**
     - [x] Task: `findByBidderId` in DAO & Concurrency Stress Test.
-    - [ ] **Gemini Prompt:** `Tôi là Mạnh. Hãy thực hiện Task: 1. Thêm 'findByBidderId' vào 'AuctionDao'/'SQLiteAuctionDao'. 2. Tạo test 'ConcurrentBidTest.java' (JUnit 5) giả lập 20 thread cùng bid. 3. Thêm Index tối ưu trong 'schema.sql'. QUY TRÌNH: Tạo branch 'feature/manh/stress-test-db', tuân thủ @GEMINI.md, sau khi xong nhắc tôi chạy 'mvn clean install' và 'mvn test'. Chỉ commit/push khi hệ thống ổn định và nhắc tôi tạo PR cho Huy (Lead) review.`
+    - [ ] Task: Kích hoạt `WAL Mode` trong SQLite và tối ưu hóa Transaction.
+    - [ ] Task: Triển khai `DELETE_ITEM` (Soft delete) và ràng buộc nghiệp vụ.
+    - [ ] **Gemini Prompt:** `Tôi là Mạnh. Hãy thực hiện Task: 1. Cập nhật 'Database.java' bật 'PRAGMA journal_mode=WAL;'. 2. Triển khai 'DELETE_ITEM' (Soft delete) trong 'SQLiteItemDao.java' và kiểm tra ràng buộc phiên 'RUNNING'. 3. Chạy Stress Test với 100 concurrent bidders. QUY TRÌNH: Tạo branch 'feature/manh/db-optimization', tuân thủ @GEMINI.md, chỉ commit khi hệ thống ổn định và nhắc tôi tạo PR cho Huy (Lead) review.`
 
-#### 🔵 ƯU TIÊN 3: Quản trị & Polish
-- **Hải Anh:** Tích hợp LineChart dữ liệu thật.
-- **Mạnh:** Tối ưu SQLite Index cho bảng `bids`.
+#### 🔵 ƯU TIÊN 3: Polish & Final Test
+- **Hải Anh:** Tích hợp LineChart dữ liệu thật (Realtime price tracking).
+- **Mạnh:** Stress test hệ thống với 100+ concurrent bidders.
+- **Huy:** Final Security & Performance Review trước khi demo.
 
 ---
 
