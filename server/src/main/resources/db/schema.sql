@@ -91,5 +91,11 @@ ON bids(auction_id);
 CREATE INDEX IF NOT EXISTS idx_bids_bidder_id
 ON bids(bidder_id);
 
+CREATE INDEX IF NOT EXISTS idx_auctions_highest_bidder_id
+ON auctions(highest_bidder_id);
+
+CREATE INDEX IF NOT EXISTS idx_auctions_seller_id
+ON auctions(seller_id);
+
 CREATE INDEX IF NOT EXISTS idx_auto_bids_auction_id
 ON auto_bids(auction_id);

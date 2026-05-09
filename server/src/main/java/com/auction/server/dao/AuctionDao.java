@@ -36,6 +36,11 @@ public interface AuctionDao {
     List<Auction> findByStatus(AuctionStatus status);
 
     /**
+     * Finds auctions where the given user is the highest bidder.
+     */
+    List<Auction> findByBidderId(long bidderId);
+
+    /**
      * Updates an existing auction.
      * Implementations should use optimistic locking via the version field.
      * @param auction The auction to update.

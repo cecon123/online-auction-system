@@ -156,6 +156,28 @@ public class SQLiteAuctionDao implements AuctionDao {
     }
 
     @Override
+    public List<Auction> findByBidderId(long bidderId) {
+        String sql = "SELECT * FROM auctions WHERE highest_bidder_id = ? ORDER BY end_time ASC";
+        List<Auction> auctions = new ArrayList<>();
+
+        try (Connection connection = database.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setLong(1, bidderId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    auctions.add(mapRow(resultSet));
+                }
+            }
+            return auctions;
+        } catch (SQLException e) {
+            logger.error("Database error during findByBidderId: {}", bidderId, e);
+            throw new IllegalStateException("Could not find auctions for bidder: " + bidderId, e);
+        }
+    }
+
+    @Override
     public void update(Auction auction) {
         String sql = """
                 UPDATE auctions
