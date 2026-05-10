@@ -7,7 +7,7 @@
 }
 
 .sidebar {
-    -fx-background-color: #312e81;
+    -fx-background-color: #1e1b4b;
     -fx-min-height: 760px;
 }
 
@@ -34,9 +34,19 @@
     -fx-cursor: hand;
 }
 
+.nav-button .ikonli-font-icon {
+    -fx-icon-color: white;
+    -fx-fill: white;
+}
+
 .nav-button:hover {
-    -fx-background-color: #3730a3;
+    -fx-background-color: #312e81;
     -fx-text-fill: white;
+}
+
+.nav-button:hover .ikonli-font-icon {
+    -fx-icon-color: white;
+    -fx-fill: white;
 }
 
 .topbar {

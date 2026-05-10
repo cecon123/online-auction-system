@@ -169,6 +169,36 @@ public class SQLiteItemDao implements ItemDao {
     }
 
     @Override
+    public void update(Item item) {
+        String sql = """
+                UPDATE items SET
+                    name = ?, description = ?, condition_text = ?,
+                    image_path = ?, starting_price = ?
+                WHERE id = ? AND deleted = 0
+                """;
+
+        try (Connection connection = database.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, item.getName());
+            statement.setString(2, item.getDescription());
+            statement.setString(3, item.getCondition());
+            statement.setString(4, item.getImagePath());
+            statement.setString(5, item.getStartingPrice().toString());
+            statement.setLong(6, item.getId());
+
+            int affected = statement.executeUpdate();
+            if (affected == 0) {
+                throw new IllegalStateException("No item updated, id not found: " + item.getId());
+            }
+            logger.info("Updated item id={}", item.getId());
+        } catch (SQLException e) {
+            logger.error("Database error during update item: {}", item.getId(), e);
+            throw new IllegalStateException("Could not update item: " + item.getId(), e);
+        }
+    }
+
+    @Override
     public void delete(long id) {
         String sql = "UPDATE items SET deleted = 1 WHERE id = ?";
 

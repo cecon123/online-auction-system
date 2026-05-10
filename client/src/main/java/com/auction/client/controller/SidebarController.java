@@ -54,11 +54,6 @@ public class SidebarController {
     }
 
     @FXML
-    private void showDashboard() {
-        SceneManager.showDashboard();
-    }
-
-    @FXML
     private void showAuctions() {
         SceneManager.showAuctionList();
     }

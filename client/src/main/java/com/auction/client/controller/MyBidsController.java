@@ -37,6 +37,8 @@ public class MyBidsController {
     private Label outbidLabel;
     @FXML
     private Label watchlistLabel;
+    @FXML
+    private Label wonAuctionsLabel;
 
     private final AuctionClientService auctionService = new AuctionClientService();
     private final Consumer<Response<?>> refreshListener = response -> {
@@ -151,6 +153,15 @@ public class MyBidsController {
         activeBidsLabel.setText(String.valueOf(activeCount));
         winningBidsLabel.setText(String.valueOf(winningCount));
         outbidLabel.setText(String.valueOf(outbidCount));
+
+        // Count won auctions
+        long wonCount = auctions.stream()
+            .filter(a -> a.status() == com.auction.common.enums.AuctionStatus.FINISHED)
+            .filter(a -> a.highestBidderId() != null && a.highestBidderId() == currentUserId)
+            .count();
+        if (wonAuctionsLabel != null) {
+            wonAuctionsLabel.setText(String.valueOf(wonCount));
+        }
     }
 
     private GridPane createAuctionRow(AuctionSummaryDto auction, boolean isAlt, boolean userIsLeading) {
@@ -183,18 +194,18 @@ public class MyBidsController {
 
         // Status Label (Winning/Outbid/Finished)
         String statusText;
-        String styleClass;
+        String statusStyle;
         
         if (auction.status() == com.auction.common.enums.AuctionStatus.FINISHED) {
             statusText = userIsLeading ? "WON" : "ENDED";
-            styleClass = userIsLeading ? "success-text" : "admin-table-cell";
+            statusStyle = userIsLeading ? "status-won" : "status-ended";
         } else {
             statusText = userIsLeading ? "WINNING" : "OUTBID";
-            styleClass = userIsLeading ? "success-text" : "error-text";
+            statusStyle = userIsLeading ? "status-winning" : "status-outbid";
         }
         
         Label statusLabel = new Label(statusText);
-        statusLabel.getStyleClass().add(styleClass);
+        statusLabel.getStyleClass().addAll("status-badge", statusStyle);
         row.add(statusLabel, 3, 0);
 
         row.add(new Label(formatRemainingTime(auction.endTime())), 4, 0);

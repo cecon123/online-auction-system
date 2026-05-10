@@ -20,20 +20,42 @@
 
 .admin-stat-card {
     -fx-background-color: white;
-    -fx-background-radius: 6;
-    -fx-border-color: #c7c4d8;
-    -fx-border-radius: 6;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 4, 0, 0, 1);
-    -fx-min-height: 110px;
+    -fx-background-radius: 8;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 4, 0, 0, 1);
+    -fx-min-height: 80px;
+}
+
+.admin-stat-card:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.12), 12, 0, 0, 4);
+    -fx-translate-y: -2px;
+}
+
+/* Gradient Variants */
+.admin-card-users {
+    -fx-background-color: linear-gradient(to bottom right, #f8fafc, #f1f5f9);
+}
+
+.admin-card-auctions {
+    -fx-background-color: linear-gradient(to bottom right, #f0fdfa, #ccfbf1);
+}
+
+.admin-card-running {
+    -fx-background-color: linear-gradient(to bottom right, #fff7ed, #ffedd5);
+}
+
+.admin-card-finished {
+    -fx-background-color: linear-gradient(to bottom right, #faf5ff, #f3e8ff);
 }
 
 .admin-stat-title {
-    -fx-font-size: 14px;
+    -fx-font-size: 13px;
     -fx-text-fill: #4b445c;
 }
 
 .admin-stat-number {
-    -fx-font-size: 34px;
+    -fx-font-size: 24px;
     -fx-font-weight: 800;
     -fx-text-fill: #111827;
 }
@@ -45,7 +67,7 @@
 }
 
 .admin-section-title {
-    -fx-font-size: 24px;
+    -fx-font-size: 18px;
     -fx-font-weight: 800;
     -fx-text-fill: #111827;
 }
@@ -68,85 +90,86 @@
 .admin-table-header-text {
     -fx-font-size: 12px;
     -fx-font-weight: 800;
-    -fx-text-fill: #1f1b2d;
+    -fx-text-fill: #475569;
 }
 
 .admin-table-row {
     -fx-background-color: white;
     -fx-border-color: transparent transparent #ddd8ea transparent;
     -fx-border-width: 0 0 1 0;
-    -fx-min-height: 44px;
+    -fx-min-height: 38px;
+}
+
+.admin-table-row:hover {
+    -fx-background-color: #f8fafc;
 }
 
 .admin-table-row-alt {
     -fx-background-color: #fbfaff;
     -fx-border-color: transparent transparent #ddd8ea transparent;
     -fx-border-width: 0 0 1 0;
-    -fx-min-height: 44px;
+    -fx-min-height: 38px;
+}
+
+.admin-table-row-alt:hover {
+    -fx-background-color: #f8fafc;
 }
 
 .admin-table-cell {
-    -fx-font-size: 13px;
+    -fx-font-size: 12px;
     -fx-text-fill: #2f2a3c;
 }
 
 .admin-money-cell {
-    -fx-font-size: 13px;
-    -fx-font-weight: 800;
-    -fx-text-fill: #3525cd;
-}
-
-.admin-link-button,
-.admin-danger-link-button,
-.admin-disabled-link-button {
-    -fx-background-color: transparent;
-    -fx-border-color: transparent;
-    -fx-padding: 0;
-    -fx-cursor: hand;
-    -fx-font-size: 13px;
-}
-
-.admin-link-button {
-    -fx-text-fill: #1d00cc;
-}
-
-.admin-danger-link-button {
-    -fx-text-fill: #d00000;
-}
-
-.admin-disabled-link-button {
-    -fx-text-fill: #b9b3c8;
-}
-
-.admin-status-active,
-.admin-status-suspended,
-.admin-status-running,
-.admin-status-finished {
-    -fx-background-radius: 999;
-    -fx-padding: 4 10 4 10;
     -fx-font-size: 12px;
     -fx-font-weight: 800;
-}
-
-.admin-status-active {
-    -fx-background-color: #ede9fe;
     -fx-text-fill: #3525cd;
 }
 
-.admin-status-suspended {
+.admin-pill-btn {
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-padding: 4 14 4 14;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-cursor: hand;
+    -fx-border-width: 0;
+}
+
+.admin-btn-primary {
+    -fx-background-color: #e0e7ff;
+    -fx-text-fill: #3730a3;
+}
+
+.admin-btn-primary:hover {
+    -fx-background-color: #c7d2fe;
+}
+
+.admin-btn-danger {
     -fx-background-color: #fee2e2;
-    -fx-text-fill: #dc2626;
+    -fx-text-fill: #991b1b;
 }
 
-.admin-status-running {
-    -fx-background-color: #f3dfd2;
-    -fx-text-fill: #9a3412;
+.admin-btn-danger:hover {
+    -fx-background-color: #fecaca;
 }
 
-.admin-status-finished {
-    -fx-background-color: #e8e4ef;
-    -fx-text-fill: #3f3a4f;
+.admin-btn-success {
+    -fx-background-color: #dcfce7;
+    -fx-text-fill: #166534;
 }
+
+.admin-btn-success:hover {
+    -fx-background-color: #bbf7d0;
+}
+
+.admin-btn-disabled {
+    -fx-background-color: #f1f5f9;
+    -fx-text-fill: #94a3b8;
+    -fx-cursor: default;
+}
+
+/* Status badges use unified .status-badge + .status-* from common.css */
 
 .admin-item-thumb,
 .admin-empty-thumb {
@@ -159,7 +182,16 @@
 }
 
 .admin-item-thumb {
-    -fx-background-color: linear-gradient(to bottom right, #111827, #334155);
+    -fx-background-color: #f1f5f9;
+    -fx-border-color: #cbd5e1;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+
+.admin-item-thumb .ikonli-font-icon {
+    -fx-icon-color: #64748b;
+    -fx-icon-size: 18px;
 }
 
 .admin-empty-thumb {

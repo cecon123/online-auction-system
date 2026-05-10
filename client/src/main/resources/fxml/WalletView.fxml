@@ -1,55 +1,132 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
+<?xml version="1.0" encoding="UTF-8" ?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<VBox xmlns="http://javafx.com/javafx"
-      xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.auction.client.controller.WalletController"
-      spacing="24"
-      styleClass="page">
-
+<ScrollPane
+    xmlns="http://javafx.com/javafx"
+    xmlns:fx="http://javafx.com/fxml"
+    fx:controller="com.auction.client.controller.WalletController"
+    fitToWidth="true"
+    hbarPolicy="NEVER"
+    vbarPolicy="AS_NEEDED"
+    styleClass="page-scroll"
+>
+<VBox spacing="24" styleClass="page">
     <padding>
-        <Insets top="32" right="32" bottom="32" left="32"/>
+        <Insets top="32" right="32" bottom="32" left="32" />
     </padding>
 
     <VBox spacing="6">
-        <Label text="Wallet" styleClass="page-title"/>
-        <Label text="Deposit funds for bidding or withdraw revenue after successful auctions."
-               styleClass="page-subtitle"/>
+        <Label text="My Wallet" styleClass="page-title" />
+        <Label text="Manage your funds, deposits, and withdrawals." styleClass="page-subtitle" />
     </VBox>
 
-    <VBox styleClass="card" spacing="14" prefWidth="420" maxWidth="520">
-        <padding>
-            <Insets top="24" right="24" bottom="24" left="24"/>
-        </padding>
+    <!-- Two-column layout -->
+    <GridPane hgap="24" vgap="24">
+        <columnConstraints>
+            <ColumnConstraints percentWidth="55" />
+            <ColumnConstraints percentWidth="45" />
+        </columnConstraints>
 
-        <Label text="TOTAL BALANCE" styleClass="form-label"/>
-        <Label fx:id="balanceLabel" styleClass="money-large"/>
+        <!-- LEFT: Virtual Card -->
+        <VBox spacing="24" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.rowSpan="2">
 
-        <HBox spacing="30">
-            <VBox spacing="4">
-                <Label text="AVAILABLE" styleClass="form-label-small"/>
-                <Label fx:id="availableLabel" styleClass="money-medium"/>
+            <VBox styleClass="wallet-card" spacing="14">
+                <padding>
+                    <Insets top="28" right="32" bottom="28" left="32" />
+                </padding>
+
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <FontIcon iconLiteral="mdi2c-credit-card-outline" iconSize="20" iconColor="white" />
+                    <Label text="AuctionPro Wallet" styleClass="wallet-card-title" />
+                </HBox>
+
+                <VBox spacing="2">
+                    <Label text="Total Balance" styleClass="wallet-card-label" />
+                    <Label fx:id="balanceLabel" text="0.00" styleClass="wallet-card-balance" />
+                </VBox>
+
+                <HBox spacing="40">
+                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                        <Label text="Available" styleClass="wallet-card-label" />
+                        <Label fx:id="availableLabel" text="0.00" styleClass="wallet-card-value" />
+                    </VBox>
+                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                        <Label text="Locked (Escrow)" styleClass="wallet-card-label" />
+                        <Label fx:id="lockedLabel" text="0.00" styleClass="wallet-card-value" />
+                    </VBox>
+                </HBox>
             </VBox>
-            <VBox spacing="4">
-                <Label text="LOCKED / ESCROW" styleClass="form-label-small"/>
-                <Label fx:id="lockedLabel" styleClass="money-medium-alt"/>
+
+            <!-- Security Info -->
+            <VBox styleClass="security-info" spacing="6">
+                <padding>
+                    <Insets top="16" right="20" bottom="16" left="20" />
+                </padding>
+                <HBox spacing="8" alignment="CENTER_LEFT">
+                    <FontIcon iconLiteral="mdi2s-shield-lock-outline" iconSize="18" styleClass="security-icon" />
+                    <Label text="Escrow Protection" styleClass="section-title" />
+                </HBox>
+                <Label text="When you place a bid, funds equal to your bid amount are locked in escrow. These funds are automatically released if you are outbid, or transferred to the seller if you win."
+                       wrapText="true" styleClass="page-subtitle" />
             </VBox>
-        </HBox>
+        </VBox>
 
-        <Label text="Amount" styleClass="form-label"/>
-        <TextField fx:id="amountField" promptText="Enter amount"/>
+        <!-- RIGHT: Actions -->
+        <VBox spacing="20" GridPane.columnIndex="1" GridPane.rowIndex="0">
 
-        <HBox spacing="12">
-            <Button text="Deposit" onAction="#handleDeposit" styleClass="primary-button"/>
-            <Button text="Withdraw" onAction="#handleWithdraw" styleClass="secondary-button"/>
-        </HBox>
+            <!-- Quick Deposit -->
+            <VBox styleClass="card" spacing="12">
+                <padding>
+                    <Insets top="20" right="20" bottom="20" left="20" />
+                </padding>
 
-        <Label fx:id="messageLabel" styleClass="page-subtitle" wrapText="true"/>
-    </VBox>
+                <Label text="Quick Deposit" styleClass="section-title" />
+                <HBox spacing="10">
+                    <Button text="50 USD" onAction="#handleQuickDeposit50" styleClass="quick-deposit-button"
+                            HBox.hgrow="ALWAYS" maxWidth="Infinity" />
+                    <Button text="100 USD" onAction="#handleQuickDeposit100" styleClass="quick-deposit-button"
+                            HBox.hgrow="ALWAYS" maxWidth="Infinity" />
+                    <Button text="500 USD" onAction="#handleQuickDeposit500" styleClass="quick-deposit-button"
+                            HBox.hgrow="ALWAYS" maxWidth="Infinity" />
+                </HBox>
+            </VBox>
+
+            <!-- Manual Deposit / Withdraw -->
+            <VBox styleClass="card" spacing="12">
+                <padding>
+                    <Insets top="20" right="20" bottom="20" left="20" />
+                </padding>
+
+                <Label text="Custom Amount" styleClass="section-title" />
+                <TextField fx:id="amountField" promptText="Enter amount" />
+
+                <HBox spacing="12">
+                    <Button text="Deposit" onAction="#handleDeposit" styleClass="primary-button"
+                            HBox.hgrow="ALWAYS" maxWidth="Infinity">
+                        <graphic>
+                            <FontIcon iconLiteral="mdi2p-plus" iconSize="16" iconColor="white" />
+                        </graphic>
+                    </Button>
+                    <Button text="Withdraw" onAction="#handleWithdraw" styleClass="secondary-button"
+                            HBox.hgrow="ALWAYS" maxWidth="Infinity">
+                        <graphic>
+                            <FontIcon iconLiteral="mdi2m-minus" iconSize="16" />
+                        </graphic>
+                    </Button>
+                </HBox>
+
+                <Label fx:id="messageLabel" text="" wrapText="true" styleClass="auth-message" />
+            </VBox>
+        </VBox>
+    </GridPane>
 </VBox>
+</ScrollPane>

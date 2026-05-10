@@ -4,6 +4,8 @@ import com.auction.common.enums.Role;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
+import java.text.NumberFormat;
+import java.util.Locale;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
@@ -21,6 +23,9 @@ public final class SceneManager {
 
     private static final double APP_WIDTH = 1280;
     private static final double APP_HEIGHT = 800;
+
+    private static final NumberFormat CURRENCY_FORMAT =
+        NumberFormat.getCurrencyInstance(Locale.US);
 
     private static Stage primaryStage;
     private static BorderPane contentRoot;
@@ -95,8 +100,10 @@ public final class SceneManager {
             return "System";
         }
 
-        return "$" + currentBalance.toPlainString();
+        return CURRENCY_FORMAT.format(currentBalance);
     }
+
+    // ── Auth Screens ──────────────────────────────────────
 
     public static void showLogin() {
         contentRoot = null;
@@ -109,6 +116,8 @@ public final class SceneManager {
         Parent root = loadFxml("/fxml/RegisterView.fxml");
         setAuthScene(root);
     }
+
+    // ── App Shell ─────────────────────────────────────────
 
     public static void showAppShell(
         long userId,
@@ -135,22 +144,30 @@ public final class SceneManager {
 
         contentRoot = foundContentRoot;
         setAppScene(root);
-        showDashboard();
+
+        // Navigate directly to the role-specific main page
+        showDefaultPage();
     }
 
-    public static void showDashboard() {
-        if (currentRole == Role.ADMIN) {
-            showCenter("/fxml/AdminDashboardView.fxml");
-        } else if (currentRole == Role.SELLER) {
-            showCenter("/fxml/SellerDashboardView.fxml");
-        } else {
-            showCenter("/fxml/BidderDashboardView.fxml");
+    // ── Role-based Default Page ───────────────────────────
+
+    /**
+     * Navigate to the default page based on the current user role.
+     * Replaces the old showDashboard() method.
+     */
+    private static void showDefaultPage() {
+        switch (currentRole) {
+            case BIDDER -> showAuctionList();
+            case SELLER -> showSellerCenter();
+            case ADMIN  -> showAdminPanel();
         }
     }
 
+    // ── Content Pages ─────────────────────────────────────
+
     public static void showAuctionList() {
         if (currentRole != Role.BIDDER) {
-            showDashboard();
+            showDefaultPage();
             return;
         }
 
@@ -163,7 +180,7 @@ public final class SceneManager {
 
     public static void showAuctionDetail(Long auctionId) {
         if (currentRole != Role.BIDDER) {
-            showDashboard();
+            showDefaultPage();
             return;
         }
 
@@ -195,7 +212,7 @@ public final class SceneManager {
 
     public static void showLiveBidding(Long auctionId) {
         if (currentRole != Role.BIDDER) {
-            showDashboard();
+            showDefaultPage();
             return;
         }
 
@@ -227,7 +244,7 @@ public final class SceneManager {
 
     public static void showMyBids() {
         if (currentRole != Role.BIDDER) {
-            showDashboard();
+            showDefaultPage();
             return;
         }
 
@@ -236,7 +253,7 @@ public final class SceneManager {
 
     public static void showSellerCenter() {
         if (currentRole != Role.SELLER) {
-            showDashboard();
+            showDefaultPage();
             return;
         }
 
@@ -245,16 +262,36 @@ public final class SceneManager {
 
     public static void showCreateAuction() {
         if (currentRole != Role.SELLER) {
-            showDashboard();
+            showDefaultPage();
             return;
         }
 
         showCenter("/fxml/CreateAuctionView.fxml");
     }
 
+    public static void showEditAuction(Long auctionId) {
+        if (currentRole != Role.SELLER) {
+            showDefaultPage();
+            return;
+        }
+
+        try {
+            URL resource = SceneManager.class.getResource("/fxml/EditAuctionView.fxml");
+            FXMLLoader loader = new FXMLLoader(resource);
+            Parent content = loader.load();
+
+            com.auction.client.controller.EditAuctionController controller = loader.getController();
+            controller.initData(auctionId);
+
+            contentRoot.setCenter(content);
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not load EditAuctionView", e);
+        }
+    }
+
     public static void showWallet() {
         if (currentRole == Role.ADMIN) {
-            showDashboard();
+            showDefaultPage();
             return;
         }
 
@@ -263,12 +300,14 @@ public final class SceneManager {
 
     public static void showAdminPanel() {
         if (currentRole != Role.ADMIN) {
-            showDashboard();
+            showDefaultPage();
             return;
         }
 
         showCenter("/fxml/AdminPanelView.fxml");
     }
+
+    // ── Internal Helpers ──────────────────────────────────
 
     private static void showCenter(String fxmlPath) {
         if (contentRoot == null) {

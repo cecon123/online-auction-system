@@ -21,6 +21,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.kordamp.ikonli.javafx.FontIcon;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.Region;
+import javafx.geometry.Pos;
 
 public class AdminPanelController {
 
@@ -52,6 +57,12 @@ public class AdminPanelController {
     private void initialize() {
         messageLabel.setText("");
         loadData();
+    }
+
+    @FXML
+    private void handleRefresh() {
+        loadData();
+        messageLabel.setText("Data refreshed successfully.");
     }
 
     private void loadData() {
@@ -118,9 +129,9 @@ public class AdminPanelController {
         GridPane row = new GridPane();
         row.getStyleClass().add(alt ? "admin-table-row-alt" : "admin-table-row");
         row.setHgap(16);
-        row.setPadding(new Insets(12, 16, 12, 16));
+        row.setPadding(new Insets(8, 16, 8, 16));
 
-        double[] widths = {16, 24, 12, 14, 18, 16};
+        double[] widths = {18, 20, 10, 12, 18, 22};
         for (double w : widths) {
             ColumnConstraints cc = new ColumnConstraints();
             cc.setPercentWidth(w);
@@ -132,22 +143,18 @@ public class AdminPanelController {
         row.add(createCell(user.role().toString(), "admin-table-cell"), 2, 0);
         
         String statusText = user.active() ? "Active" : "Suspended";
-        Label statusLabel = createCell(statusText, user.active() ? "admin-status-active" : "admin-status-suspended");
+        Label statusLabel = createStatusBadge(statusText, user.active() ? "status-active" : "status-suspended");
         row.add(statusLabel, 3, 0);
         
         String joinedDate = user.createdAt() != null ? user.createdAt().format(DATE_FORMATTER) : "N/A";
         row.add(createCell(joinedDate, "admin-table-cell"), 4, 0);
 
         HBox actions = new HBox(16);
-        Button viewBtn = new Button("View");
-        viewBtn.getStyleClass().add("admin-link-button");
-        viewBtn.setOnAction(e -> handleViewUser(user));
-
         Button actionBtn = new Button(user.active() ? "Disable" : "Enable");
-        actionBtn.getStyleClass().add(user.active() ? "admin-danger-link-button" : "admin-link-button");
+        actionBtn.getStyleClass().addAll("admin-pill-btn", user.active() ? "admin-btn-danger" : "admin-btn-success");
         actionBtn.setOnAction(e -> handleToggleUserStatus(user));
 
-        actions.getChildren().addAll(viewBtn, actionBtn);
+        actions.getChildren().add(actionBtn);
         row.add(actions, 5, 0);
 
         return row;
@@ -157,9 +164,9 @@ public class AdminPanelController {
         GridPane row = new GridPane();
         row.getStyleClass().add(alt ? "admin-table-row-alt" : "admin-table-row");
         row.setHgap(14);
-        row.setPadding(new Insets(10, 16, 10, 16));
+        row.setPadding(new Insets(8, 16, 8, 16));
 
-        double[] widths = {20, 12, 12, 14, 14, 10, 10, 8};
+        double[] widths = {18, 10, 10, 12, 12, 10, 14, 14};
         for (double w : widths) {
             ColumnConstraints cc = new ColumnConstraints();
             cc.setPercentWidth(w);
@@ -167,9 +174,28 @@ public class AdminPanelController {
         }
 
         HBox itemBox = new HBox(10);
-        itemBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        itemBox.setAlignment(Pos.CENTER_LEFT);
+        
         VBox thumb = new VBox();
         thumb.getStyleClass().add("admin-item-thumb");
+        thumb.setAlignment(Pos.CENTER);
+        
+        if (auction.imagePath() != null && !auction.imagePath().isEmpty()) {
+            try {
+                Image img = new Image(auction.imagePath(), 32, 32, true, true, true);
+                if (!img.isError()) {
+                    ImageView iv = new ImageView(img);
+                    thumb.getChildren().add(iv);
+                } else {
+                    thumb.getChildren().add(new FontIcon("mdi2p-package-variant"));
+                }
+            } catch (Exception e) {
+                thumb.getChildren().add(new FontIcon("mdi2p-package-variant"));
+            }
+        } else {
+            thumb.getChildren().add(new FontIcon("mdi2p-package-variant"));
+        }
+        
         itemBox.getChildren().addAll(thumb, createCell(auction.title(), "admin-table-cell"));
         row.add(itemBox, 0, 0);
 
@@ -179,22 +205,22 @@ public class AdminPanelController {
         row.add(createCell(formatMoney(auction.currentPrice()), "admin-money-cell"), 4, 0);
         
         String status = auction.status().toString();
-        Label statusLbl = createCell(status, getStatusStyleClass(status));
+        Label statusLbl = createStatusBadge(status, getStatusStyleClass(status));
         row.add(statusLbl, 5, 0);
         
-        row.add(createCell("N/A", "admin-table-cell"), 6, 0); // End time placeholder
+        String endTimeFormatted = auction.endTime() != null ? auction.endTime().format(DATE_FORMATTER) : "N/A";
+        row.add(createCell(endTimeFormatted, "admin-table-cell"), 6, 0);
 
         HBox actions = new HBox(12);
-        Button viewBtn = new Button("View");
-        viewBtn.getStyleClass().add("admin-link-button");
-        viewBtn.setOnAction(e -> handleViewAuction(auction));
-
         Button cancelBtn = new Button("Cancel");
-        cancelBtn.getStyleClass().add("admin-danger-link-button");
-        cancelBtn.setDisable(!status.equals("OPEN") && !status.equals("RUNNING"));
+        cancelBtn.getStyleClass().addAll("admin-pill-btn", "admin-btn-danger");
+        if (!status.equals("OPEN") && !status.equals("RUNNING")) {
+            cancelBtn.getStyleClass().add("admin-btn-disabled");
+            cancelBtn.setDisable(true);
+        }
         cancelBtn.setOnAction(e -> handleCancelAuction(auction));
 
-        actions.getChildren().addAll(viewBtn, cancelBtn);
+        actions.getChildren().add(cancelBtn);
         row.add(actions, 7, 0);
 
         return row;
@@ -206,26 +232,24 @@ public class AdminPanelController {
         return label;
     }
 
+    private Label createStatusBadge(String text, String statusClass) {
+        Label label = new Label(text);
+        label.getStyleClass().addAll("status-badge", statusClass);
+        return label;
+    }
+
     private String getStatusStyleClass(String status) {
         return switch (status) {
-            case "RUNNING" -> "admin-status-running";
-            case "FINISHED" -> "admin-status-finished";
-            case "OPEN" -> "admin-status-open";
-            default -> "admin-table-cell";
+            case "RUNNING" -> "status-running";
+            case "FINISHED" -> "status-finished";
+            case "OPEN" -> "status-open";
+            case "CANCELLED" -> "status-cancelled";
+            default -> "status-ended";
         };
     }
 
     private String formatMoney(BigDecimal amount) {
         return amount != null ? USD_FORMAT.format(amount) : "N/A";
-    }
-
-    @FXML
-    private void handleExportReport() {
-        messageLabel.setText("Report export functionality is not implemented yet.");
-    }
-
-    private void handleViewUser(UserDto user) {
-        messageLabel.setText("Viewing detail for: " + user.fullName());
     }
 
     private void handleToggleUserStatus(UserDto user) {
@@ -242,11 +266,25 @@ public class AdminPanelController {
         });
     }
 
-    private void handleViewAuction(AuctionDetailDto auction) {
-        messageLabel.setText("Viewing detail for auction: " + auction.title());
-    }
-
     private void handleCancelAuction(AuctionDetailDto auction) {
-        messageLabel.setText("Auction cancellation functionality is not implemented yet.");
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirm Cancellation");
+        alert.setHeaderText("Cancel Auction");
+        alert.setContentText("Are you sure you want to cancel the auction '" + auction.title() + "'? This action cannot be undone.");
+
+        alert.showAndWait().ifPresent(response -> {
+            if (response == javafx.scene.control.ButtonType.OK) {
+                adminService.cancelAuction(auction.auctionId()).thenAccept(res -> {
+                    Platform.runLater(() -> {
+                        if (res.isSuccess()) {
+                            messageLabel.setText("Auction canceled successfully.");
+                            loadAuctions();
+                        } else {
+                            messageLabel.setText("Failed to cancel auction: " + res.getMessage());
+                        }
+                    });
+                });
+            }
+        });
     }
 }

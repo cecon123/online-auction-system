@@ -18,7 +18,7 @@
 <ScrollPane
     xmlns="http://javafx.com/javafx"
     xmlns:fx="http://javafx.com/fxml"
-    fx:controller="com.auction.client.controller.CreateAuctionController"
+    fx:controller="com.auction.client.controller.EditAuctionController"
     fitToWidth="true"
     hbarPolicy="NEVER"
     vbarPolicy="AS_NEEDED"
@@ -33,9 +33,9 @@
         <VBox maxWidth="960" spacing="20">
             <!-- Page Header -->
             <VBox spacing="4">
-                <Label text="Create New Auction" styleClass="create-page-title" />
+                <Label text="Edit Auction" styleClass="create-page-title" />
                 <Label
-                    text="Fill in the details below to list a new item for bidding."
+                    text="Update the details of your auction."
                     styleClass="create-page-subtitle"
                 />
             </VBox>
@@ -216,7 +216,7 @@
                     />
 
                     <Button
-                        text="Publish Auction"
+                        text="Update Auction"
                         onAction="#handleSaveAuction"
                         styleClass="create-primary-footer-button"
                         prefWidth="160"

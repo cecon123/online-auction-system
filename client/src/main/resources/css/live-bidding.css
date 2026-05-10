@@ -26,14 +26,7 @@
     -fx-max-height: 92px;
 }
 
-.live-status-running {
-    -fx-background-color: #dcfce7;
-    -fx-text-fill: #166534;
-    -fx-background-radius: 999;
-    -fx-padding: 3 9 3 9;
-    -fx-font-size: 10px;
-    -fx-font-weight: 800;
-}
+/* Status badges use unified .status-badge + .status-* from common.css */
 
 .live-title {
     -fx-font-size: 24px;
@@ -385,13 +378,160 @@
     -fx-font-size: 11px;
 }
 
-.price-chart .chart-series-line {
-    -fx-stroke: #ff5a2a;
-    -fx-stroke-width: 3px;
+.price-chart .chart-series-area-fill {
+    -fx-fill: linear-gradient(to bottom, rgba(53,37,205,0.25), rgba(53,37,205,0.02));
+}
+
+.price-chart .chart-series-area-line {
+    -fx-stroke: #3525cd;
+    -fx-stroke-width: 2.5px;
 }
 
 .price-chart .chart-line-symbol {
-    -fx-background-color: white, #ff5a2a;
+    -fx-background-color: white, #3525cd;
     -fx-background-radius: 6px;
     -fx-padding: 4px;
 }
+
+/* =========================================================
+   Empty State
+   ========================================================= */
+
+.live-empty-state {
+    -fx-background-color: #fcf8ff;
+}
+
+.live-empty-icon {
+    -fx-icon-color: #c7c4d8;
+    -fx-fill: #c7c4d8;
+}
+
+.live-empty-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #6b7280;
+}
+
+.live-empty-subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: #9ca3af;
+    -fx-text-alignment: center;
+}
+
+/* =========================================================
+   Quick Bid Buttons
+   ========================================================= */
+
+.quick-bid-button {
+    -fx-background-color: #ede9fe;
+    -fx-text-fill: #3525cd;
+    -fx-font-weight: 800;
+    -fx-font-size: 12px;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: transparent;
+    -fx-padding: 6 14 6 14;
+    -fx-cursor: hand;
+    -fx-pref-height: 34px;
+}
+
+.quick-bid-button:hover {
+    -fx-background-color: #ddd6fe;
+}
+
+/* =========================================================
+   Bid History Cards
+   ========================================================= */
+
+.bid-history-card-compact {
+    -fx-min-width: 260px;
+    -fx-pref-width: 280px;
+    -fx-max-width: 300px;
+}
+
+.bid-history-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.bid-history-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.bid-history-subtitle {
+    -fx-font-size: 11px;
+    -fx-text-fill: #9ca3af;
+}
+
+.bid-card {
+    -fx-background-color: white;
+    -fx-border-color: #f3f4f6;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 12 8 12 8;
+    -fx-transition: all 0.2s ease;
+}
+
+.bid-card-self {
+    -fx-background-color: #f5f3ff;
+    -fx-border-color: #ddd6fe;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 12 8 12 8;
+}
+
+.bid-card-latest {
+    -fx-background-color: #f0fdf4;
+    -fx-border-color: #bbf7d0;
+    -fx-border-width: 1;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-effect: dropshadow(gaussian, rgba(34, 197, 94, 0.1), 10, 0, 0, 2);
+    -fx-margin: 4 0 4 0;
+}
+
+.bid-card-icon-pane {
+    -fx-min-width: 32px;
+    -fx-min-height: 32px;
+    -fx-background-color: #f3f4f6;
+    -fx-background-radius: 999;
+    -fx-icon-color: #9ca3af;
+}
+
+.bid-card-icon-latest {
+    -fx-background-color: #dcfce7;
+    -fx-icon-color: #166534;
+}
+
+.bid-card-name {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1f2937;
+}
+
+.bid-card-you-tag {
+    -fx-background-color: #3525cd;
+    -fx-text-fill: white;
+    -fx-font-size: 9px;
+    -fx-font-weight: 800;
+    -fx-padding: 1 5 1 5;
+    -fx-background-radius: 4;
+}
+
+.bid-card-time {
+    -fx-font-size: 11px;
+    -fx-text-fill: #6b7280;
+    -fx-font-weight: 400;
+}
+
+.bid-card-amount {
+    -fx-font-size: 14px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #374151;
+}
+
+.bid-card-amount-latest {
+    -fx-font-size: 16px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #166534;
+}
+
+

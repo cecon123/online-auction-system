@@ -79,7 +79,7 @@ public class RequestRouter {
         this.authService = new AuthService(userDao);
         this.walletService = new WalletService(userDao);
         this.bidService = new BidService(auctionDao, bidDao, userDao, autoBidDao, walletService);
-        this.auctionService = new AuctionService(auctionDao, itemDao);
+        this.auctionService = new AuctionService(auctionDao, itemDao, bidDao, walletService);
         this.notificationService = NotificationService.getInstance();
         this.sessionManager = SessionManager.getInstance();
     }
@@ -102,18 +102,13 @@ public class RequestRouter {
 
         try {
             return switch (type) {
-                case LOGIN -> Response.ok(
-                    type,
-                    request.getRequestId(),
-                    "Login successful",
-                    authService.login(
-                        requireData(
-                            request,
-                            LoginRequest.class,
-                            "Missing login data"
-                        )
-                    )
-                );
+                case LOGIN -> {
+                    com.auction.common.dto.auth.LoginResponse authRes = authService.login(
+                        requireData(request, LoginRequest.class, "Missing login data")
+                    );
+                    NotificationService.getInstance().registerUserConnection(authRes.userId(), clientWriter);
+                    yield Response.ok(type, request.getRequestId(), "Login successful", authRes);
+                }
                 case REGISTER -> Response.ok(
                     type,
                     request.getRequestId(),
@@ -128,6 +123,7 @@ public class RequestRouter {
                 );
                 case LOGOUT -> {
                     sessionManager.invalidateSession(request.getToken());
+                    NotificationService.getInstance().unregisterUserConnection(clientWriter);
                     logger.info(
                         "Logout successful for token: {}",
                         request.getToken()
@@ -140,14 +136,7 @@ public class RequestRouter {
                     );
                 }
                 case PLACE_BID -> {
-                    Long userId = sessionManager.getUserId(request.getToken());
-                    if (userId == null) {
-                        yield Response.fail(
-                            type,
-                            request.getRequestId(),
-                            "Unauthorized. Please login."
-                        );
-                    }
+                    Long userId = requireActiveUser(request);
                     PlaceBidRequest bidData = requireData(
                         request,
                         PlaceBidRequest.class,
@@ -162,8 +151,11 @@ public class RequestRouter {
                 }
                 case GET_AUCTIONS -> handleGetAuctions(request);
                 case GET_SELLER_AUCTIONS -> handleGetSellerAuctions(request);
+                case GET_SELLER_STATS -> handleGetSellerStats(request);
                 case GET_AUCTION_DETAIL -> handleGetAuctionDetail(request);
                 case CREATE_AUCTION -> handleCreateAuction(request);
+                case UPDATE_AUCTION -> handleUpdateAuction(request);
+                case CANCEL_AUCTION -> handleCancelAuction(request);
                 case DEPOSIT -> handleDeposit(request);
                 case WITHDRAW -> handleWithdraw(request);
                 case GET_BID_HISTORY -> {
@@ -242,6 +234,10 @@ public class RequestRouter {
                     requireAdmin(request);
                     yield handleGetAuctions(request); // Admin uses same summary for now
                 }
+                case ADMIN_CANCEL_AUCTION -> {
+                    requireAdmin(request);
+                    yield handleAdminCancelAuction(request);
+                }
                 default -> Response.fail(
                     type,
                     request.getRequestId(),
@@ -261,10 +257,7 @@ public class RequestRouter {
     }
 
     private Response<DashboardDto> handleGetDashboard(Request<?> request) {
-        Long userId = sessionManager.getUserId(request.getToken());
-        if (userId == null) {
-            throw new IllegalStateException("Unauthorized. Please login.");
-        }
+        Long userId = requireActiveUser(request);
 
         UserDao.UserRecord user = userDao.findById(userId)
             .orElseThrow(() -> new IllegalStateException("User not found."));
@@ -326,10 +319,7 @@ public class RequestRouter {
     }
 
     private Response<Void> handleSetAutoBid(Request<?> request) {
-        Long userId = sessionManager.getUserId(request.getToken());
-        if (userId == null) {
-            throw new IllegalStateException("Unauthorized. Please login.");
-        }
+        Long userId = requireActiveUser(request);
 
         com.auction.common.dto.bid.SetAutoBidRequest data = requireData(
             request,
@@ -348,10 +338,7 @@ public class RequestRouter {
     }
 
     private Response<com.auction.common.dto.bid.AutoBidDto> handleGetAutoBid(Request<?> request) {
-        Long userId = sessionManager.getUserId(request.getToken());
-        if (userId == null) {
-            throw new IllegalStateException("Unauthorized. Please login.");
-        }
+        Long userId = requireActiveUser(request);
 
         Long auctionId = jsonMapper.convertData(request.getData(), Long.class);
         if (auctionId == null) {
@@ -376,13 +363,73 @@ public class RequestRouter {
     private Response<List<AuctionSummaryDto>> handleGetSellerAuctions(
         Request<?> request
     ) {
-        Long userId = sessionManager.getUserId(request.getToken());
-        if (userId == null) {
-            throw new IllegalStateException("Unauthorized. Please login.");
-        }
+        Long userId = requireActiveUser(request);
 
         List<Auction> auctionList = auctionDao.findBySellerId(userId);
         return mapToAuctionSummaries(auctionList, MessageType.GET_SELLER_AUCTIONS, "Seller auctions loaded", request.getRequestId());
+    }
+
+    private Response<com.auction.common.dto.dashboard.SellerStatsDto> handleGetSellerStats(
+        Request<?> request
+    ) {
+        Long userId = requireActiveUser(request);
+
+        List<Auction> sellerAuctions = auctionDao.findBySellerId(userId);
+        
+        java.math.BigDecimal expectedRevenue = java.math.BigDecimal.ZERO;
+        java.math.BigDecimal totalRevenue = java.math.BigDecimal.ZERO;
+        int activeAuctionsCount = 0;
+        int finishedAuctionsCount = 0;
+        int successfulAuctionsCount = 0;
+        int totalAuctionsCount = sellerAuctions.size();
+        
+        // Let's iterate and calculate
+        for (Auction a : sellerAuctions) {
+            if (a.getStatus() == AuctionStatus.RUNNING || a.getStatus() == AuctionStatus.OPEN) {
+                activeAuctionsCount++;
+                if (a.getCurrentPrice() != null) {
+                    expectedRevenue = expectedRevenue.add(a.getCurrentPrice());
+                }
+            } else if (a.getStatus() == AuctionStatus.FINISHED) {
+                finishedAuctionsCount++;
+                // If there's a highest bidder and price >= reserve price (handled elsewhere usually, but let's assume if it has a highest bidder it's successful for now, or check reserve price)
+                if (a.getHighestBidderId() != null && (a.getReservePrice() == null || a.getCurrentPrice().compareTo(a.getReservePrice()) >= 0)) {
+                    successfulAuctionsCount++;
+                    if (a.getCurrentPrice() != null) {
+                        totalRevenue = totalRevenue.add(a.getCurrentPrice());
+                    }
+                }
+            }
+        }
+        
+        int successRate = 0;
+        if (finishedAuctionsCount > 0) {
+            successRate = (int) Math.round((double) successfulAuctionsCount / finishedAuctionsCount * 100);
+        }
+
+        int totalBidsReceived = 0;
+        for (Auction a : sellerAuctions) {
+            List<?> history = bidService.getBidHistory(a.getId());
+            if (history != null) {
+                totalBidsReceived += history.size();
+            }
+        }
+
+        com.auction.common.dto.dashboard.SellerStatsDto stats = new com.auction.common.dto.dashboard.SellerStatsDto(
+            expectedRevenue,
+            totalRevenue,
+            totalBidsReceived,
+            successRate,
+            activeAuctionsCount,
+            totalAuctionsCount
+        );
+
+        return Response.ok(
+            MessageType.GET_SELLER_STATS,
+            request.getRequestId(),
+            "Seller stats loaded",
+            stats
+        );
     }
 
     private Response<List<AuctionSummaryDto>> mapToAuctionSummaries(List<Auction> auctionList, String requestId) {
@@ -494,10 +541,7 @@ public class RequestRouter {
     }
 
     private Response<BigDecimal> handleDeposit(Request<?> request) {
-        Long userId = sessionManager.getUserId(request.getToken());
-        if (userId == null) {
-            throw new IllegalStateException("Unauthorized. Please login.");
-        }
+        Long userId = requireActiveUser(request);
 
         BigDecimal amount = jsonMapper.convertData(
             request.getData(),
@@ -518,10 +562,7 @@ public class RequestRouter {
     }
 
     private Response<BigDecimal> handleWithdraw(Request<?> request) {
-        Long userId = sessionManager.getUserId(request.getToken());
-        if (userId == null) {
-            throw new IllegalStateException("Unauthorized. Please login.");
-        }
+        Long userId = requireActiveUser(request);
 
         BigDecimal amount = jsonMapper.convertData(
             request.getData(),
@@ -544,10 +585,7 @@ public class RequestRouter {
     private Response<AuctionSummaryDto> handleCreateAuction(
         Request<?> request
     ) {
-        Long userId = sessionManager.getUserId(request.getToken());
-        if (userId == null) {
-            throw new IllegalStateException("Unauthorized. Please login.");
-        }
+        Long userId = requireActiveUser(request);
 
         CreateAuctionRequest data = requireData(
             request,
@@ -559,11 +597,79 @@ public class RequestRouter {
 
         AuctionSummaryDto response = auctionService.createAuction(userId, data);
 
+        NotificationService.getInstance().broadcastToAllUsers(MessageType.AUCTION_LIST_UPDATED, null);
+
         return Response.ok(
             MessageType.CREATE_AUCTION,
             request.getRequestId(),
             "Auction created successfully",
             response
+        );
+    }
+
+    private Response<?> handleUpdateAuction(Request<?> request) {
+        Long userId = requireActiveUser(request);
+
+        com.auction.common.dto.auction.UpdateAuctionRequest data = requireData(
+            request,
+            com.auction.common.dto.auction.UpdateAuctionRequest.class,
+            "UPDATE_AUCTION requires auction payload"
+        );
+
+        validateUpdateAuctionRequest(data);
+
+        auctionService.updateAuction(userId, data);
+
+        NotificationService.getInstance().broadcastToAllUsers(MessageType.AUCTION_LIST_UPDATED, null);
+
+        return Response.ok(
+            MessageType.UPDATE_AUCTION,
+            request.getRequestId(),
+            "Auction updated successfully",
+            null
+        );
+    }
+
+    private Response<?> handleCancelAuction(Request<?> request) {
+        Long userId = requireActiveUser(request);
+
+        Long auctionId = jsonMapper.convertData(request.getData(), Long.class);
+        if (auctionId == null) {
+            throw new IllegalArgumentException("Missing auction ID");
+        }
+
+        auctionService.cancelAuction(userId, auctionId);
+        
+        NotificationService.getInstance().broadcastToAllUsers(MessageType.AUCTION_LIST_UPDATED, null);
+
+        return Response.ok(
+            MessageType.CANCEL_AUCTION,
+            request.getRequestId(),
+            "Auction canceled successfully",
+            null
+        );
+    }
+
+    private Response<?> handleAdminCancelAuction(Request<?> request) {
+        Long adminId = sessionManager.getUserId(request.getToken());
+        if (adminId == null) {
+            throw new IllegalStateException("Unauthorized. Please login.");
+        }
+
+        Long auctionId = jsonMapper.convertData(request.getData(), Long.class);
+        if (auctionId == null) {
+            throw new IllegalArgumentException("Missing auction ID");
+        }
+
+        auctionService.adminCancelAuction(adminId, auctionId);
+        
+        NotificationService.getInstance().broadcastToAllUsers(MessageType.AUCTION_LIST_UPDATED, null);
+
+        return Response.ok(
+            MessageType.ADMIN_CANCEL_AUCTION,
+            request.getRequestId(),
+            "Auction canceled successfully by Admin",
+            null
         );
     }
 
@@ -608,11 +714,52 @@ public class RequestRouter {
         }
     }
 
-    private Response<List<AuctionSummaryDto>> handleGetMyBids(Request<?> request) {
-        Long userId = sessionManager.getUserId(request.getToken());
-        if (userId == null) {
-            throw new IllegalStateException("Unauthorized. Please login.");
+    private void validateUpdateAuctionRequest(com.auction.common.dto.auction.UpdateAuctionRequest data) {
+        if (data.auctionId() <= 0) {
+            throw new IllegalArgumentException("Invalid auction ID.");
         }
+        if (isBlank(data.itemName())) {
+            throw new IllegalArgumentException("Item name is required.");
+        }
+
+        if (data.itemType() == null) {
+            throw new IllegalArgumentException("Item type is required.");
+        }
+
+        if (isBlank(data.condition())) {
+            throw new IllegalArgumentException("Condition is required.");
+        }
+
+        if (isBlank(data.description())) {
+            throw new IllegalArgumentException("Description is required.");
+        }
+
+        if (
+            data.startingPrice() == null ||
+            data.startingPrice().compareTo(BigDecimal.ZERO) <= 0
+        ) {
+            throw new IllegalArgumentException(
+                "Starting price must be positive."
+            );
+        }
+
+        if (data.startTime() == null) {
+            throw new IllegalArgumentException("Start time is required.");
+        }
+
+        if (data.endTime() == null) {
+            throw new IllegalArgumentException("End time is required.");
+        }
+
+        if (!data.endTime().isAfter(data.startTime())) {
+            throw new IllegalArgumentException(
+                "End time must be after start time."
+            );
+        }
+    }
+
+    private Response<List<AuctionSummaryDto>> handleGetMyBids(Request<?> request) {
+        Long userId = requireActiveUser(request);
 
         // Find all auctions where the user has placed at least one bid
         List<Long> auctionIds = bidService.getMyBids(userId);
@@ -651,10 +798,7 @@ public class RequestRouter {
     }
 
     private Response<List<com.auction.common.dto.bid.BidHistoryDto>> handleGetUserBidHistory(Request<?> request) {
-        Long userId = sessionManager.getUserId(request.getToken());
-        if (userId == null) {
-            throw new IllegalStateException("Unauthorized. Please login.");
-        }
+        Long userId = requireActiveUser(request);
 
         List<com.auction.common.dto.bid.BidHistoryDto> history = bidService.getUserBidHistory(userId);
         
@@ -685,7 +829,7 @@ public class RequestRouter {
         );
     }
 
-    private void requireAdmin(Request<?> request) {
+    private Long requireActiveUser(Request<?> request) {
         Long userId = sessionManager.getUserId(request.getToken());
         if (userId == null) {
             throw new IllegalStateException("Unauthorized. Please login.");
@@ -693,6 +837,17 @@ public class RequestRouter {
 
         UserDao.UserRecord user = userDao.findById(userId)
             .orElseThrow(() -> new IllegalStateException("User not found."));
+
+        if (!user.active()) {
+            throw new IllegalStateException("Your account has been suspended.");
+        }
+
+        return userId;
+    }
+
+    private void requireAdmin(Request<?> request) {
+        Long userId = requireActiveUser(request);
+        UserDao.UserRecord user = userDao.findById(userId).get();
 
         if (user.role() != Role.ADMIN) {
             throw new IllegalStateException("Access denied. Admin role required.");

@@ -25,26 +25,6 @@ public class AppShellController {
     public void initialize() {
         logger.info("Initializing AppShellController and registering global bid listeners.");
         
-        // Register global listener for bid updates
-        SocketClient.getInstance().addEventListener(MessageType.BID_UPDATE, response -> {
-            try {
-                BidUpdateEvent event = JsonMapper.getInstance().convertData(response.getData(), BidUpdateEvent.class);
-                if (event != null) {
-                    // Don't show toast for own bids
-                    if (event.bidderUsername().equals(com.auction.client.util.SceneManager.getCurrentUsername())) {
-                        return;
-                    }
-
-                    String message = String.format("%s placed a bid of $%,.2f", 
-                            event.bidderUsername(), event.amount().doubleValue());
-                    
-                    NotificationManager.showToast("New Bid Received!", message);
-                }
-            } catch (Exception e) {
-                logger.error("Error processing global BID_UPDATE notification", e);
-            }
-        });
-
         // Register global listener for auction closed
         SocketClient.getInstance().addEventListener(MessageType.AUCTION_CLOSED, response -> {
             try {
@@ -81,6 +61,18 @@ public class AppShellController {
                 }
             } catch (Exception e) {
                 logger.error("Error processing global AUCTION_CLOSED notification", e);
+            }
+        });
+
+        // Register global listener for system notifications (e.g., First Bid)
+        SocketClient.getInstance().addEventListener(MessageType.SYSTEM_NOTIFICATION, response -> {
+            try {
+                com.auction.common.dto.notification.SystemNotificationDto event = JsonMapper.getInstance().convertData(response.getData(), com.auction.common.dto.notification.SystemNotificationDto.class);
+                if (event != null) {
+                    NotificationManager.showToast(event.title(), event.message(), event.type());
+                }
+            } catch (Exception e) {
+                logger.error("Error processing global SYSTEM_NOTIFICATION", e);
             }
         });
     }

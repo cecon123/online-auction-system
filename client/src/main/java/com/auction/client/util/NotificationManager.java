@@ -90,6 +90,15 @@ public final class NotificationManager {
             }
         });
 
+        socket.addEventListener(MessageType.SYSTEM_NOTIFICATION, response -> {
+            try {
+                com.auction.common.dto.notification.SystemNotificationDto event = mapper.convertData(response.getData(), com.auction.common.dto.notification.SystemNotificationDto.class);
+                showToast(event.title(), event.message(), event.type());
+            } catch (Exception e) {
+                logger.error("Error processing SYSTEM_NOTIFICATION", e);
+            }
+        });
+
         logger.info("NotificationManager initialized with global listeners.");
     }
 
@@ -98,12 +107,17 @@ public final class NotificationManager {
      *
      * @param title   The notification title.
      * @param message The notification message.
+     * @param type    The notification type (e.g. INFO, SUCCESS, WARNING)
      */
-    public static void showToast(String title, String message) {
-        Platform.runLater(() -> createAndShowToast(title, message));
+    public static void showToast(String title, String message, String type) {
+        Platform.runLater(() -> createAndShowToast(title, message, type));
     }
 
-    private static void createAndShowToast(String title, String message) {
+    public static void showToast(String title, String message) {
+        showToast(title, message, "INFO");
+    }
+
+    private static void createAndShowToast(String title, String message, String type) {
         Stage toastStage = new Stage();
         toastStage.initStyle(StageStyle.TRANSPARENT);
         toastStage.setAlwaysOnTop(true);
@@ -111,7 +125,15 @@ public final class NotificationManager {
         VBox root = new VBox(5);
         root.setAlignment(Pos.CENTER_LEFT);
         root.setPadding(new Insets(15));
-        root.setStyle("-fx-background-color: #3525cd; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 0);");
+        
+        String bgColor = "#3525cd"; // Default INFO (purple)
+        if ("SUCCESS".equalsIgnoreCase(type)) {
+            bgColor = "#2e7d32"; // Green
+        } else if ("WARNING".equalsIgnoreCase(type) || "ERROR".equalsIgnoreCase(type)) {
+            bgColor = "#d32f2f"; // Red
+        }
+
+        root.setStyle("-fx-background-color: " + bgColor + "; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 0);");
 
         Label titleLabel = new Label(title);
         titleLabel.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px;");

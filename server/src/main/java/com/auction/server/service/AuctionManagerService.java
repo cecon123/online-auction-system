@@ -144,20 +144,44 @@ public class AuctionManagerService {
                         .orElse("Unknown");
                 }
 
-                String message = "Auction " + (newStatus == AuctionStatus.FINISHED ? "sold successfully!" : "ended without sale.");
-
-                notificationService.broadcast(
-                    auction.getId(),
-                    com.auction.common.protocol.MessageType.AUCTION_CLOSED,
-                    new com.auction.common.dto.auction.AuctionEventDto(
+                if (newStatus == AuctionStatus.FINISHED || newStatus == AuctionStatus.CANCELED) {
+                    String message = "Auction " + (newStatus == AuctionStatus.FINISHED ? "sold successfully!" : "ended without sale.");
+                    notificationService.broadcast(
                         auction.getId(),
-                        newStatus,
-                        message,
-                        winnerUsername,
-                        auction.getCurrentPrice(),
-                        auction.getEndTime()
-                    )
-                );
+                        com.auction.common.protocol.MessageType.AUCTION_CLOSED,
+                        new com.auction.common.dto.auction.AuctionEventDto(
+                            auction.getId(),
+                            newStatus,
+                            message,
+                            winnerUsername,
+                            auction.getCurrentPrice(),
+                            auction.getEndTime()
+                        )
+                    );
+                }
+
+                // --- Global Seller Notification ---
+                if (newStatus == AuctionStatus.FINISHED) {
+                    com.auction.common.dto.notification.SystemNotificationDto successNotice = new com.auction.common.dto.notification.SystemNotificationDto(
+                        "Auction Sold! \uD83D\uDCB0", // 💰
+                        "Congratulations! Your auction #" + auction.getId() + " was won by " + winnerUsername + " for $" + auction.getCurrentPrice() + ".",
+                        "SUCCESS",
+                        now
+                    );
+                    notificationService.notifyUser(auction.getSellerId(), com.auction.common.protocol.MessageType.SYSTEM_NOTIFICATION, successNotice);
+                } else if (newStatus == AuctionStatus.CANCELED) {
+                    String reason = (auction.getHighestBidderId() != null) ? "reserve price not met." : "no bids were placed.";
+                    com.auction.common.dto.notification.SystemNotificationDto failNotice = new com.auction.common.dto.notification.SystemNotificationDto(
+                        "Auction Ended \uD83D\uDE14", // 😔
+                        "Your auction #" + auction.getId() + " ended because " + reason,
+                        "WARNING",
+                        now
+                    );
+                    notificationService.notifyUser(auction.getSellerId(), com.auction.common.protocol.MessageType.SYSTEM_NOTIFICATION, failNotice);
+                }
+
+                // Global broadcast for list update
+                notificationService.broadcastToAllUsers(com.auction.common.protocol.MessageType.AUCTION_LIST_UPDATED, null);
             } catch (IllegalStateException e) {
                 logger.warn("Status update failed for Auction {}: {}", auction.getId(), e.getMessage());
             } catch (Exception e) {

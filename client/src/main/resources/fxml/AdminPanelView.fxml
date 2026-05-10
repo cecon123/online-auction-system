@@ -17,80 +17,81 @@
             hbarPolicy="NEVER"
             styleClass="page-scroll">
 
-    <VBox spacing="28" styleClass="page">
+    <VBox spacing="16" styleClass="page">
         <padding>
-            <Insets top="32" right="32" bottom="40" left="32"/>
+            <Insets top="16" right="20" bottom="20" left="20"/>
         </padding>
 
         <!-- Header -->
         <HBox spacing="16" alignment="CENTER_LEFT">
-            <VBox spacing="6" HBox.hgrow="ALWAYS">
+            <VBox spacing="4" HBox.hgrow="ALWAYS">
                 <Label text="Admin Panel" styleClass="page-title"/>
                 <Label text="System overview and management console." styleClass="page-subtitle"/>
             </VBox>
-
-            <Button text="⇩  Export Report"
-                    onAction="#handleExportReport"
-                    styleClass="admin-export-button"/>
+            <Button text="Refresh" onAction="#handleRefresh" styleClass="admin-pill-btn, admin-btn-primary">
+                <graphic>
+                    <org.kordamp.ikonli.javafx.FontIcon iconLiteral="mdi2r-refresh" iconSize="14" iconColor="#3730a3"/>
+                </graphic>
+            </Button>
         </HBox>
 
         <!-- Stat cards -->
-        <HBox spacing="16">
-            <VBox styleClass="admin-stat-card" spacing="14" HBox.hgrow="ALWAYS">
+        <HBox spacing="12">
+            <VBox styleClass="admin-stat-card" spacing="8" HBox.hgrow="ALWAYS">
                 <padding>
-                    <Insets top="20" right="20" bottom="20" left="20"/>
+                    <Insets top="16" right="16" bottom="16" left="16"/>
                 </padding>
 
                 <HBox alignment="CENTER_LEFT">
                     <Label text="Total Users" styleClass="admin-stat-title"/>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <Label text="👥" styleClass="admin-stat-icon-purple"/>
+                    <org.kordamp.ikonli.javafx.FontIcon iconLiteral="mdi2a-account-multiple" iconSize="22" iconColor="#6366f1"/>
                 </HBox>
 
-                <HBox spacing="10" alignment="BOTTOM_LEFT">
+                <HBox spacing="8" alignment="BOTTOM_LEFT">
                     <Label fx:id="totalUsersLabel" text="0" styleClass="admin-stat-number"/>
                 </HBox>
             </VBox>
 
-            <VBox styleClass="admin-stat-card" spacing="14" HBox.hgrow="ALWAYS">
+            <VBox styleClass="admin-stat-card" spacing="10" HBox.hgrow="ALWAYS">
                 <padding>
-                    <Insets top="20" right="20" bottom="20" left="20"/>
+                    <Insets top="16" right="16" bottom="16" left="16"/>
                 </padding>
 
                 <HBox alignment="CENTER_LEFT">
                     <Label text="Total Auctions" styleClass="admin-stat-title"/>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <Label text="▣" styleClass="admin-stat-icon-blue"/>
+                    <org.kordamp.ikonli.javafx.FontIcon iconLiteral="mdi2g-gavel" iconSize="22" iconColor="#0ea5e9"/>
                 </HBox>
 
-                <HBox spacing="10" alignment="BOTTOM_LEFT">
+                <HBox spacing="8" alignment="BOTTOM_LEFT">
                     <Label fx:id="totalAuctionsLabel" text="0" styleClass="admin-stat-number"/>
                 </HBox>
             </VBox>
 
-            <VBox styleClass="admin-stat-card" spacing="14" HBox.hgrow="ALWAYS">
+            <VBox styleClass="admin-stat-card" spacing="10" HBox.hgrow="ALWAYS">
                 <padding>
-                    <Insets top="20" right="20" bottom="20" left="20"/>
+                    <Insets top="16" right="16" bottom="16" left="16"/>
                 </padding>
 
                 <HBox alignment="CENTER_LEFT">
                     <Label text="Running" styleClass="admin-stat-title"/>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <Label text="▶" styleClass="admin-stat-icon-orange"/>
+                    <org.kordamp.ikonli.javafx.FontIcon iconLiteral="mdi2p-play-circle" iconSize="22" iconColor="#f97316"/>
                 </HBox>
 
                 <Label fx:id="runningAuctionsLabel" text="0" styleClass="admin-stat-number"/>
             </VBox>
 
-            <VBox styleClass="admin-stat-card" spacing="14" HBox.hgrow="ALWAYS">
+            <VBox styleClass="admin-stat-card" spacing="10" HBox.hgrow="ALWAYS">
                 <padding>
-                    <Insets top="20" right="20" bottom="20" left="20"/>
+                    <Insets top="16" right="16" bottom="16" left="16"/>
                 </padding>
 
                 <HBox alignment="CENTER_LEFT">
                     <Label text="Finished" styleClass="admin-stat-title"/>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <Label text="✓" styleClass="admin-stat-icon-gray"/>
+                    <org.kordamp.ikonli.javafx.FontIcon iconLiteral="mdi2c-check-circle" iconSize="22" iconColor="#a855f7"/>
                 </HBox>
 
                 <Label fx:id="finishedAuctionsLabel" text="0" styleClass="admin-stat-number"/>
@@ -98,22 +99,21 @@
         </HBox>
 
         <!-- User Management -->
-        <VBox spacing="14">
+        <VBox spacing="10">
             <Label text="User Management" styleClass="admin-section-title"/>
-
             <VBox fx:id="userTableContainer" styleClass="admin-table">
                 <GridPane styleClass="admin-table-header" hgap="16">
                     <padding>
-                        <Insets top="12" right="16" bottom="12" left="16"/>
+                        <Insets top="8" right="16" bottom="8" left="16"/>
                     </padding>
 
                     <columnConstraints>
-                        <ColumnConstraints percentWidth="16"/>
-                        <ColumnConstraints percentWidth="24"/>
-                        <ColumnConstraints percentWidth="12"/>
-                        <ColumnConstraints percentWidth="14"/>
                         <ColumnConstraints percentWidth="18"/>
-                        <ColumnConstraints percentWidth="16"/>
+                        <ColumnConstraints percentWidth="20"/>
+                        <ColumnConstraints percentWidth="10"/>
+                        <ColumnConstraints percentWidth="12"/>
+                        <ColumnConstraints percentWidth="18"/>
+                        <ColumnConstraints percentWidth="22"/>
                     </columnConstraints>
 
                     <Label text="USER" styleClass="admin-table-header-text" GridPane.columnIndex="0"/>
@@ -129,24 +129,24 @@
         </VBox>
 
         <!-- Auction Management -->
-        <VBox spacing="14">
+        <VBox spacing="10">
             <Label text="Auction Management" styleClass="admin-section-title"/>
 
             <VBox fx:id="auctionTableContainer" styleClass="admin-table">
                 <GridPane styleClass="admin-table-header" hgap="14">
                     <padding>
-                        <Insets top="12" right="16" bottom="12" left="16"/>
+                        <Insets top="8" right="16" bottom="8" left="16"/>
                     </padding>
 
                     <columnConstraints>
-                        <ColumnConstraints percentWidth="20"/>
-                        <ColumnConstraints percentWidth="12"/>
-                        <ColumnConstraints percentWidth="12"/>
-                        <ColumnConstraints percentWidth="14"/>
-                        <ColumnConstraints percentWidth="14"/>
+                        <ColumnConstraints percentWidth="18"/>
                         <ColumnConstraints percentWidth="10"/>
                         <ColumnConstraints percentWidth="10"/>
-                        <ColumnConstraints percentWidth="8"/>
+                        <ColumnConstraints percentWidth="12"/>
+                        <ColumnConstraints percentWidth="12"/>
+                        <ColumnConstraints percentWidth="10"/>
+                        <ColumnConstraints percentWidth="14"/>
+                        <ColumnConstraints percentWidth="14"/>
                     </columnConstraints>
 
                     <Label text="ITEM" styleClass="admin-table-header-text" GridPane.columnIndex="0"/>

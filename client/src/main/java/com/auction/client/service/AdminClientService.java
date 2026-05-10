@@ -68,4 +68,12 @@ public class AdminClientService {
                 return response;
             });
     }
+
+    /**
+     * Cancels an auction (Admin only).
+     */
+    public CompletableFuture<Response<Void>> cancelAuction(Long auctionId) {
+        Request<Long> request = new Request<>(MessageType.ADMIN_CANCEL_AUCTION, null, null, auctionId);
+        return socketClient.<Long, Void>sendRequest(request);
+    }
 }

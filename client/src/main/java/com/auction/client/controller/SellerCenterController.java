@@ -17,19 +17,73 @@ public class SellerCenterController {
     @FXML
     private Label emptyLabel;
 
+    @FXML private Label expectedRevenueLabel;
+    @FXML private Label totalRevenueLabel;
+    @FXML private Label totalBidsLabel;
+    @FXML private Label successRateLabel;
+    @FXML private Label successRateSubtitleLabel;
+
+    private static com.auction.common.dto.dashboard.SellerStatsDto cachedStats = null;
     private final AuctionClientService auctionService = new AuctionClientService();
 
     @FXML
     private void initialize() {
+        if (cachedStats != null) {
+            updateStatsUI(cachedStats);
+        } else {
+            expectedRevenueLabel.setText("...");
+            totalRevenueLabel.setText("...");
+            totalBidsLabel.setText("...");
+            successRateLabel.setText("...");
+            successRateSubtitleLabel.setText("Loading...");
+        }
+
         loadSellerAuctions();
+        loadSellerStats();
     }
 
+    @FXML
+    private void handleRefresh() {
+        // Clear caches to force fresh load
+        cachedStats = null;
+        cachedAuctions = null;
+        
+        loadSellerAuctions();
+        loadSellerStats();
+    }
+
+    private void loadSellerStats() {
+        auctionService.getSellerStats().thenAccept(response -> {
+            Platform.runLater(() -> {
+                if (response.isSuccess() && response.getData() != null) {
+                    cachedStats = response.getData();
+                    updateStatsUI(cachedStats);
+                }
+            });
+        });
+    }
+
+    private void updateStatsUI(com.auction.common.dto.dashboard.SellerStatsDto stats) {
+        expectedRevenueLabel.setText("$" + String.format("%,.2f", stats.expectedRevenue()));
+        totalRevenueLabel.setText("$" + String.format("%,.2f", stats.totalRevenue()));
+        totalBidsLabel.setText(String.valueOf(stats.totalBidsReceived()));
+        successRateLabel.setText(stats.successRate() + "%");
+        
+        successRateSubtitleLabel.setText(stats.activeAuctionsCount() + " active / " + stats.totalAuctionsCount() + " total");
+    }
+
+    private static List<AuctionSummaryDto> cachedAuctions = null;
+
     private void loadSellerAuctions() {
+        if (cachedAuctions != null) {
+            displayAuctions(cachedAuctions);
+        }
+
         auctionService.getSellerAuctions().thenAccept(response -> {
             Platform.runLater(() -> {
                 if (response.isSuccess()) {
-                    List<AuctionSummaryDto> auctions = response.getData();
-                    displayAuctions(auctions);
+                    cachedAuctions = response.getData();
+                    displayAuctions(cachedAuctions);
                 } else {
                     // Handle error
                 }
@@ -51,29 +105,90 @@ public class SellerCenterController {
         emptyLabel.setManaged(false);
 
         for (AuctionSummaryDto auction : auctions) {
-            HBox row = new HBox(24);
+            HBox row = new HBox(16);
             row.getStyleClass().add("auction-row");
+            row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
             
             Label title = new Label(auction.title());
-            title.setPrefWidth(260);
             title.getStyleClass().add("text-bold");
+            HBox.setHgrow(title, javafx.scene.layout.Priority.ALWAYS);
+            title.setMaxWidth(Double.MAX_VALUE);
 
             Label startPrice = new Label("$" + auction.startingPrice().toPlainString());
-            startPrice.setPrefWidth(140);
+            startPrice.setPrefWidth(100);
+            startPrice.setMinWidth(100);
 
             Label currentPrice = new Label("$" + auction.currentPrice().toPlainString());
-            currentPrice.setPrefWidth(140);
+            currentPrice.setPrefWidth(100);
+            currentPrice.setMinWidth(100);
 
             Label status = new Label(auction.status().name());
-            status.getStyleClass().add("status-" + auction.status().name().toLowerCase());
+            status.getStyleClass().addAll("status-badge", getStatusStyleClass(auction.status().name()));
+            status.setPrefWidth(80);
+            status.setMinWidth(80);
 
-            row.getChildren().addAll(title, startPrice, currentPrice, status);
+            HBox actions = new HBox(8);
+            actions.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+            actions.setPrefWidth(130);
+            actions.setMinWidth(130);
+
+            if (auction.status() == com.auction.common.enums.AuctionStatus.OPEN) {
+                
+                javafx.scene.control.Button btnEdit = new javafx.scene.control.Button("Edit");
+                btnEdit.getStyleClass().addAll("btn", "btn-sm", "btn-secondary");
+                btnEdit.setOnAction(e -> handleEditAuction(auction.id()));
+                
+                javafx.scene.control.Button btnCancel = new javafx.scene.control.Button("Cancel");
+                btnCancel.getStyleClass().addAll("btn", "btn-sm", "btn-danger");
+                btnCancel.setOnAction(e -> handleCancelAuction(auction.id()));
+                
+                actions.getChildren().addAll(btnEdit, btnCancel);
+            }
+
+            row.getChildren().addAll(title, startPrice, currentPrice, status, actions);
             auctionListContainer.getChildren().add(row);
         }
+    }
+
+    private void handleCancelAuction(long auctionId) {
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Cancel Auction");
+        alert.setHeaderText("Cancel Auction #" + auctionId);
+        alert.setContentText("Are you sure you want to cancel this auction? This cannot be undone.");
+
+        if (alert.showAndWait().orElse(javafx.scene.control.ButtonType.CANCEL) == javafx.scene.control.ButtonType.OK) {
+            auctionService.cancelAuction(auctionId).thenAccept(response -> {
+                Platform.runLater(() -> {
+                    if (response.isSuccess()) {
+                        com.auction.client.util.NotificationManager.showToast("Auction canceled successfully", "SUCCESS");
+                    } else {
+                        com.auction.client.util.NotificationManager.showToast(response.getMessage(), "ERROR");
+                    }
+                });
+            });
+        }
+    }
+
+    private void handleEditAuction(long auctionId) {
+        SceneManager.showEditAuction(auctionId);
     }
 
     @FXML
     private void handleCreateAuction() {
         SceneManager.showCreateAuction();
+    }
+
+    /**
+     * Maps AuctionStatus enum name to the corresponding CSS class.
+     * Handles the mismatch between CANCELED (enum) and status-cancelled (legacy CSS).
+     */
+    private String getStatusStyleClass(String statusName) {
+        return switch (statusName) {
+            case "RUNNING"  -> "status-running";
+            case "OPEN"     -> "status-open";
+            case "FINISHED" -> "status-finished";
+            case "CANCELED" -> "status-canceled";
+            default         -> "status-finished";
+        };
     }
 }

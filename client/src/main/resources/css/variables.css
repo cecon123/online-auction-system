@@ -1,5 +1,24 @@
 /* =========================================================
    Global Variables & Root
+   =========================================================
+
+   Color Palette (Indigo/Navy Design System)
+   -----------------------------------------
+   Navy 950:    #1e1b4b   (Sidebar bg)
+   Indigo 800:  #312e81   (Sidebar hover)
+   Indigo 600:  #4f46e5   (Button hover)
+   Primary:     #3525cd   (Brand, CTA)
+   Accent:      #7c3aed   (Purple accent)
+   Surface:     #fcf8ff   (Page bg)
+   Card:        #ffffff
+   Border:      #c7c4d8
+   Text:        #111827
+   Muted:       #6b7280
+   Success:     #059669
+   Error:       #ba1a1a
+
+   Control Height: 42px (all interactive elements)
+   Radius: sm=6  md=8  lg=12  pill=999
    ========================================================= */
 
 .root {
@@ -32,4 +51,59 @@
 
 .scroll-pane > .viewport {
     -fx-background-color: transparent;
+}
+
+/* =========================================================
+   Modern Scrollbar — Slim, Rounded, Auto-reveal
+   ========================================================= */
+
+.scroll-bar {
+    -fx-background-color: transparent;
+    -fx-pref-width: 8px;
+    -fx-min-width: 8px;
+    -fx-max-width: 8px;
+}
+
+.scroll-bar:horizontal {
+    -fx-pref-height: 8px;
+    -fx-min-height: 8px;
+    -fx-max-height: 8px;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: rgba(0, 0, 0, 0.12);
+    -fx-background-radius: 999;
+    -fx-min-width: 6px;
+    -fx-pref-width: 6px;
+    -fx-min-height: 30px;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: rgba(0, 0, 0, 0.28);
+}
+
+.scroll-bar .thumb:pressed {
+    -fx-background-color: rgba(0, 0, 0, 0.38);
+}
+
+.scroll-bar .track,
+.scroll-bar .track-background {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-pref-height: 0;
+    -fx-pref-width: 0;
+    -fx-min-height: 0;
+    -fx-min-width: 0;
+    -fx-max-height: 0;
+    -fx-max-width: 0;
+    -fx-padding: 0;
+}
+
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow {
+    -fx-shape: "";
+    -fx-padding: 0;
 }

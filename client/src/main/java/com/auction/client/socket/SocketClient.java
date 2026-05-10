@@ -51,14 +51,14 @@ public final class SocketClient {
     }
 
     /**
-     * Registers a listener for a specific message type (realtime events).
+     * Registers a listener for real-time events from the server.
      */
     public void addEventListener(MessageType type, Consumer<Response<?>> listener) {
         eventListeners.computeIfAbsent(type, k -> new CopyOnWriteArrayList<>()).add(listener);
     }
 
     /**
-     * Removes a listener.
+     * Unregisters a listener for real-time events.
      */
     public void removeEventListener(MessageType type, Consumer<Response<?>> listener) {
         List<Consumer<Response<?>>> listeners = eventListeners.get(type);
@@ -152,8 +152,8 @@ public final class SocketClient {
             String requestId = response.getRequestId();
 
             // Realtime events from server often have requestId starting with 'event-' 
-            // or no requestId at all.
-            if (requestId != null && !requestId.startsWith("event-")) {
+            // or 'sys-notify-', or no requestId at all.
+            if (requestId != null && !requestId.startsWith("event-") && !requestId.startsWith("sys-notify-")) {
                 CompletableFuture<Response<?>> future = pendingRequests.remove(requestId);
                 if (future != null) {
                     future.complete(response);

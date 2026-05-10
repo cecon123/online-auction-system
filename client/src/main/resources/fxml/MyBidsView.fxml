@@ -66,9 +66,9 @@
                     <Insets top="18" right="18" bottom="18" left="18"/>
                 </padding>
 
-                <Label text="WATCHLIST" styleClass="form-label"/>
-                <Label fx:id="watchlistLabel" text="0" styleClass="stat-number"/>
-                <Label text="Auctions you follow" styleClass="page-subtitle"/>
+                <Label text="WON AUCTIONS" styleClass="form-label"/>
+                <Label fx:id="wonAuctionsLabel" text="0" styleClass="stat-number"/>
+                <Label text="Auctions you have won" styleClass="success-text"/>
             </VBox>
         </HBox>
 

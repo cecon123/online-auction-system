@@ -25,17 +25,6 @@
     <Region prefHeight="32" />
 
     <Button
-        onAction="#showDashboard"
-        maxWidth="Infinity"
-        styleClass="nav-button"
-        text="Dashboard"
-    >
-        <graphic>
-            <FontIcon iconLiteral="mdi2v-view-dashboard-outline" iconSize="18" />
-        </graphic>
-    </Button>
-
-    <Button
         fx:id="auctionsButton"
         onAction="#showAuctions"
         maxWidth="Infinity"

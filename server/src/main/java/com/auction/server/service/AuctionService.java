@@ -2,6 +2,7 @@ package com.auction.server.service;
 
 import com.auction.common.dto.auction.AuctionSummaryDto;
 import com.auction.common.dto.auction.CreateAuctionRequest;
+import com.auction.common.dto.auction.UpdateAuctionRequest;
 import com.auction.common.enums.AuctionStatus;
 import com.auction.common.model.Auction;
 import com.auction.common.model.Item;
@@ -12,6 +13,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.auction.common.protocol.MessageType;
+import com.auction.common.dto.notification.SystemNotificationDto;
+import com.auction.common.dto.auction.AuctionEventDto;
 
 /**
  * Service for managing auction lifecycle and creation.
@@ -24,11 +28,17 @@ public class AuctionService {
 
     private final AuctionDao auctionDao;
     private final ItemDao itemDao;
+    private final com.auction.server.dao.BidDao bidDao;
+    private final WalletService walletService;
+    private final NotificationService notificationService;
     private final ItemFactory itemFactory;
 
-    public AuctionService(AuctionDao auctionDao, ItemDao itemDao) {
+    public AuctionService(AuctionDao auctionDao, ItemDao itemDao, com.auction.server.dao.BidDao bidDao, WalletService walletService) {
         this.auctionDao = auctionDao;
         this.itemDao = itemDao;
+        this.bidDao = bidDao;
+        this.walletService = walletService;
+        this.notificationService = NotificationService.getInstance();
         this.itemFactory = new ItemFactory();
     }
 
@@ -74,6 +84,9 @@ public class AuctionService {
         logger.debug("Item created with ID: {}", itemId);
 
         // 2. Create and persist Auction
+        LocalDateTime now = LocalDateTime.now();
+        AuctionStatus initialStatus = request.startTime().isAfter(now) ? AuctionStatus.OPEN : AuctionStatus.RUNNING;
+
         Auction auction = new Auction(
             0L, // ID will be generated
             itemId,
@@ -84,9 +97,9 @@ public class AuctionService {
             null, // No highest bidder yet
             request.startTime(),
             request.endTime(),
-            AuctionStatus.OPEN,
+            initialStatus,
             0L, // Initial version
-            LocalDateTime.now()
+            now
         );
 
         long auctionId = auctionDao.create(auction);
@@ -105,8 +118,126 @@ public class AuctionService {
             null, // No highest bidder yet
             request.startTime(),
             request.endTime(),
-            AuctionStatus.OPEN,
+            initialStatus,
             request.imagePath()
         );
+    }
+
+    public void cancelAuction(long userId, long auctionId) {
+        Auction auction = auctionDao.findById(auctionId)
+            .orElseThrow(() -> new IllegalArgumentException("Auction not found: " + auctionId));
+
+        if (auction.getSellerId() != userId) {
+            throw new IllegalStateException("You can only cancel your own auctions.");
+        }
+
+        if (auction.getStatus() != AuctionStatus.OPEN && auction.getStatus() != AuctionStatus.RUNNING) {
+            throw new IllegalStateException("Auction cannot be canceled in its current status: " + auction.getStatus());
+        }
+
+        auction.setStatus(AuctionStatus.CANCELED);
+        auctionDao.update(auction);
+        
+        performCancellationCleanup(auction, "Seller canceled the auction.");
+        
+        logger.info("User {} canceled Auction {}", userId, auctionId);
+    }
+
+    public void adminCancelAuction(long adminId, long auctionId) {
+        Auction auction = auctionDao.findById(auctionId)
+            .orElseThrow(() -> new IllegalArgumentException("Auction not found: " + auctionId));
+
+        if (auction.getStatus() != AuctionStatus.OPEN && auction.getStatus() != AuctionStatus.RUNNING) {
+            throw new IllegalStateException("Auction cannot be canceled in its current status: " + auction.getStatus());
+        }
+
+        auction.setStatus(AuctionStatus.CANCELED);
+        auctionDao.update(auction);
+
+        performCancellationCleanup(auction, "Administrator canceled the auction due to policy violation.");
+
+        logger.info("Admin {} canceled Auction {}", adminId, auctionId);
+    }
+
+    private void performCancellationCleanup(Auction auction, String reason) {
+        LocalDateTime now = LocalDateTime.now();
+        
+        // 1. Release funds for the current highest bidder
+        if (auction.getHighestBidderId() != null && auction.getHighestMaxBid() != null) {
+            walletService.releaseFunds(auction.getHighestBidderId(), auction.getHighestMaxBid());
+            
+            // Notify the outbid (now canceled) leader
+            SystemNotificationDto refundNotice = new SystemNotificationDto(
+                "Auction Canceled - Refund Issued",
+                "Auction #" + auction.getId() + " has been canceled. Your locked bid of $" + auction.getHighestMaxBid() + " has been returned to your balance.",
+                "INFO",
+                now
+            );
+            notificationService.notifyUser(auction.getHighestBidderId(), MessageType.SYSTEM_NOTIFICATION, refundNotice);
+        }
+
+        // 2. Notify Seller
+        SystemNotificationDto sellerNotice = new SystemNotificationDto(
+            "Auction Canceled",
+            "Your auction #" + auction.getId() + " has been canceled. Reason: " + reason,
+            "WARNING",
+            now
+        );
+        notificationService.notifyUser(auction.getSellerId(), MessageType.SYSTEM_NOTIFICATION, sellerNotice);
+
+        // 3. Broadcast to all observers (Bidders currently viewing or subscribed)
+        notificationService.broadcast(auction.getId(), MessageType.AUCTION_CANCELED, 
+            new AuctionEventDto(auction.getId(), AuctionStatus.CANCELED, reason, null, null, auction.getEndTime()));
+    }
+
+    /**
+     * Updates a seller's own auction that has no bids yet.
+     *
+     * @param sellerId The user requesting the update.
+     * @param request  The updated fields.
+     */
+    public void updateAuction(long sellerId, UpdateAuctionRequest request) {
+        Auction auction = auctionDao.findById(request.auctionId())
+            .orElseThrow(() -> new IllegalArgumentException("Auction not found: " + request.auctionId()));
+
+        if (auction.getSellerId() != sellerId) {
+            throw new IllegalStateException("You can only edit your own auctions.");
+        }
+
+        if (auction.getHighestBidderId() != null) {
+            throw new IllegalStateException("Cannot edit auction. Bids have already been placed.");
+        }
+
+        if (auction.getStatus() != AuctionStatus.OPEN) {
+            throw new IllegalStateException("Auction cannot be edited in its current status: " + auction.getStatus());
+        }
+
+        // Update Item fields
+        Item item = itemDao.findById(auction.getItemId())
+            .orElseThrow(() -> new IllegalArgumentException("Item not found for auction: " + request.auctionId()));
+
+        item.setName(request.itemName());
+        item.setDescription(request.description());
+        item.setCondition(request.condition());
+        item.setImagePath(request.imagePath());
+        item.setStartingPrice(request.startingPrice());
+        itemDao.update(item);
+
+        // Update Auction fields
+        auction.setStartTime(request.startTime());
+        auction.setEndTime(request.endTime());
+        auction.setReservePrice(request.reservePrice());
+        
+        // Auto update status if start time has passed
+        LocalDateTime now = LocalDateTime.now();
+        if (!request.startTime().isAfter(now)) {
+            auction.setStatus(AuctionStatus.RUNNING);
+        }
+
+        // Reset current price to new starting price (no bids yet, so this is safe)
+        auction.setCurrentPrice(request.startingPrice());
+        auctionDao.update(auction);
+
+        logger.info("User {} updated Auction {}", sellerId, request.auctionId());
     }
 }

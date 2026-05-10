@@ -4,6 +4,8 @@ import com.auction.client.service.WalletClientService;
 import com.auction.client.util.JsonMapper;
 import com.auction.client.util.SceneManager;
 import java.math.BigDecimal;
+import java.text.NumberFormat;
+import java.util.Locale;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -30,6 +32,7 @@ public class WalletController {
     private BigDecimal lockedBalance;
     private final WalletClientService walletService = new WalletClientService();
     private final JsonMapper jsonMapper = JsonMapper.getInstance();
+    private static final NumberFormat CURRENCY = NumberFormat.getCurrencyInstance(Locale.US);
 
     @FXML
     private void initialize() {
@@ -38,6 +41,15 @@ public class WalletController {
         refreshBalance();
         messageLabel.setText("");
     }
+
+    @FXML
+    private void handleQuickDeposit50() { amountField.setText("50"); handleDeposit(); }
+
+    @FXML
+    private void handleQuickDeposit100() { amountField.setText("100"); handleDeposit(); }
+
+    @FXML
+    private void handleQuickDeposit500() { amountField.setText("500"); handleDeposit(); }
 
     @FXML
     private void handleDeposit() {
@@ -138,8 +150,8 @@ public class WalletController {
     }
 
     private void refreshBalance() {
-        balanceLabel.setText("$" + balance.toPlainString());
-        availableLabel.setText("$" + balance.subtract(lockedBalance).toPlainString());
-        lockedLabel.setText("$" + lockedBalance.toPlainString());
+        balanceLabel.setText(CURRENCY.format(balance));
+        availableLabel.setText(CURRENCY.format(balance.subtract(lockedBalance)));
+        lockedLabel.setText(CURRENCY.format(lockedBalance));
     }
 }

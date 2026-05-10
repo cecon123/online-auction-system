@@ -22,12 +22,50 @@ import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 
-public class CreateAuctionController {
+import com.auction.common.dto.auction.UpdateAuctionRequest;
+
+public class EditAuctionController {
 
     private final AuctionClientService auctionService;
+    private Long currentAuctionId;
 
-    public CreateAuctionController() {
+    public EditAuctionController() {
         this.auctionService = new AuctionClientService();
+    }
+
+    public void initData(Long auctionId) {
+        this.currentAuctionId = auctionId;
+        auctionService.getAuctionDetail(auctionId).thenAccept(response -> {
+            Platform.runLater(() -> {
+                if (response.isSuccess() && response.getData() != null) {
+                    com.auction.common.dto.auction.AuctionDetailDto detail = response.getData();
+                    productNameField.setText(detail.title());
+                    categoryComboBox.setValue(detail.itemType());
+                    conditionComboBox.setValue(detail.condition());
+                    descriptionArea.setText(detail.description());
+                    startingPriceField.setText(detail.startingPrice() != null ? detail.startingPrice().toString() : "");
+                    reservePriceField.setText(detail.reservePrice() != null ? detail.reservePrice().toString() : "");
+                    
+                    if (detail.startTime() != null) {
+                        startDatePicker.setValue(detail.startTime().toLocalDate());
+                        startHourSpinner.getValueFactory().setValue(detail.startTime().getHour());
+                        startMinuteSpinner.getValueFactory().setValue(detail.startTime().getMinute());
+                    }
+                    if (detail.endTime() != null) {
+                        endDatePicker.setValue(detail.endTime().toLocalDate());
+                        endHourSpinner.getValueFactory().setValue(detail.endTime().getHour());
+                        endMinuteSpinner.getValueFactory().setValue(detail.endTime().getMinute());
+                    }
+                    
+                    if (detail.imagePath() != null) {
+                        selectedImageFile = new File(detail.imagePath());
+                        selectedImageLabel.setText(selectedImageFile.getName());
+                    }
+                } else {
+                    showError("Failed to load auction details.");
+                }
+            });
+        });
     }
 
     @FXML
@@ -194,7 +232,13 @@ public class CreateAuctionController {
             return;
         }
 
-        CreateAuctionRequest request = new CreateAuctionRequest(
+        if (currentAuctionId == null) {
+            showError("Auction ID is missing.");
+            return;
+        }
+
+        UpdateAuctionRequest request = new UpdateAuctionRequest(
+            currentAuctionId,
             productName,
             categoryComboBox.getValue(),
             conditionComboBox.getValue(),
@@ -206,15 +250,15 @@ public class CreateAuctionController {
             selectedImageFile.getAbsolutePath()
         );
 
-        messageLabel.setText("Saving auction...");
+        messageLabel.setText("Updating auction...");
 
-        auctionService.createAuction(request).thenAccept(response -> {
+        auctionService.updateAuction(request).thenAccept(response -> {
             Platform.runLater(() -> {
                 if (response.isSuccess()) {
-                    com.auction.client.util.NotificationManager.showToast("Auction created successfully!", "SUCCESS");
+                    com.auction.client.util.NotificationManager.showToast("Auction updated successfully!", "SUCCESS");
                     SceneManager.showSellerCenter();
                 } else {
-                    showError("Failed to create auction: " + response.getMessage());
+                    showError("Failed to update auction: " + response.getMessage());
                 }
             });
         }).exceptionally(ex -> {

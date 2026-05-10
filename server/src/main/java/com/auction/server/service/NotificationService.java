@@ -24,6 +24,10 @@ public class NotificationService {
 
     // Map of auctionId -> set of PrintWriters for subscribed clients
     private final Map<Long, Set<PrintWriter>> subscriptions = new ConcurrentHashMap<>();
+    
+    // Map of userId -> set of PrintWriters for targeted user notifications
+    private final Map<Long, Set<PrintWriter>> userConnections = new ConcurrentHashMap<>();
+    
     private final JsonMapper jsonMapper = JsonMapper.getInstance();
 
     private NotificationService() {}
@@ -61,6 +65,79 @@ public class NotificationService {
      */
     public void unsubscribeFromAll(PrintWriter clientWriter) {
         subscriptions.values().forEach(clients -> clients.remove(clientWriter));
+        unregisterUserConnection(clientWriter);
+    }
+
+    /**
+     * Registers a client's socket connection to a specific user ID after login.
+     */
+    public void registerUserConnection(long userId, PrintWriter clientWriter) {
+        userConnections
+            .computeIfAbsent(userId, k -> new CopyOnWriteArraySet<>())
+            .add(clientWriter);
+        logger.debug("Registered connection for user {}", userId);
+    }
+
+    /**
+     * Removes a client's socket connection from any user ID mapping upon disconnect.
+     */
+    public void unregisterUserConnection(PrintWriter clientWriter) {
+        userConnections.values().forEach(clients -> clients.remove(clientWriter));
+    }
+
+    /**
+     * Sends a direct notification to all active connections of a specific user.
+     */
+    public void notifyUser(long userId, MessageType type, Object data) {
+        Set<PrintWriter> clients = userConnections.getOrDefault(userId, Collections.emptySet());
+
+        if (clients.isEmpty()) {
+            return;
+        }
+
+        Response<?> response = Response.ok(
+            type,
+            "sys-notify-" + System.currentTimeMillis(),
+            "System notification",
+            data
+        );
+        String json = jsonMapper.toJson(response);
+
+        logger.info("Sending {} to User {}", type, userId);
+
+        clients.forEach(writer -> {
+            try {
+                writer.println(json);
+            } catch (Exception e) {
+                logger.error("Failed to send notification to User {}", userId, e);
+            }
+        });
+    }
+
+    /**
+     * Broadcasts a message to all connected users.
+     */
+    public void broadcastToAllUsers(MessageType type, Object data) {
+        Response<?> response = Response.ok(
+            type,
+            "sys-notify-" + System.currentTimeMillis(),
+            "Global broadcast",
+            data
+        );
+        String json = jsonMapper.toJson(response);
+
+        logger.info("Broadcasting {} to all connected users", type);
+
+        userConnections.values().stream()
+            .flatMap(Set::stream)
+            .distinct()
+            .forEach(writer -> {
+                try {
+                    writer.println(json);
+                } catch (Exception e) {
+                    logger.error("Failed to send broadcast to a user", e);
+                }
+            });
     }
 
     /**

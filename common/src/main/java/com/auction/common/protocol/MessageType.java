@@ -25,6 +25,8 @@ public enum MessageType {
     DELETE_ITEM,
     CREATE_AUCTION,
     GET_SELLER_AUCTIONS,
+    GET_SELLER_STATS,
+    SYSTEM_NOTIFICATION,
     UPDATE_AUCTION,
     CANCEL_AUCTION,
 
@@ -42,6 +44,7 @@ public enum MessageType {
     BID_UPDATE,
     AUCTION_CLOSED,
     TIME_EXTENDED,
+    AUCTION_LIST_UPDATED,
 
     // Wallet
     DEPOSIT,
@@ -55,4 +58,6 @@ public enum MessageType {
     ADMIN_GET_USERS,
     ADMIN_UPDATE_USER_STATUS,
     ADMIN_GET_AUCTIONS,
+    ADMIN_CANCEL_AUCTION,
+    AUCTION_CANCELED,
 }

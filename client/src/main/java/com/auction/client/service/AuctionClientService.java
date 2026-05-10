@@ -111,6 +111,14 @@ public class AuctionClientService {
     }
 
     /**
+     * Updates an existing auction.
+     */
+    public CompletableFuture<Response<Void>> updateAuction(com.auction.common.dto.auction.UpdateAuctionRequest updateRequest) {
+        Request<com.auction.common.dto.auction.UpdateAuctionRequest> request = new Request<>(MessageType.UPDATE_AUCTION, null, null, updateRequest);
+        return socketClient.sendRequest(request);
+    }
+
+    /**
      * Fetches the bid history for an auction.
      */
     public CompletableFuture<Response<List<PlaceBidResponse>>> getBidHistory(Long auctionId) {
@@ -136,6 +144,22 @@ public class AuctionClientService {
             .thenApply(response -> {
                 if (response.isSuccess()) {
                     List<AuctionSummaryDto> data = jsonMapper.convertList(response.getData(), AuctionSummaryDto.class);
+                    response.setData(data);
+                }
+                return response;
+            });
+    }
+
+    /**
+     * Fetches statistics for the current seller.
+     */
+    public CompletableFuture<Response<com.auction.common.dto.dashboard.SellerStatsDto>> getSellerStats() {
+        Request<Void> request = new Request<>(MessageType.GET_SELLER_STATS, null, null, null);
+
+        return socketClient.<Void, com.auction.common.dto.dashboard.SellerStatsDto>sendRequest(request)
+            .thenApply(response -> {
+                if (response.isSuccess()) {
+                    com.auction.common.dto.dashboard.SellerStatsDto data = jsonMapper.convertData(response.getData(), com.auction.common.dto.dashboard.SellerStatsDto.class);
                     response.setData(data);
                 }
                 return response;
@@ -188,5 +212,13 @@ public class AuctionClientService {
                 }
                 return response;
             });
+    }
+
+    /**
+     * Cancels an auction.
+     */
+    public CompletableFuture<Response<Void>> cancelAuction(Long auctionId) {
+        Request<Long> request = new Request<>(MessageType.CANCEL_AUCTION, null, null, auctionId);
+        return socketClient.<Long, Void>sendRequest(request);
     }
 }

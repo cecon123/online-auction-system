@@ -3,7 +3,9 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
 <VBox
     xmlns="http://javafx.com/javafx"
     xmlns:fx="http://javafx.com/fxml"
@@ -16,7 +18,7 @@
         <Insets top="32" right="32" bottom="32" left="32" />
     </padding>
 
-    <HBox spacing="16">
+    <HBox spacing="16" alignment="CENTER_LEFT">
         <VBox HBox.hgrow="ALWAYS">
             <Label text="Seller Center" styleClass="page-title" />
             <Label
@@ -25,11 +27,49 @@
             />
         </VBox>
 
-        <Button
-            text="+ Create New Auction"
-            onAction="#handleCreateAuction"
-            styleClass="primary-button"
-        />
+        <HBox spacing="8" alignment="CENTER_RIGHT">
+            <Button onAction="#handleRefresh" styleClass="secondary-button">
+                <graphic>
+                    <FontIcon iconLiteral="mdi2r-refresh" iconSize="18" />
+                </graphic>
+            </Button>
+            <Button
+                text="+ Create New Auction"
+                onAction="#handleCreateAuction"
+                styleClass="primary-button"
+            />
+        </HBox>
+    </HBox>
+
+    <!-- Dashboard Metrics -->
+    <HBox spacing="16" fx:id="metricsContainer">
+        <!-- Card 1: Expected Revenue -->
+        <VBox styleClass="card, metric-card" HBox.hgrow="ALWAYS">
+            <Label text="Expected Revenue" styleClass="metric-title" />
+            <Label fx:id="expectedRevenueLabel" text="0.00" styleClass="metric-value, metric-highlight" />
+            <Label text="From active auctions" styleClass="metric-subtitle" />
+        </VBox>
+        
+        <!-- Card 2: Total Revenue -->
+        <VBox styleClass="card, metric-card" HBox.hgrow="ALWAYS">
+            <Label text="Total Revenue" styleClass="metric-title" />
+            <Label fx:id="totalRevenueLabel" text="0.00" styleClass="metric-value, metric-success" />
+            <Label text="From successful auctions" styleClass="metric-subtitle" />
+        </VBox>
+
+        <!-- Card 3: Total Bids -->
+        <VBox styleClass="card, metric-card" HBox.hgrow="ALWAYS">
+            <Label text="Total Bids" styleClass="metric-title" />
+            <Label fx:id="totalBidsLabel" text="0" styleClass="metric-value" />
+            <Label text="Across all items" styleClass="metric-subtitle" />
+        </VBox>
+
+        <!-- Card 4: Success Rate -->
+        <VBox styleClass="card, metric-card" HBox.hgrow="ALWAYS">
+            <Label text="Success Rate" styleClass="metric-title" />
+            <Label fx:id="successRateLabel" text="0%" styleClass="metric-value" />
+            <Label fx:id="successRateSubtitleLabel" text="0/0 finished" styleClass="metric-subtitle" />
+        </VBox>
     </HBox>
 
     <ScrollPane fitToWidth="true" styleClass="card-scroll" VBox.vgrow="ALWAYS">

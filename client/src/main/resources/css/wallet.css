@@ -1,0 +1,67 @@
+/* =========================================================
+   Wallet — Virtual Card + Quick Deposit
+   ========================================================= */
+
+.wallet-card {
+    -fx-background-color: linear-gradient(to bottom right, #4338ca, #7c3aed);
+    -fx-background-radius: 16;
+    -fx-effect: dropshadow(gaussian, rgba(99, 102, 241, 0.35), 20, 0, 0, 8);
+}
+
+.wallet-card-title {
+    -fx-text-fill: rgba(255, 255, 255, 0.8);
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+}
+
+.wallet-card-balance {
+    -fx-text-fill: white;
+    -fx-font-size: 36px;
+    -fx-font-weight: 800;
+}
+
+.wallet-card-label {
+    -fx-text-fill: rgba(255, 255, 255, 0.55);
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+}
+
+.wallet-card-value {
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: 800;
+}
+
+/* Quick Deposit */
+
+.quick-deposit-button {
+    -fx-background-color: white;
+    -fx-text-fill: #3525cd;
+    -fx-border-color: #c7c4d8;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-font-weight: 800;
+    -fx-font-size: 13px;
+    -fx-padding: 8 24 8 24;
+    -fx-pref-height: 42px;
+    -fx-cursor: hand;
+}
+
+.quick-deposit-button:hover {
+    -fx-background-color: #f5f3ff;
+    -fx-border-color: #3525cd;
+}
+
+/* Security Info */
+
+.security-info {
+    -fx-background-color: #f8f7ff;
+    -fx-background-radius: 10;
+    -fx-border-color: #e2e0f0;
+    -fx-border-radius: 10;
+}
+
+.security-icon {
+    -fx-icon-color: #3525cd;
+    -fx-fill: #3525cd;
+}

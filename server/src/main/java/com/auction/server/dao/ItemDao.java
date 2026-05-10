@@ -31,6 +31,12 @@ public interface ItemDao {
     List<Item> findAll();
 
     /**
+     * Updates an existing item's mutable fields (name, description, condition, imagePath).
+     * Starting price is not updatable after creation.
+     */
+    void update(Item item);
+
+    /**
      * Deletes an item.
      */
     void delete(long id);
