@@ -36,6 +36,7 @@ import com.auction.server.service.NotificationService;
 import com.auction.server.service.SessionManager;
 import com.auction.server.service.WalletService;
 import com.auction.server.util.JsonMapper;
+import com.auction.server.concurrency.IdempotencyManager;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -59,6 +60,7 @@ public class RequestRouter {
     private final AuctionService auctionService;
     private final NotificationService notificationService;
     private final SessionManager sessionManager;
+    private final IdempotencyManager idempotencyManager;
     private final AuctionDao auctionDao;
     private final UserDao userDao;
     private final ItemDao itemDao;
@@ -67,6 +69,7 @@ public class RequestRouter {
     public RequestRouter(PrintWriter clientWriter) {
         this.jsonMapper = JsonMapper.getInstance();
         this.clientWriter = clientWriter;
+        this.idempotencyManager = IdempotencyManager.getInstance();
 
         // Initialize real DAOs
         this.userDao = new SQLiteUserDao();
@@ -94,6 +97,16 @@ public class RequestRouter {
                 null,
                 request.getRequestId(),
                 "Request type is required"
+            );
+        }
+
+        // 1. Idempotency Check (Anti-Replay)
+        if (!idempotencyManager.isNewRequest(request.getRequestId())) {
+            logger.warn("Replay attack detected or duplicate request: {}", request.getRequestId());
+            return Response.fail(
+                request.getType(),
+                request.getRequestId(),
+                "Duplicate request detected (Replay protection)"
             );
         }
 
