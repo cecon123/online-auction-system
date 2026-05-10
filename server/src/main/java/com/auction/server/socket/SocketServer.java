@@ -27,6 +27,8 @@ public class SocketServer {
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
+                // Set a 10-minute read timeout to prevent dead connections from leaking threads/RAM
+                clientSocket.setSoTimeout(600_000); 
                 logger.info("Client connected: {}", clientSocket.getRemoteSocketAddress());
                 clientPool.submit(new ClientHandler(clientSocket));
             }

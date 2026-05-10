@@ -45,6 +45,8 @@ public class ClientHandler implements Runnable {
                 Response<?> response = handleJsonLine(line);
                 writer.println(jsonMapper.toJson(response));
             }
+        } catch (java.net.SocketTimeoutException e) {
+            System.err.println("Client timed out due to inactivity: " + socket.getRemoteSocketAddress());
         } catch (IOException e) {
             System.err.println("Client disconnected: " + e.getMessage());
         } finally {
