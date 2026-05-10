@@ -55,7 +55,6 @@ public class AuctionDetailController {
         // Setup image preview once
         imagePreview.prefWidthProperty().bind(imageContainer.widthProperty());
         imagePreview.prefHeightProperty().bind(imageContainer.heightProperty());
-        imagePreview.getStyleClass().add("card");
         
         // Rounded corner clip (matches .card radius 8)
         javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle();
@@ -215,8 +214,8 @@ public class AuctionDetailController {
             imagePreview.setVisible(true);
             imagePreview.setManaged(true);
             
-            // Only update background if URL has changed to prevent flickering
-            if (!fullUrl.equals(currentImageUrl)) {
+            // Only update background if URL has changed OR if it was cleared
+            if (!fullUrl.equals(currentImageUrl) || imagePreview.getBackground() == null) {
                 currentImageUrl = fullUrl;
                 javafx.scene.image.Image img = new javafx.scene.image.Image(fullUrl, true);
                 

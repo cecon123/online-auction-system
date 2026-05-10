@@ -345,23 +345,43 @@ public class LiveBiddingController {
 
     private void loadBidHistory() {
         if (auctionId == null) return;
+        
+        // Show loading state immediately to prevent layout shift and inform user
+        Platform.runLater(() -> {
+            bidHistoryContainer.getChildren().clear();
+            Label loadingLabel = new Label("Loading history...");
+            loadingLabel.getStyleClass().add("bid-history-subtitle");
+            loadingLabel.setPadding(new Insets(20));
+            bidHistoryContainer.setAlignment(Pos.CENTER);
+            bidHistoryContainer.getChildren().add(loadingLabel);
+        });
+
         auctionService.getBidHistory(auctionId).thenAccept(response -> {
             if (response.isSuccess()) {
                 List<PlaceBidResponse> history = response.getData();
                 Platform.runLater(() -> {
                     bidHistoryContainer.getChildren().clear();
                     
-                    // History comes newest-first; reverse for chronological chart
-                    java.util.List<PlaceBidResponse> chronological = new java.util.ArrayList<>(history);
-                    java.util.Collections.reverse(chronological);
+                    if (history.isEmpty()) {
+                        Label emptyLabel = new Label("No bids yet.");
+                        emptyLabel.getStyleClass().add("bid-history-subtitle");
+                        emptyLabel.setPadding(new Insets(20));
+                        bidHistoryContainer.setAlignment(Pos.CENTER);
+                        bidHistoryContainer.getChildren().add(emptyLabel);
+                    } else {
+                        bidHistoryContainer.setAlignment(Pos.TOP_LEFT);
+                        // History comes newest-first; reverse for chronological chart
+                        java.util.List<PlaceBidResponse> chronological = new java.util.ArrayList<>(history);
+                        java.util.Collections.reverse(chronological);
 
-                    // Update chart using manager
-                    chartManager.setData(chronological);
+                        // Update chart using manager
+                        chartManager.setData(chronological);
 
-                    // Populate bid history cards (newest first — original order)
-                    for (PlaceBidResponse bid : history) {
-                        String time = bid.timestamp().format(TIME_FMT);
-                        addBidHistoryCard(time, bid.highestBidderUsername(), bid.currentPrice());
+                        // Populate bid history cards (newest first — original order)
+                        for (PlaceBidResponse bid : history) {
+                            String time = bid.timestamp().format(TIME_FMT);
+                            addBidHistoryCard(time, bid.highestBidderUsername(), bid.currentPrice());
+                        }
                     }
                 });
             }

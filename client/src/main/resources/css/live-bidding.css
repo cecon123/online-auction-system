@@ -281,12 +281,11 @@
 
 /* Live Bid History */
 .bid-history-card-compact {
-    -fx-min-width: 260px;
-    -fx-pref-width: 260px;
-    -fx-max-width: 260px;
-    -fx-min-height: 390px;
-    -fx-pref-height: 390px;
-    -fx-max-height: 390px;
+    -fx-min-width: 320px;
+    -fx-pref-width: 320px;
+    -fx-max-width: 320px;
+    -fx-min-height: 480px;
+    -fx-pref-height: 480px;
 }
 
 .bid-history-subtitle {
@@ -443,11 +442,7 @@
    Bid History Cards
    ========================================================= */
 
-.bid-history-card-compact {
-    -fx-min-width: 260px;
-    -fx-pref-width: 280px;
-    -fx-max-width: 300px;
-}
+/* End of bid history card styles */
 
 .bid-history-scroll {
     -fx-background-color: transparent;
