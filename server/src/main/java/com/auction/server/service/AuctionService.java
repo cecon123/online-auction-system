@@ -123,6 +123,15 @@ public class AuctionService {
         );
     }
 
+    /**
+     * Cancels an auction by the seller.
+     * Allowed only if the auction is in OPEN or RUNNING status.
+     *
+     * @param userId    The ID of the seller.
+     * @param auctionId The ID of the auction to cancel.
+     * @throws IllegalArgumentException if auction is not found.
+     * @throws IllegalStateException    if user is not the seller or status is invalid.
+     */
     public void cancelAuction(long userId, long auctionId) {
         Auction auction = auctionDao.findById(auctionId)
             .orElseThrow(() -> new IllegalArgumentException("Auction not found: " + auctionId));
@@ -143,6 +152,14 @@ public class AuctionService {
         logger.info("User {} canceled Auction {}", userId, auctionId);
     }
 
+    /**
+     * Cancels an auction by an administrator.
+     *
+     * @param adminId   The ID of the administrator.
+     * @param auctionId The ID of the auction to cancel.
+     * @throws IllegalArgumentException if auction is not found.
+     * @throws IllegalStateException    if status is invalid for cancellation.
+     */
     public void adminCancelAuction(long adminId, long auctionId) {
         Auction auction = auctionDao.findById(auctionId)
             .orElseThrow(() -> new IllegalArgumentException("Auction not found: " + auctionId));
@@ -159,6 +176,13 @@ public class AuctionService {
         logger.info("Admin {} canceled Auction {}", adminId, auctionId);
     }
 
+    /**
+     * Performs cleanup tasks after an auction is canceled, including refunding the highest bidder
+     * and notifying relevant parties.
+     *
+     * @param auction The canceled auction.
+     * @param reason  The reason for cancellation.
+     */
     private void performCancellationCleanup(Auction auction, String reason) {
         LocalDateTime now = LocalDateTime.now();
         
@@ -195,6 +219,15 @@ public class AuctionService {
      *
      * @param sellerId The user requesting the update.
      * @param request  The updated fields.
+     */
+    /**
+     * Updates an existing auction.
+     * Only allowed for the seller, before any bids are placed, and if the status is OPEN.
+     *
+     * @param sellerId The ID of the seller.
+     * @param request  The update request containing new details.
+     * @throws IllegalArgumentException if auction or item is not found.
+     * @throws IllegalStateException    if bids exist or status/ownership is invalid.
      */
     public void updateAuction(long sellerId, UpdateAuctionRequest request) {
         Auction auction = auctionDao.findById(request.auctionId())

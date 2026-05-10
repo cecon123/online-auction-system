@@ -5,12 +5,12 @@
 .page-title {
     -fx-font-size: 30px;
     -fx-font-weight: 800;
-    -fx-text-fill: #111827;
+    -fx-text-fill: -text-main;
 }
 
 .page-subtitle {
     -fx-font-size: 14px;
-    -fx-text-fill: #4b445c;
+    -fx-text-fill: -text-muted;
 }
 
 .section-title {
@@ -20,9 +20,9 @@
 }
 
 .card {
-    -fx-background-color: white;
+    -fx-background-color: -bg-card;
     -fx-background-radius: 8;
-    -fx-border-color: #c7c4d8;
+    -fx-border-color: -border-color;
     -fx-border-radius: 8;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.09), 5, 0, 0, 1);
 }
@@ -36,7 +36,7 @@
 .form-label {
     -fx-font-size: 12px;
     -fx-font-weight: 800;
-    -fx-text-fill: #2f2a3c;
+    -fx-text-fill: -text-main;
 }
 
 .stat-number {
@@ -48,7 +48,7 @@
 .money-large {
     -fx-font-size: 26px;
     -fx-font-weight: 800;
-    -fx-text-fill: #3525cd;
+    -fx-text-fill: -brand-primary;
 }
 
 .money {
@@ -57,11 +57,11 @@
 }
 
 .success-text {
-    -fx-text-fill: #059669;
+    -fx-text-fill: -color-success;
 }
 
 .error-text {
-    -fx-text-fill: #ba1a1a;
+    -fx-text-fill: -color-error;
 }
 
 /* ── Unified Status Badge System ── */
@@ -94,7 +94,7 @@
 .status-cancelled,
 .status-canceled {
     -fx-background-color: #fef3c7;
-    -fx-text-fill: #92400e;
+    -fx-text-fill: -color-warning;
 }
 
 /* Bid result statuses */

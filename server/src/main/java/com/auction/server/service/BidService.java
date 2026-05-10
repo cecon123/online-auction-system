@@ -195,6 +195,11 @@ public class BidService {
 
     /**
      * Sets or updates an auto-bid rule (Proxy Bidding limit).
+     * This allows the system to bid on behalf of the user up to a maximum amount.
+     *
+     * @param userId  The ID of the user.
+     * @param request The auto-bid request containing max bid and auction ID.
+     * @throws IllegalArgumentException if user or auction is not found, or max bid is too low.
      */
     public void setAutoBid(long userId, com.auction.common.dto.bid.SetAutoBidRequest request) {
         lockManager.executeLocked(request.auctionId(), () -> {
@@ -234,6 +239,13 @@ public class BidService {
         triggerAutoBids(request.auctionId(), 0L);
     }
 
+    /**
+     * Triggers the auto-bidding system for a specific auction.
+     * Iterates through all active auto-bid rules and places bids if necessary.
+     *
+     * @param auctionId     The ID of the auction.
+     * @param lastBidderId  The ID of the user who just placed a manual bid (to avoid auto-bidding against themselves).
+     */
     private void triggerAutoBids(long auctionId, long lastBidderId) {
         lockManager.executeLocked(auctionId, () -> {
             Auction auction = auctionDao.findById(auctionId).orElse(null);
@@ -269,8 +281,13 @@ public class BidService {
     }
 
     /**
-     * Internal step for auto-bidding. Similar to placeBid but uses proxy logic
-     * (only jumps to next increment, but locks full max).
+     * Internal step for auto-bidding.
+     * Updates the auction price to the next increment and locks the full max bid for the proxy leader.
+     *
+     * @param bidderId  The ID of the auto-bidder.
+     * @param auctionId The ID of the auction.
+     * @param nextPrice The next price point to jump to.
+     * @param userMaxBid The maximum budget defined in the auto-bid rule.
      */
     private void placeAutoStep(long bidderId, long auctionId, java.math.BigDecimal nextPrice, java.math.BigDecimal userMaxBid) {
         LocalDateTime now = LocalDateTime.now();
@@ -323,6 +340,13 @@ public class BidService {
         );
     }
 
+    /**
+     * Retrieves the current auto-bid rule for a user on a specific auction.
+     *
+     * @param userId    The ID of the user.
+     * @param auctionId The ID of the auction.
+     * @return An Optional containing the auto-bid details if found.
+     */
     public java.util.Optional<com.auction.common.dto.bid.AutoBidDto> getAutoBid(long userId, long auctionId) {
         return autoBidDao.findByAuctionAndBidder(auctionId, userId)
             .map(rule -> new com.auction.common.dto.bid.AutoBidDto(
@@ -371,7 +395,10 @@ public class BidService {
     }
 
     /**
-     * Gets detailed bid history for a user.
+     * Gets a detailed bid history for a specific user, including the results (WON/WINNING/OUTBID).
+     *
+     * @param userId The ID of the user.
+     * @return A list of bid history DTOs.
      */
     public java.util.List<com.auction.common.dto.bid.BidHistoryDto> getUserBidHistory(long userId) {
         return bidDao.findByBidderId(userId).stream()

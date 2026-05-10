@@ -32,6 +32,10 @@ public class AuthService {
     /**
      * Registers a new user.
      * Hashes password using BCrypt before storing in DB.
+     *
+     * @param request The registration request details.
+     * @return A response containing the newly created user's info.
+     * @throws IllegalArgumentException if the username already exists.
      */
     public RegisterResponse register(RegisterRequest request) {
         // 1. Check if username exists
@@ -73,6 +77,11 @@ public class AuthService {
     /**
      * Authenticates a user.
      * Verifies password hash and issues a session token.
+     *
+     * @param request The login credentials.
+     * @return A response containing user details and a session token.
+     * @throws IllegalArgumentException if username or password is invalid.
+     * @throws IllegalStateException    if the account is suspended.
      */
     public LoginResponse login(LoginRequest request) {
         // 1. Find user

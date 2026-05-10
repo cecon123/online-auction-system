@@ -8,6 +8,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
@@ -147,15 +148,26 @@
                                     <graphic>
                                         <FontIcon iconLiteral="mdi2g-gavel" iconSize="16" iconColor="white" />
                                     </graphic>
+                                    <tooltip>
+                                        <Tooltip text="Place a manual bid with the specified amount" />
+                                    </tooltip>
                                 </Button>
                             </HBox>
 
                             <!-- Quick Bid Buttons -->
                             <HBox spacing="8" alignment="CENTER_LEFT">
-                                <Button text="+$10" onAction="#handleQuickBid10" styleClass="quick-bid-button" />
-                                <Button text="+$50" onAction="#handleQuickBid50" styleClass="quick-bid-button" />
-                                <Button text="+$100" onAction="#handleQuickBid100" styleClass="quick-bid-button" />
-                                <Button text="+$500" onAction="#handleQuickBid500" styleClass="quick-bid-button" />
+                                <Button text="+$10" onAction="#handleQuickBid10" styleClass="quick-bid-button">
+                                    <tooltip><Tooltip text="Quickly increase bid by $10" /></tooltip>
+                                </Button>
+                                <Button text="+$50" onAction="#handleQuickBid50" styleClass="quick-bid-button">
+                                    <tooltip><Tooltip text="Quickly increase bid by $50" /></tooltip>
+                                </Button>
+                                <Button text="+$100" onAction="#handleQuickBid100" styleClass="quick-bid-button">
+                                    <tooltip><Tooltip text="Quickly increase bid by $100" /></tooltip>
+                                </Button>
+                                <Button text="+$500" onAction="#handleQuickBid500" styleClass="quick-bid-button">
+                                    <tooltip><Tooltip text="Quickly increase bid by $500" /></tooltip>
+                                </Button>
                             </HBox>
 
                             <Label
@@ -316,6 +328,9 @@
                                 <graphic>
                                     <FontIcon iconLiteral="mdi2p-play" iconSize="16" iconColor="white" />
                                 </graphic>
+                                <tooltip>
+                                    <Tooltip text="Start the auto-bidding agent with current settings" />
+                                </tooltip>
                             </Button>
 
                             <Button
@@ -338,6 +353,9 @@
                                 <graphic>
                                     <FontIcon iconLiteral="mdi2s-stop" iconSize="16" iconColor="white" />
                                 </graphic>
+                                <tooltip>
+                                    <Tooltip text="Stop the auto-bidding agent" />
+                                </tooltip>
                             </Button>
 
                             <Region HBox.hgrow="ALWAYS" />

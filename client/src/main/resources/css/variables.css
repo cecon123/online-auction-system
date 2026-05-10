@@ -22,17 +22,37 @@
    ========================================================= */
 
 .root {
+    /* Brand Colors */
+    -brand-primary: #3525cd;
+    -brand-secondary: #4f46e5;
+    -brand-accent: #7c3aed;
+    
+    /* Semantic Colors */
+    -color-success: #059669;
+    -color-error: #ba1a1a;
+    -color-warning: #92400e;
+    
+    /* Neutral / Text Colors */
+    -text-main: #111827;
+    -text-muted: #6b7280;
+    -text-inverse: #ffffff;
+    
+    /* Backgrounds & Surfaces */
+    -bg-surface: #fcf8ff;
+    -bg-card: #ffffff;
+    -border-color: #c7c4d8;
+
     -fx-font-family: "Segoe UI", "Arial", sans-serif;
-    -fx-background-color: #fcf8ff;
-    -fx-text-fill: #111827;
+    -fx-background-color: -bg-surface;
+    -fx-text-fill: -text-main;
 }
 
 .label {
-    -fx-text-fill: #111827;
+    -fx-text-fill: -text-main;
 }
 
 .page {
-    -fx-background-color: #fcf8ff;
+    -fx-background-color: -bg-surface;
 }
 
 .page-scroll {
@@ -41,7 +61,7 @@
 }
 
 .page-scroll > .viewport {
-    -fx-background-color: #fcf8ff;
+    -fx-background-color: -bg-surface;
 }
 
 .scroll-pane {
