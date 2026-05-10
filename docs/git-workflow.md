@@ -1,80 +1,80 @@
-# Git Workflow
+# Quy trình làm việc với Git (Git Workflow)
 
-This document outlines the branching and collaboration strategy for the Online Auction System project.
+Tài liệu này phác thảo chiến lược phân nhánh và cộng tác cho dự án Hệ thống Đấu giá Trực tuyến.
 
-## 1. Branching Strategy
+## 1. Chiến lược Phân nhánh (Branching Strategy)
 
-- **`main`**: The stable branch. Contains the latest demo-ready code. No direct commits allowed.
-- **`dev`**: The integration branch. All feature branches are merged here first.
-- **`feature/<task-name>-<developer-name>`**: Individual task branches. 
+- **`main`**: Nhánh ổn định. Chứa mã nguồn mới nhất đã sẵn sàng để demo. Không cho phép commit trực tiếp vào nhánh này.
+- **`dev`**: Nhánh tích hợp. Tất cả các nhánh tính năng đều được merge vào đây trước.
+- **`feature/<tên-tính-năng>-<tên-người-làm>`**: Nhánh làm việc cá nhân cho từng tác vụ. 
 
-Example: `feature/sqlite-user-dao-manh`
+Ví dụ: `feature/sqlite-user-dao-manh`
 
-## 2. Daily Workflow
+## 2. Quy trình làm việc hàng ngày
 
-### Step 1: Sync your local `dev`
-Before starting a new task, ensure your integration branch is up to date.
+### Bước 1: Đồng bộ nhánh `dev` địa phương
+Trước khi bắt đầu một tác vụ mới, hãy đảm bảo nhánh tích hợp của bạn đã được cập nhật.
 
 ```bash
 git checkout dev
 git pull origin dev
 ```
 
-### Step 2: Create a feature branch
+### Bước 2: Tạo nhánh tính năng mới
 ```bash
 git checkout -b feature/my-new-task-huy
 ```
 
-### Step 3: Work and Commit
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
-- `feat:` for new features.
-- `fix:` for bug fixes.
-- `docs:` for documentation updates.
-- `refactor:` for code restructuring.
-- `test:` for adding/updating tests.
+### Bước 3: Làm việc và Commit
+Tuân thủ chuẩn [Conventional Commits](https://www.conventionalcommits.org/):
+- `feat:` cho các tính năng mới.
+- `fix:` cho các bản sửa lỗi.
+- `docs:` cho cập nhật tài liệu.
+- `refactor:` cho việc cấu trúc lại mã nguồn.
+- `test:` cho việc thêm/cập nhật kiểm thử.
 
 ```bash
 git add .
 git commit -m "feat: add auction lock manager"
 ```
 
-### Step 4: Merge into `dev`
-Once the task is finished and tested locally:
+### Bước 4: Merge vào nhánh `dev`
+Sau khi tác vụ hoàn thành và đã được kiểm thử tại máy địa phương:
 
-1. Push your branch:
+1. Đẩy nhánh của bạn lên:
    ```bash
    git push -u origin feature/my-new-task-huy
    ```
-2. Pull latest `dev` into your feature branch to resolve conflicts:
+2. Kéo nhánh `dev` mới nhất vào nhánh tính năng để giải quyết xung đột:
    ```bash
    git checkout dev
    git pull origin dev
    git checkout feature/my-new-task-huy
    git merge dev
    ```
-3. Run tests one last time:
+3. Chạy kiểm thử lần cuối:
    ```bash
    mvn clean test
    ```
-4. Merge into `dev`:
+4. Merge vào `dev`:
    ```bash
    git checkout dev
    git merge feature/my-new-task-huy
    git push origin dev
    ```
 
-## 3. Pull Requests & Code Review
+## 3. Pull Requests & Kiểm duyệt mã nguồn (Code Review)
 
-- For larger changes, create a Pull Request on GitHub from `feature/*` to `dev`.
-- Tag the Lead (Huy) for review.
-- After approval, the Lead will merge the branch.
+- Đối với các thay đổi lớn, hãy tạo Pull Request (PR) trên GitHub từ `feature/*` sang `dev`.
+- Gắn thẻ (tag) Nhóm trưởng (Huy) để kiểm duyệt.
+- Sau khi được phê duyệt, Nhóm trưởng sẽ thực hiện merge nhánh.
 
-## 4. Post-Merge Rule
+## 4. Quy tắc sau khi Merge
 
-Every time you pull from `dev`, it is **mandatory** to run:
+Mỗi khi bạn kéo (pull) mã nguồn mới từ `dev`, **bắt buộc** phải chạy lệnh:
 
 ```bash
 mvn clean install
 ```
 
-This ensures your local `target` folders and dependencies are synchronized across the multi-module project.
+Việc này đảm bảo các thư mục `target` địa phương và các phụ thuộc (dependencies) được đồng bộ trên toàn bộ dự án multi-module.

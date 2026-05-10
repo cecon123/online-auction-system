@@ -1,12 +1,12 @@
-# Socket JSON Protocol
+# Giao thức Socket JSON (Socket JSON Protocol)
 
-All client-server messages are **newline-delimited JSON** strings. 
+Tất cả các tin nhắn trao đổi giữa client và server là các chuỗi **JSON phân tách bằng ký tự xuống dòng** (newline-delimited JSON).
 
-> **CRITICAL RULE:** 
-> One request = one JSON line. One response = one JSON line.
-> Do NOT use pretty printing (multi-line JSON) when sending over the socket, as the `ClientHandler` uses `readLine()` to parse messages.
+> **QUY TẮC QUAN TRỌNG:**
+> Một yêu cầu (request) = một dòng JSON. Một phản hồi (response) = một dòng JSON.
+> KHÔNG sử dụng định dạng "pretty printing" (JSON nhiều dòng) khi gửi qua socket, vì `ClientHandler` sử dụng phương thức `readLine()` để bóc tách các tin nhắn.
 
-## Request Format
+## Định dạng Yêu cầu (Request Format)
 
 ```json
 {
@@ -20,12 +20,13 @@ All client-server messages are **newline-delimited JSON** strings.
 }
 ```
 
-- `type`: The `MessageType` enum name.
-- `requestId`: A unique identifier (UUID recommended) for the client to track responses.
-- `token`: Session token obtained after LOGIN. Null for AUTH requests.
-- `data`: Type-specific payload.
+- `type`: Tên của enum `MessageType`.
+- `requestId`: Một định danh duy nhất (UUID) do client tạo ra để theo dõi các phản hồi.
+- `token`: Token phiên làm việc nhận được sau khi ĐĂNG NHẬP (LOGIN). Để trống đối với các yêu cầu xác thực (AUTH).
+- `data`: Payload cụ thể theo từng loại yêu cầu.
+  - Đối với `PLACE_BID`: Nếu phiên đấu giá đã có người thầu, mức giá mới phải ít nhất bằng **Giá hiện tại + 10.00$**.
 
-## Response Format
+## Định dạng Phản hồi (Response Format)
 
 ```json
 {
@@ -37,29 +38,17 @@ All client-server messages are **newline-delimited JSON** strings.
     "auctionId": 1,
     "currentPrice": 1500000,
     "highestBidderUsername": "huy",
-    "timestamp": "2026-05-04T20:30:00"
+    "timestamp": "2026-05-10T20:30:00"
   }
 }
 ```
 
-- `success`: `true` if processed correctly, `false` otherwise.
-- `message`: Human-readable status or error message.
+- `success`: `true` nếu xử lý thành công, `false` nếu ngược lại.
+- `message`: Thông báo trạng thái hoặc lỗi có thể đọc được bằng ngôn ngữ tự nhiên.
 
-## Error Response Example
+## Định dạng Sự kiện Thời gian thực (Realtime Event Format)
 
-```json
-{
-  "type": "PLACE_BID",
-  "requestId": "uuid-123",
-  "success": false,
-  "message": "Bid amount must be higher than current price",
-  "data": null
-}
-```
-
-## Realtime Event Format (Server Push)
-
-Events pushed by the server have `requestId` as `null`.
+Các sự kiện do server chủ động đẩy xuống (push) sẽ có `requestId` là `null` hoặc một tiền tố sự kiện chung.
 
 ```json
 {
@@ -71,37 +60,46 @@ Events pushed by the server have `requestId` as `null`.
     "auctionId": 1,
     "bidderUsername": "huy",
     "amount": 1500000,
-    "timestamp": "2026-05-04T20:30:00",
-    "newEndTime": null
+    "timestamp": "2026-05-10T20:30:00",
+    "newEndTime": "2026-05-10T21:00:00"
   }
 }
 ```
 
-## Message Types (Implementation Status)
+## Danh mục Loại Tin nhắn (Message Types)
 
-| Category | Type | Purpose |
+| Phân loại | Loại tin nhắn (Type) | Mục đích |
 |---|---|---|
-| **AUTH** | `REGISTER` | Create a new user account |
-| | `LOGIN` | Authenticate and get session token |
-| | `LOGOUT` | Invalidate session |
-| **DASHBOARD** | `GET_DASHBOARD` | Get summary for user role |
-| **AUCTION** | `GET_AUCTIONS` | List all active/upcoming auctions |
-| | `GET_AUCTION_DETAIL` | Detailed info for one auction |
-| | `CREATE_AUCTION` | Seller: Create new listing |
-| | `UPDATE_AUCTION` | Seller: Edit before RUNNING |
-| | `CANCEL_AUCTION` | Seller/Admin: Stop auction |
-| **ITEM** | `CREATE_ITEM` | Seller: Create item without auction |
-| | `UPDATE_ITEM` | Seller: Edit item details |
-| | `DELETE_ITEM` | Seller: Remove item |
-| **BID** | `PLACE_BID` | Bidder: Place a new bid |
-| | `GET_BID_HISTORY` | View bid logs for an auction |
-| **REALTIME** | `SUBSCRIBE_AUCTION` | Listen for updates on an auction |
-| | `UNSUBSCRIBE_AUCTION` | Stop listening |
-| | `BID_UPDATE` | Server: New bid broadcast |
-| | `AUCTION_CLOSED` | Server: Auction ended broadcast |
-| | `TIME_EXTENDED` | Server: Anti-sniping trigger broadcast |
-| **WALLET** | `DEPOSIT` | Add funds to user balance |
-| | `WITHDRAW` | Remove funds from user balance |
-| **ADMIN** | `ADMIN_GET_USERS` | List all users |
-| | `ADMIN_UPDATE_USER_STATUS` | Enable/Disable users |
-| | `ADMIN_GET_AUCTIONS` | System-wide auction management |
+| **XÁC THỰC** | `REGISTER` | Tạo tài khoản người dùng mới |
+| | `LOGIN` | Xác thực và nhận token phiên làm việc |
+| | `LOGOUT` | Hủy hiệu lực phiên làm việc |
+| **DASHBOARD** | `GET_DASHBOARD` | Lấy thông tin tổng quan theo vai trò người dùng |
+| **ĐẤU GIÁ** | `GET_AUCTIONS` | Liệt kê tất cả các phiên đấu giá đang/sắp diễn ra |
+| | `GET_AUCTION_DETAIL` | Thông tin chi tiết của một phiên đấu giá |
+| | `CREATE_AUCTION` | Người bán: Đăng phiên đấu giá mới |
+| | `UPDATE_AUCTION` | Người bán: Chỉnh sửa trước khi bắt đầu (RUNNING) |
+| | `CANCEL_AUCTION` | Người bán/Quản trị viên: Dừng phiên đấu giá |
+| | `GET_SELLER_AUCTIONS` | Người bán: Xem danh sách phiên sở hữu |
+| | `GET_SELLER_STATS` | Người bán: Xem thống kê doanh thu và lượt thầu |
+| **MẶT HÀNG** | `CREATE_ITEM` | Người bán: Đăng ký mặt hàng mới |
+| | `UPDATE_ITEM` | Người bán: Chỉnh sửa thông tin mặt hàng |
+| | `DELETE_ITEM` | Người bán: Xóa mặt hàng |
+| **ĐẶT GIÁ** | `PLACE_BID` | Người đấu giá: Đặt một mức giá thầu mới |
+| | `GET_BID_HISTORY` | Xem lịch sử thầu của một phiên đấu giá |
+| | `GET_MY_BIDS` | Liệt kê các phiên đấu giá người dùng đã tham gia |
+| | `GET_USER_BID_HISTORY` | Lịch sử tham gia chi tiết (Thắng/Đang dẫn đầu/Bị vượt giá) |
+| **REALTIME** | `SUBSCRIBE_AUCTION` | Đăng ký lắng nghe cập nhật của một phiên |
+| | `UNSUBSCRIBE_AUCTION` | Ngừng lắng nghe cập nhật |
+| | `BID_UPDATE` | Sự kiện Server: Phát sóng lượt thầu mới |
+| | `AUCTION_CLOSED` | Sự kiện Server: Phát sóng kết thúc phiên |
+| | `TIME_EXTENDED` | Sự kiện Server: Phát sóng gia hạn thời gian (Anti-sniping) |
+| | `AUCTION_LIST_UPDATED`| Sự kiện Server: Danh sách chung thay đổi |
+| **VÍ TIỀN** | `DEPOSIT` | Nạp tiền vào số dư người dùng |
+| | `WITHDRAW` | Rút tiền từ số dư người dùng |
+| **TỰ ĐỘNG THẦU** | `SET_AUTO_BID` | Cấu hình mức thầu tối đa và bước giá |
+| | `GET_AUTO_BID` | Kiểm tra luật tự động thầu hiện tại của phiên |
+| **QUẢN TRỊ** | `ADMIN_GET_USERS` | Danh sách tất cả người dùng |
+| | `ADMIN_UPDATE_USER_STATUS` | Kích hoạt/Vô hiệu hóa người dùng |
+| | `ADMIN_GET_AUCTIONS` | Quản lý toàn bộ phiên đấu giá hệ thống |
+| | `ADMIN_CANCEL_AUCTION` | Dừng phiên đấu giá cưỡng bức bởi Admin |
+| | `SYSTEM_NOTIFICATION` | Tin nhắn trực tiếp từ server tới người dùng |

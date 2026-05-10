@@ -219,5 +219,9 @@ Tự động chạy `mvn test` trên mỗi PR vào `dev` và `main`.
 Tập trung vào luồng: **Register/Login -> Browse -> Bid -> Realtime Update -> Close.**
 
 ## 25. Tài liệu tham khảo
-- `docs/protocol.md`
-- `docs/class-diagram.md`
+- `docs/protocol.md` (Giao thức Socket JSON)
+- `docs/class-diagram.md` (Sơ đồ Lớp & Kiến trúc)
+- `docs/database-erd.md` (Sơ đồ ERD & Tối ưu SQLite)
+- `docs/user-manual.md` (Hướng dẫn sử dụng hệ thống)
+- `docs/design-patterns.md` (Các mẫu thiết kế áp dụng)
+- `docs/mock-interview-guide.md` (Tài liệu ôn tập vấn đáp chuyên sâu)

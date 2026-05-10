@@ -1,209 +1,69 @@
-# Design Patterns - Online Auction System
+# Các Mẫu Thiết kế (Design Patterns) - Hệ thống Đấu giá Trực tuyến
 
-This document explains the design patterns used in the Online Auction System.
-
-The project currently focuses on three required patterns:
-
-```text
-Singleton
-Factory Method
-Observer
-```
-
-Optional patterns can be added later if the core system is stable:
-
-```text
-Strategy
-Command
-```
+Tài liệu này giải thích các mẫu thiết kế (design patterns) được triển khai trong hệ thống nhằm đảm bảo khả năng mở rộng, an toàn đa luồng và mã nguồn sạch.
 
 ---
 
-## 1. Singleton
+## 1. Singleton (Đơn khởi tạo)
 
-### Current implementations
+Được sử dụng để quản lý các tài nguyên dùng chung và đảm bảo các điểm truy cập toàn cục duy nhất.
 
-```text
-Database.getInstance()
-JsonMapper.getInstance()
-NotificationService.getInstance()
-SessionManager.getInstance()
-```
-
-### Locations
-
-```text
-server/src/main/java/com/auction/server/dao/Database.java
-server/src/main/java/com/auction/server/util/JsonMapper.java
-server/src/main/java/com/auction/server/service/NotificationService.java
-server/src/main/java/com/auction/server/service/SessionManager.java
-```
-
-### Purpose
-
-- **Database**: Centralized SQLite connection manager.
-- **JsonMapper**: Centralized Gson instance with custom type adapters.
-- **NotificationService**: Manages realtime client subscriptions and broadcasting.
-- **SessionManager**: Handles user sessions and token validation.
-
-### Why Singleton is appropriate here
-
-- Configuration consistency (SQLite and Gson).
-- Resource efficiency (reuse one Gson instance, one database manager).
-- Shared utility access across different server modules.
-
-### Related files
-
-```text
-server/src/main/java/com/auction/server/dao/Database.java
-server/src/main/java/com/auction/server/util/JsonMapper.java
-server/src/main/java/com/auction/server/service/NotificationService.java
-server/src/main/java/com/auction/server/service/SessionManager.java
-```
+### Các triển khai cụ thể:
+- **`Database.getInstance()`**: Cấu hình kết nối SQLite tập trung. Đảm bảo chế độ WAL (Write-Ahead Logging) được bật và các ràng buộc khóa ngoại được thực thi nhất quán.
+- **`JsonMapper.getInstance()`**: Chia sẻ một đối tượng `Gson` duy nhất được cấu hình với các bộ chuyển đổi `LocalDateTime` tùy chỉnh trong toàn bộ ứng dụng (cả Client và Server).
+- **`NotificationService.getInstance()`**: Quản lý việc đăng ký của khách hàng và phát sóng (broadcasting) tin nhắn thời gian thực từ một điểm duy nhất.
+- **`SessionManager.getInstance()`**: Danh mục trung tâm cho các token hoạt động của người dùng.
+- **`AuctionLockManager.getInstance()`**: Cung cấp quyền truy cập vào danh mục khóa (lock registry) toàn cục để kiểm soát đồng thời.
 
 ---
 
-## 2. Factory Method
+## 2. Factory Method (Phương thức Nhà máy)
 
-### Current implementation
+Được sử dụng để tách biệt logic khởi tạo đối tượng khỏi các dịch vụ nghiệp vụ.
 
-```text
-ItemFactory.create(...)
-```
+### Triển khai cụ thể:
+- **`ItemFactory.create(ItemDto)`**: Tạo ra các lớp con cụ thể (`Electronics`, `Art`, `Vehicle`) dựa trên enum `ItemType` được cung cấp trong DTO.
 
-### Location
-
-```text
-server/src/main/java/com/auction/server/factory/ItemFactory.java
-```
-
-### Purpose
-
-The system has an abstract `Item` class and concrete item types:
-
-```text
-Item
-├── Electronics
-├── Art
-└── Vehicle
-```
-
-The factory creates the correct concrete object based on `ItemType`.
-
-### Why Factory Method is appropriate here
-
-Without a factory, object creation logic would be duplicated in controllers, services, and tests.
-
-Benefits:
-
-- `ItemService` does not need to know all subclass constructors.
-- Adding a new item type later is easier.
-- The design demonstrates abstraction and polymorphism.
-- Business services stay cleaner.
+### Lợi ích:
+- **Loose Coupling (Phụ thuộc lỏng)**: `AuctionService` không cần biết các hàm khởi tạo (constructor) cụ thể của từng loại mặt hàng.
+- **Khả năng mở rộng**: Việc thêm một loại mặt hàng mới chỉ yêu cầu cập nhật nhà máy (factory) và tạo một lớp con mới.
 
 ---
 
-## 3. Observer
+## 3. Observer (Người quan sát)
 
-### Current implementation
+Được sử dụng cho cơ chế đấu giá thời gian thực cốt lõi.
 
-Observer is implemented in the realtime bidding feature via `NotificationService`.
+### Triển khai cụ thể:
+- **Subject (Chủ thể)**: `NotificationService` (Server). Nó duy trì một bản đồ (map) từ `auctionId` đến một tập hợp các `PrintWriter` (những người quan sát).
+- **Observers (Người quan sát)**: Các trình xử lý kết nối socket của các client khác nhau.
 
-### Purpose
-
-When a valid bid is placed, all clients watching the same auction receive an update immediately.
-
-Flow:
-
-```text
-BidService.placeBid()
-→ notificationService.broadcast(auctionId, MessageType.BID_UPDATE, updateData)
-→ JavaFX Client receives BID_UPDATE
-→ Platform.runLater(...) updates UI
-```
-
-### Why Observer is appropriate here
-
-- Multiple clients can watch the same auction.
-- The server does not need to know làm thế nào mỗi client hiển thị bản cập nhật.
-- Clients có thể subscribe hoặc unsubscribe từ các sự kiện đấu giá.
-- Cập nhật thời gian thực mà không cần polling.
-
-### Event types
-
-```text
-BID_UPDATE
-AUCTION_CLOSED
-TIME_EXTENDED
-```
-
-### Subscription flow
-
-```text
-Client opens LiveBiddingView → sends SUBSCRIBE_AUCTION
-Server registers client writer in NotificationService
-```
-
-### Client-side rule
-
-JavaFX UI must not be updated directly from the socket listener thread. Always use `Platform.runLater()`.
+### Luồng hoạt động:
+1.  Client gửi yêu cầu `SUBSCRIBE_AUCTION` cho ID #5.
+2.  `NotificationService` thêm `PrintWriter` của client đó vào danh sách theo dõi của ID #5.
+3.  Khi có một lệnh đặt giá được thực hiện, `BidService` gọi `notificationService.broadcast(5, BID_UPDATE, data)`.
+4.  Tất cả các client đã đăng ký sẽ nhận được bản cập nhật JSON ngay lập tức.
+5.  Giao diện người dùng (UI) của client cập nhật bằng cách sử dụng `Platform.runLater()`.
 
 ---
 
-## 4. Strategy - Optional
+## 4. Producer-Consumer (Người sản xuất - Người tiêu dùng)
 
-### Planned usage
+Được sử dụng trong JavaFX Client để xử lý các tin nhắn socket bất đồng bộ.
 
-Strategy can be used for bidding logic if the team implements Auto-Bidding.
-
-Expected structure:
-
-```text
-BidStrategy
-├── ManualBidStrategy
-└── AutoBidStrategy
-```
+### Triển khai cụ thể:
+- **Producer (Người sản xuất)**: Luồng chạy nền `ListenThread` trong `SocketClient` đợi tin nhắn từ server.
+- **Consumer (Người tiêu dùng)**: Luồng ứng dụng JavaFX (`JavaFX Application Thread`) tiêu thụ các tin nhắn này để cập nhật giao diện người dùng.
 
 ---
 
-## 5. Command - Optional
+## 5. Tổng kết các Mẫu thiết kế
 
-### Possible usage
-
-Command can be used to encapsulate bid actions.
-
----
-
-## 6. Pattern Summary
-
-| Pattern | Status | Main class | Purpose |
-|---|---|---|---|
-| Singleton | Implemented | `Database` | Centralized database connection configuration |
-| Factory Method | Implemented | `ItemFactory` | Create concrete `Item` subclasses |
-| Observer | Implemented | `NotificationService` | Realtime bid update |
-| Strategy | Optional | `BidStrategy` | Manual bid vs auto bid |
-| Command | Optional | `BidCommand` | Encapsulate bid action |
-
----
-
-## 7. Explanation for Presentation
-
-### Singleton explanation
-
-`Database` và `NotificationService` là Singleton vì chúng quản lý tài nguyên dùng chung (DB connection và client subscriptions). Việc này giúp cấu hình nhất quán và tránh việc tạo nhiều instance gây lãng phí tài nguyên.
-
-### Factory Method explanation
-
-`ItemFactory` được dùng vì `Item` là lớp trừu tượng. Thay vì viết logic khởi tạo ở nhiều nơi, Factory giúp tạo đúng subclass dựa trên `ItemType`, giúp code sạch và dễ mở rộng.
-
-### Observer explanation
-
-Observer được triển khai qua `NotificationService`. Khi có bid mới, server sẽ "đẩy" thông báo tới tất cả client đang theo dõi phiên đấu giá đó, đảm bảo tính realtime mà không cần client phải liên tục hỏi server (polling).
-
----
-
-## 8. Notes for Team Members
-
-- Sử dụng `ItemFactory` khi tạo đối tượng Item.
-- Mọi cập nhật UI JavaFX từ sự kiện socket phải nằm trong `Platform.runLater()`.
-- Logic thông báo realtime nên nằm trong `NotificationService`.
+| Mẫu thiết kế | Lớp triển khai | Mục tiêu chiến lược |
+|---|---|---|
+| **Singleton** | `Database`, `JsonMapper`, `NotificationService`, `AuctionLockManager` | Hiệu quả tài nguyên và tính nhất quán toàn cục. |
+| **Factory Method** | `ItemFactory` | Trừu tượng hóa việc tạo đối tượng (Tuân thủ SRP & OCP). |
+| **Observer** | `NotificationService` | Thông báo "Push" thời gian thực mà không cần polling. |
+| **Producer-Consumer** | `SocketClient` + `Platform.runLater` | Tách biệt I/O mạng khỏi việc dựng giao diện UI. |
+| **DAO** | `UserDao`, `AuctionDao`, `BidDao` | Cô lập logic SQL khỏi logic nghiệp vụ (Business Logic). |
+| **DTO** | `Request`, `Response`, `AuctionDto` | Truyền tải dữ liệu an toàn và hiệu quả giữa các module. |
