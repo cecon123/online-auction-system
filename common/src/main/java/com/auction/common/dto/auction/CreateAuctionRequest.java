@@ -25,5 +25,6 @@ public record CreateAuctionRequest(
     BigDecimal reservePrice,
     LocalDateTime startTime,
     LocalDateTime endTime,
-    String imagePath
+    String imagePath,
+    String imageBase64
 ) {}

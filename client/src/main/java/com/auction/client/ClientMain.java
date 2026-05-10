@@ -38,6 +38,10 @@ public class ClientMain extends Application {
     public static void main(String[] args) {
         // Set default timezone to Vietnam
         java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+        
+        // Register Global Exception Handler
+        Thread.setDefaultUncaughtExceptionHandler(new com.auction.client.util.GlobalExceptionHandler());
+        
         launch(args);
     }
 }

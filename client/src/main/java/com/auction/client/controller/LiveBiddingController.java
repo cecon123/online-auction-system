@@ -15,10 +15,13 @@ import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
 import javafx.animation.Animation;
+import javafx.animation.FillTransition;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -40,10 +43,12 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import org.kordamp.ikonli.javafx.FontIcon;
 import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.auction.client.util.PriceChartManager;
 
 public class LiveBiddingController {
 
@@ -109,6 +114,8 @@ public class LiveBiddingController {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private Timeline countdownTimeline;
+    private PriceChartManager chartManager;
+    private Timeline flashTimeline;
 
     public void setAuctionId(Long auctionId) {
         this.auctionId = auctionId;
@@ -124,7 +131,7 @@ public class LiveBiddingController {
         autoStepComboBox.setItems(FXCollections.observableArrayList("500", "1000", "2500", "5000"));
         autoStepComboBox.setValue("500");
 
-        setupChart();
+        this.chartManager = new PriceChartManager(priceChart);
         refreshAutoBidPanel();
 
         manualBidMessageLabel.setText("");
@@ -137,6 +144,7 @@ public class LiveBiddingController {
         // Show empty state by default
         showEmptyState();
         setupCountdownTimeline();
+        setupFlashTimeline();
     }
 
     // ── Empty State Toggle ───────────────────────────────
@@ -342,19 +350,13 @@ public class LiveBiddingController {
                 List<PlaceBidResponse> history = response.getData();
                 Platform.runLater(() -> {
                     bidHistoryContainer.getChildren().clear();
-                    priceSeries.getData().clear();
-
+                    
                     // History comes newest-first; reverse for chronological chart
                     java.util.List<PlaceBidResponse> chronological = new java.util.ArrayList<>(history);
                     java.util.Collections.reverse(chronological);
 
-                    // Populate chart with chronological data (keep last 10)
-                    int startIdx = Math.max(0, chronological.size() - 10);
-                    for (int i = startIdx; i < chronological.size(); i++) {
-                        PlaceBidResponse bid = chronological.get(i);
-                        String timeStr = bid.timestamp().format(TIME_FMT);
-                        priceSeries.getData().add(new XYChart.Data<>(timeStr, bid.currentPrice().doubleValue()));
-                    }
+                    // Update chart using manager
+                    chartManager.setData(chronological);
 
                     // Populate bid history cards (newest first — original order)
                     for (PlaceBidResponse bid : history) {
@@ -366,6 +368,7 @@ public class LiveBiddingController {
         });
     }
 
+
     private void handleBidUpdate(Response<?> response) {
         BidUpdateEvent event = JsonMapper.getInstance().convertData(response.getData(), BidUpdateEvent.class);
         if (event.auctionId().equals(auctionId)) {
@@ -376,8 +379,9 @@ public class LiveBiddingController {
 
                 String time = LocalDateTime.now().format(TIME_FMT);
                 addBidHistoryCard(time, event.bidderUsername(), this.currentPrice);
-                addPricePoint("Update", this.currentPrice);
+                chartManager.addPricePoint(this.currentPrice);
                 refreshCurrentPrice();
+                triggerColorFlash();
                 refreshAutoBidPanel();
                 updateCountdown();
 
@@ -501,7 +505,6 @@ public class LiveBiddingController {
                     autoLastActionLabel.setText("Auto bid placed: " + formatMoney(nextAutoBid) + ".");
                     showAutoMessage("Auto bidding responded successfully.", true);
                 } else {
-                    showAutoMessage("Auto bid failed: " + response.getMessage(), false);
                     autoLastActionLabel.setText("Auto bid failed.");
                     autoBidEnabled = false;
                 }
@@ -510,27 +513,17 @@ public class LiveBiddingController {
         });
     }
 
-    // ── Chart ────────────────────────────────────────────
-
-    private void setupChart() {
-        priceSeries = new XYChart.Series<>();
-        priceSeries.setName("Current Price");
-        timeAxis.setLabel("Time");
-        timeAxis.setAnimated(false);
-        priceAxis.setLabel("Price");
-        priceAxis.setAutoRanging(true);
-        priceAxis.setAnimated(false);
-        priceChart.getData().setAll(priceSeries);
-        priceChart.setLegendVisible(false);
-        priceChart.setAnimated(false);
-        priceChart.setCreateSymbols(true);
+    private void setupFlashTimeline() {
+        flashTimeline = new Timeline(
+            new KeyFrame(Duration.ZERO, new javafx.animation.KeyValue(currentPriceLabel.textFillProperty(), Color.web("#059669"))),
+            new KeyFrame(Duration.millis(500), new javafx.animation.KeyValue(currentPriceLabel.textFillProperty(), Color.web("#3525cd")))
+        );
     }
 
-    private void addPricePoint(String label, BigDecimal price) {
-        String time = LocalDateTime.now().format(TIME_FMT);
-        String safeLabel = time + " (" + label + ")";
-        priceSeries.getData().add(new XYChart.Data<>(safeLabel, price.doubleValue()));
-        if (priceSeries.getData().size() > 10) { priceSeries.getData().remove(0); }
+    private void triggerColorFlash() {
+        if (flashTimeline != null) {
+            flashTimeline.playFromStart();
+        }
     }
 
     // ── UI Helpers ───────────────────────────────────────

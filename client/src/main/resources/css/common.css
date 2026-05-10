@@ -406,3 +406,17 @@
 .text-bold {
     -fx-font-weight: 700;
 }
+
+/* ── Placeholder Styles ── */
+.image-placeholder {
+    -fx-background-color: #f3f4f6;
+    -fx-background-radius: 8;
+    -fx-alignment: center;
+}
+
+.image-placeholder-text {
+    -fx-text-fill: #94a3b8;
+    -fx-font-weight: 800;
+    -fx-font-size: 14px;
+    -fx-text-alignment: center;
+}

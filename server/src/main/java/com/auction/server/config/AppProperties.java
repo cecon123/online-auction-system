@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Loads server configuration from application.properties.
  *
@@ -11,6 +14,7 @@ import java.util.Properties;
  * outside Java source code.
  */
 public final class AppProperties {
+    private static final Logger logger = LoggerFactory.getLogger(AppProperties.class);
     private static final String CONFIG_FILE = "/application.properties";
     private static final AppProperties INSTANCE = new AppProperties();
 
@@ -41,10 +45,18 @@ public final class AppProperties {
         return getInt("database.busyTimeoutMs", 5000);
     }
 
+    public int getAssetPort() {
+        return getInt("server.asset.port", 8081);
+    }
+
+    public String getAssetDir() {
+        return getString("server.asset.dir", "uploads");
+    }
+
     private void load() {
         try (InputStream inputStream = AppProperties.class.getResourceAsStream(CONFIG_FILE)) {
             if (inputStream == null) {
-                System.out.println("application.properties not found. Using default configuration.");
+                logger.warn("application.properties not found. Using default configuration.");
                 return;
             }
 

@@ -8,6 +8,8 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import java.text.NumberFormat;
+import java.util.Locale;
 import java.util.List;
 
 public class SellerCenterController {
@@ -15,13 +17,14 @@ public class SellerCenterController {
     private VBox auctionListContainer;
 
     @FXML
-    private Label emptyLabel;
-
+    private VBox emptyPlaceholder;
     @FXML private Label expectedRevenueLabel;
     @FXML private Label totalRevenueLabel;
     @FXML private Label totalBidsLabel;
     @FXML private Label successRateLabel;
     @FXML private Label successRateSubtitleLabel;
+
+    private static final NumberFormat CURRENCY = NumberFormat.getCurrencyInstance(Locale.US);
 
     private static com.auction.common.dto.dashboard.SellerStatsDto cachedStats = null;
     private final AuctionClientService auctionService = new AuctionClientService();
@@ -64,8 +67,8 @@ public class SellerCenterController {
     }
 
     private void updateStatsUI(com.auction.common.dto.dashboard.SellerStatsDto stats) {
-        expectedRevenueLabel.setText("$" + String.format("%,.2f", stats.expectedRevenue()));
-        totalRevenueLabel.setText("$" + String.format("%,.2f", stats.totalRevenue()));
+        expectedRevenueLabel.setText(CURRENCY.format(stats.expectedRevenue()));
+        totalRevenueLabel.setText(CURRENCY.format(stats.totalRevenue()));
         totalBidsLabel.setText(String.valueOf(stats.totalBidsReceived()));
         successRateLabel.setText(stats.successRate() + "%");
         
@@ -96,13 +99,13 @@ public class SellerCenterController {
         auctionListContainer.getChildren().removeIf(node -> node instanceof HBox);
 
         if (auctions == null || auctions.isEmpty()) {
-            emptyLabel.setVisible(true);
-            emptyLabel.setManaged(true);
+            emptyPlaceholder.setVisible(true);
+            emptyPlaceholder.setManaged(true);
             return;
         }
 
-        emptyLabel.setVisible(false);
-        emptyLabel.setManaged(false);
+        emptyPlaceholder.setVisible(false);
+        emptyPlaceholder.setManaged(false);
 
         for (AuctionSummaryDto auction : auctions) {
             HBox row = new HBox(16);
@@ -114,11 +117,11 @@ public class SellerCenterController {
             HBox.setHgrow(title, javafx.scene.layout.Priority.ALWAYS);
             title.setMaxWidth(Double.MAX_VALUE);
 
-            Label startPrice = new Label("$" + auction.startingPrice().toPlainString());
+            Label startPrice = new Label(CURRENCY.format(auction.startingPrice()));
             startPrice.setPrefWidth(100);
             startPrice.setMinWidth(100);
 
-            Label currentPrice = new Label("$" + auction.currentPrice().toPlainString());
+            Label currentPrice = new Label(CURRENCY.format(auction.currentPrice()));
             currentPrice.setPrefWidth(100);
             currentPrice.setMinWidth(100);
 

@@ -103,3 +103,6 @@ ON auctions(seller_id);
 
 CREATE INDEX IF NOT EXISTS idx_auto_bids_auction_id
 ON auto_bids(auction_id);
+
+CREATE INDEX IF NOT EXISTS idx_auto_bids_bidder_id
+ON auto_bids(bidder_id);

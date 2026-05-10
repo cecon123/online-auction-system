@@ -595,7 +595,29 @@ public class RequestRouter {
 
         validateCreateAuctionRequest(data);
 
-        AuctionSummaryDto response = auctionService.createAuction(userId, data);
+        // Process image upload
+        String savedFileName = com.auction.server.util.ImageUtil.saveBase64Image(
+            data.imageBase64(),
+            com.auction.server.config.AppProperties.getInstance().getAssetDir()
+        );
+
+        CreateAuctionRequest finalRequest = data;
+        if (savedFileName != null) {
+            finalRequest = new CreateAuctionRequest(
+                data.itemName(),
+                data.itemType(),
+                data.condition(),
+                data.description(),
+                data.startingPrice(),
+                data.reservePrice(),
+                data.startTime(),
+                data.endTime(),
+                savedFileName, // Store only the filename (uuid.png)
+                null
+            );
+        }
+
+        AuctionSummaryDto response = auctionService.createAuction(userId, finalRequest);
 
         NotificationService.getInstance().broadcastToAllUsers(MessageType.AUCTION_LIST_UPDATED, null);
 
@@ -618,7 +640,30 @@ public class RequestRouter {
 
         validateUpdateAuctionRequest(data);
 
-        auctionService.updateAuction(userId, data);
+        // Process image upload
+        String savedFileName = com.auction.server.util.ImageUtil.saveBase64Image(
+            data.imageBase64(),
+            com.auction.server.config.AppProperties.getInstance().getAssetDir()
+        );
+
+        com.auction.common.dto.auction.UpdateAuctionRequest finalRequest = data;
+        if (savedFileName != null) {
+            finalRequest = new com.auction.common.dto.auction.UpdateAuctionRequest(
+                data.auctionId(),
+                data.itemName(),
+                data.itemType(),
+                data.condition(),
+                data.description(),
+                data.startingPrice(),
+                data.reservePrice(),
+                data.startTime(),
+                data.endTime(),
+                savedFileName,
+                null
+            );
+        }
+
+        auctionService.updateAuction(userId, finalRequest);
 
         NotificationService.getInstance().broadcastToAllUsers(MessageType.AUCTION_LIST_UPDATED, null);
 
@@ -882,6 +927,13 @@ public class RequestRouter {
             UpdateUserStatusRequest.class,
             "ADMIN_UPDATE_USER_STATUS requires user status payload"
         );
+
+        UserDao.UserRecord targetUser = userDao.findById(data.userId())
+            .orElseThrow(() -> new IllegalArgumentException("User not found: " + data.userId()));
+
+        if (targetUser.role() == Role.ADMIN && !data.active()) {
+            throw new IllegalStateException("Administrative accounts cannot be deactivated.");
+        }
 
         userDao.updateActiveStatus(data.userId(), data.active());
         logger.info("Admin updated user {} active status to {}", data.userId(), data.active());

@@ -18,12 +18,27 @@ import org.slf4j.LoggerFactory;
  * - TopBar on the top
  * - Dynamic center content
  */
+import javafx.scene.layout.HBox;
+import com.auction.client.socket.ConnectionState;
+
 public class AppShellController {
     private static final Logger logger = LoggerFactory.getLogger(AppShellController.class);
 
     @FXML
+    private HBox disconnectedBanner;
+
+    @FXML
     public void initialize() {
         logger.info("Initializing AppShellController and registering global bid listeners.");
+
+        // Monitor connection state
+        SocketClient.getInstance().connectionStateProperty().addListener((obs, oldState, newState) -> {
+            Platform.runLater(() -> {
+                boolean isDisconnected = newState == ConnectionState.DISCONNECTED || newState == ConnectionState.RECONNECTING;
+                disconnectedBanner.setVisible(isDisconnected);
+                disconnectedBanner.setManaged(isDisconnected);
+            });
+        });
         
         // Register global listener for auction closed
         SocketClient.getInstance().addEventListener(MessageType.AUCTION_CLOSED, response -> {
@@ -75,5 +90,14 @@ public class AppShellController {
                 logger.error("Error processing global SYSTEM_NOTIFICATION", e);
             }
         });
+    }
+
+    @FXML
+    private void handleRetryConnection() {
+        try {
+            SocketClient.getInstance().connect();
+        } catch (java.io.IOException e) {
+            logger.error("Failed to manual reconnect", e);
+        }
     }
 }

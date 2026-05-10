@@ -117,7 +117,14 @@
                         <VBox spacing="6">
                             <Label text="PRODUCT IMAGE" styleClass="create-form-label" />
 
-                            <VBox styleClass="upload-box" spacing="10" alignment="CENTER">
+                            <VBox
+                                fx:id="uploadBox"
+                                onDragOver="#handleDragOver"
+                                onDragDropped="#handleDragDropped"
+                                styleClass="upload-box"
+                                spacing="10"
+                                alignment="CENTER"
+                            >
                                 <FontIcon iconLiteral="mdi2c-cloud-upload-outline" iconSize="32" styleClass="security-icon" />
                                 <Label text="Drag or browse image" styleClass="upload-title" />
                                 <Label text="PNG, JPG, JPEG, GIF — max 5MB" styleClass="upload-subtitle" />

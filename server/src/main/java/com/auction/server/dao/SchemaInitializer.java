@@ -10,6 +10,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Initializes the SQLite database schema from db/schema.sql.
  *
@@ -17,6 +20,7 @@ import java.util.stream.Collectors;
  */
 public final class SchemaInitializer {
 
+    private static final Logger logger = LoggerFactory.getLogger(SchemaInitializer.class);
     private static final String SCHEMA_RESOURCE = "/db/schema.sql";
     private static final String SEED_RESOURCE = "/db/seed.sql";
 
@@ -35,19 +39,19 @@ public final class SchemaInitializer {
                 }
             }
 
-            System.out.println("Database schema initialized.");
+            logger.info("Database schema initialized.");
 
             // Check if we should seed the database
             boolean skipSeed = Boolean.getBoolean("auction.skip.seed");
             if (!skipSeed && isDatabaseEmpty(connection)) {
-                System.out.println("Database is empty. Loading seed data...");
+                logger.info("Database is empty. Loading seed data...");
                 String seedSql = loadSql(SEED_RESOURCE);
                 for (String sqlStatement : splitSqlStatements(seedSql)) {
                     if (!sqlStatement.isBlank()) {
                         statement.execute(sqlStatement);
                     }
                 }
-                System.out.println("Seed data loaded successfully.");
+                logger.info("Seed data loaded successfully.");
             }
         } catch (SQLException e) {
             throw new IllegalStateException(

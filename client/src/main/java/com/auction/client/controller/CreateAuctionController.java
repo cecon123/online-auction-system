@@ -21,6 +21,9 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
+import javafx.scene.input.DragEvent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
 
 public class CreateAuctionController {
 
@@ -126,8 +129,45 @@ public class CreateAuctionController {
 
         Window window = productNameField.getScene().getWindow();
         File file = fileChooser.showOpenDialog(window);
+        processSelectedFile(file);
+    }
 
+    @FXML
+    private void handleDragOver(DragEvent event) {
+        if (event.getDragboard().hasFiles()) {
+            event.acceptTransferModes(TransferMode.COPY);
+        }
+        event.consume();
+    }
+
+    @FXML
+    private void handleDragDropped(DragEvent event) {
+        Dragboard db = event.getDragboard();
+        boolean success = false;
+        if (db.hasFiles()) {
+            File file = db.getFiles().get(0);
+            processSelectedFile(file);
+            success = true;
+        }
+        event.setDropCompleted(success);
+        event.consume();
+    }
+
+    private void processSelectedFile(File file) {
         if (file != null) {
+            // Basic extension check
+            String name = file.getName().toLowerCase();
+            if (!(name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".gif"))) {
+                showError("Invalid file type. Please select an image (PNG, JPG, GIF).");
+                return;
+            }
+
+            if (file.length() > 2 * 1024 * 1024) {
+                showError("Image size too large (max 2MB)");
+                selectedImageFile = null;
+                selectedImageLabel.setText("No image selected");
+                return;
+            }
             selectedImageFile = file;
             selectedImageLabel.setText(file.getName());
             showSuccess("Selected image: " + file.getName());
@@ -194,6 +234,14 @@ public class CreateAuctionController {
             return;
         }
 
+        String imageBase64 = null;
+        try {
+            imageBase64 = com.auction.client.util.FileUtil.toBase64(selectedImageFile);
+        } catch (Exception e) {
+            showError("Failed to process image: " + e.getMessage());
+            return;
+        }
+
         CreateAuctionRequest request = new CreateAuctionRequest(
             productName,
             categoryComboBox.getValue(),
@@ -203,7 +251,8 @@ public class CreateAuctionController {
             reservePrice,
             startTime,
             endTime,
-            selectedImageFile.getAbsolutePath()
+            selectedImageFile.getName(), // Send original name as hint
+            imageBase64
         );
 
         messageLabel.setText("Saving auction...");

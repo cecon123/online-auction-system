@@ -152,6 +152,13 @@ public class AdminPanelController {
         HBox actions = new HBox(16);
         Button actionBtn = new Button(user.active() ? "Disable" : "Enable");
         actionBtn.getStyleClass().addAll("admin-pill-btn", user.active() ? "admin-btn-danger" : "admin-btn-success");
+        
+        // Admins cannot be deactivated
+        if (user.role() == com.auction.common.enums.Role.ADMIN && user.active()) {
+            actionBtn.setDisable(true);
+            actionBtn.getStyleClass().add("admin-btn-disabled");
+        }
+        
         actionBtn.setOnAction(e -> handleToggleUserStatus(user));
 
         actions.getChildren().add(actionBtn);
@@ -182,18 +189,19 @@ public class AdminPanelController {
         
         if (auction.imagePath() != null && !auction.imagePath().isEmpty()) {
             try {
-                Image img = new Image(auction.imagePath(), 32, 32, true, true, true);
+                String fullUrl = com.auction.client.util.ImageUrlUtil.getImageUrl(auction.imagePath());
+                Image img = new Image(fullUrl, 32, 32, true, true, true);
                 if (!img.isError()) {
                     ImageView iv = new ImageView(img);
                     thumb.getChildren().add(iv);
                 } else {
-                    thumb.getChildren().add(new FontIcon("mdi2p-package-variant"));
+                    thumb.getChildren().add(new org.kordamp.ikonli.javafx.FontIcon("mdi2p-package-variant"));
                 }
             } catch (Exception e) {
-                thumb.getChildren().add(new FontIcon("mdi2p-package-variant"));
+                thumb.getChildren().add(new org.kordamp.ikonli.javafx.FontIcon("mdi2p-package-variant"));
             }
         } else {
-            thumb.getChildren().add(new FontIcon("mdi2p-package-variant"));
+            thumb.getChildren().add(new org.kordamp.ikonli.javafx.FontIcon("mdi2p-package-variant"));
         }
         
         itemBox.getChildren().addAll(thumb, createCell(auction.title(), "admin-table-cell"));
@@ -253,6 +261,10 @@ public class AdminPanelController {
     }
 
     private void handleToggleUserStatus(UserDto user) {
+        if (user.role() == com.auction.common.enums.Role.ADMIN && user.active()) {
+            messageLabel.setText("Administrative accounts cannot be deactivated.");
+            return;
+        }
         boolean newStatus = !user.active();
         adminService.updateUserStatus(user.id(), newStatus).thenAccept(response -> {
             Platform.runLater(() -> {

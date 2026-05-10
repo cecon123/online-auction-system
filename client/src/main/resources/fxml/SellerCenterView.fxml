@@ -80,7 +80,14 @@
             <Label text="Your Auctions" styleClass="section-title" />
             
             <!-- Dynamic items will be added here -->
-            <Label fx:id="emptyLabel" text="You haven't created any auctions yet." styleClass="page-subtitle" visible="false" managed="false"/>
+            <VBox fx:id="emptyPlaceholder" spacing="12" alignment="CENTER" visible="false" managed="false" minHeight="200">
+                <FontIcon iconLiteral="mdi2p-plus-circle-outline" iconSize="48" iconColor="#9ca3af" />
+                <Label text="No auctions found" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #4b5563;" />
+                <Label text="Get started by creating your first listing." style="-fx-font-size: 14px; -fx-text-fill: #9ca3af;" />
+                <Button text="Create Auction" onAction="#handleCreateAuction" styleClass="primary-button">
+                    <graphic><FontIcon iconLiteral="mdi2p-plus" iconSize="14" /></graphic>
+                </Button>
+            </VBox>
         </VBox>
     </ScrollPane>
 </VBox>

@@ -32,6 +32,8 @@ public class AuctionListController {
     private ComboBox<String> categoryFilter;
     @FXML
     private ComboBox<String> statusFilter;
+    @FXML
+    private VBox emptyState;
 
     private final AuctionClientService auctionService = new AuctionClientService();
     private List<AuctionSummaryDto> allAuctions = List.of();
@@ -103,6 +105,12 @@ public class AuctionListController {
 
     private void populateAuctions(List<AuctionSummaryDto> auctions) {
         auctionContainer.getChildren().clear();
+        boolean isEmpty = auctions.isEmpty();
+        emptyState.setVisible(isEmpty);
+        emptyState.setManaged(isEmpty);
+        auctionContainer.setVisible(!isEmpty);
+        auctionContainer.setManaged(!isEmpty);
+
         for (AuctionSummaryDto auction : auctions) {
             VBox card = createAuctionCard(auction);
             auctionContainer.getChildren().add(card);
@@ -118,16 +126,52 @@ public class AuctionListController {
         card.setMaxHeight(340);
         card.setPadding(new Insets(0, 0, 16, 0));
 
-        // Image Placeholder with Status Badge
-        VBox imageArea = new VBox();
+        // Image Area with Status Badge overlay
+        javafx.scene.layout.StackPane imageArea = new javafx.scene.layout.StackPane();
         imageArea.getStyleClass().add("image-placeholder");
         imageArea.setPrefHeight(130);
         imageArea.setMinHeight(130);
         imageArea.setMaxHeight(130);
-        imageArea.setPadding(new Insets(10));
 
-        HBox badgeContainer = new HBox();
-        badgeContainer.setAlignment(Pos.TOP_RIGHT);
+        String fullUrl = com.auction.client.util.ImageUrlUtil.getImageUrl(auction.imagePath());
+        if (fullUrl != null) {
+            javafx.scene.layout.Region imagePreview = new javafx.scene.layout.Region();
+            imagePreview.setPrefSize(260, 130);
+            
+            javafx.scene.image.Image img = new javafx.scene.image.Image(fullUrl, true);
+            img.progressProperty().addListener((obs, old, progress) -> {
+                if (progress.doubleValue() == 1.0) {
+                    javafx.application.Platform.runLater(() -> {
+                        imagePreview.setBackground(new javafx.scene.layout.Background(
+                            new javafx.scene.layout.BackgroundImage(
+                                img,
+                                javafx.scene.layout.BackgroundRepeat.NO_REPEAT,
+                                javafx.scene.layout.BackgroundRepeat.NO_REPEAT,
+                                javafx.scene.layout.BackgroundPosition.CENTER,
+                                new javafx.scene.layout.BackgroundSize(
+                                    javafx.scene.layout.BackgroundSize.AUTO, 
+                                    javafx.scene.layout.BackgroundSize.AUTO, 
+                                    false, false, false, true
+                                )
+                            )
+                        ));
+                    });
+                }
+            });
+            
+            javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle(260, 130);
+            clip.setArcWidth(16);
+            clip.setArcHeight(16);
+            imagePreview.setClip(clip);
+            
+            imageArea.getChildren().add(imagePreview);
+        } else {
+            Label imageLabel = new Label(auction.itemType().toString());
+            imageLabel.getStyleClass().add("image-placeholder-text");
+            imageArea.getChildren().add(imageLabel);
+        }
+
+        // Status Badge Overlay
         Label statusBadge = new Label(auction.status().toString());
         statusBadge.getStyleClass().add("status-badge");
         switch (auction.status()) {
@@ -136,16 +180,10 @@ public class AuctionListController {
             case FINISHED -> statusBadge.getStyleClass().add("status-finished");
             default -> statusBadge.getStyleClass().add("status-cancelled");
         }
-        badgeContainer.getChildren().add(statusBadge);
-
-        VBox centerLabel = new VBox();
-        centerLabel.setAlignment(Pos.CENTER);
-        VBox.setVgrow(centerLabel, Priority.ALWAYS);
-        Label imageLabel = new Label(auction.itemType().toString());
-        imageLabel.getStyleClass().add("image-placeholder-text");
-        centerLabel.getChildren().add(imageLabel);
-
-        imageArea.getChildren().addAll(badgeContainer, centerLabel);
+        
+        javafx.scene.layout.StackPane.setAlignment(statusBadge, Pos.TOP_RIGHT);
+        javafx.scene.layout.StackPane.setMargin(statusBadge, new Insets(10));
+        imageArea.getChildren().add(statusBadge);
 
         // Content Area
         VBox content = new VBox(4);

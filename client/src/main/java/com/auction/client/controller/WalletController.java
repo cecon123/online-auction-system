@@ -72,8 +72,8 @@ public class WalletController {
                         SceneManager.setCurrentBalance(balance);
                         refreshBalance();
                         messageLabel.setText(
-                            "Deposit successful! New balance: $" +
-                                balance.toPlainString()
+                            "Deposit successful! New balance: " +
+                                CURRENCY.format(balance)
                         );
                         amountField.clear();
                     } else {
@@ -112,8 +112,8 @@ public class WalletController {
                         SceneManager.setCurrentBalance(balance);
                         refreshBalance();
                         messageLabel.setText(
-                            "Withdraw successful! New balance: $" +
-                                balance.toPlainString()
+                            "Withdraw successful! New balance: " +
+                                CURRENCY.format(balance)
                         );
                         amountField.clear();
                     } else {

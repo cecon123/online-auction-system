@@ -15,6 +15,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.StackPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +24,7 @@ public class AuctionDetailController {
     private static final NumberFormat CURRENCY_FORMAT = NumberFormat.getCurrencyInstance(Locale.US);
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
-    @FXML private VBox imageContainer;
+    @FXML private StackPane imageContainer;
     @FXML private Label imagePlaceholderLabel;
     @FXML private Label statusLabel;
     @FXML private Label titleLabel;
@@ -185,8 +186,62 @@ public class AuctionDetailController {
         descriptionTitleLabel.setText(detail.title());
         descriptionLabel.setText(detail.description());
 
-        if (detail.imagePath() != null && !detail.imagePath().isEmpty()) {
-            imagePlaceholderLabel.setText("Image: " + detail.imagePath());
+        // Update Image
+        String fullUrl = com.auction.client.util.ImageUrlUtil.getImageUrl(detail.imagePath());
+        imageContainer.getChildren().clear();
+        
+        if (fullUrl != null) {
+            imagePlaceholderLabel.setVisible(false);
+            imagePlaceholderLabel.setManaged(false);
+            
+            javafx.scene.layout.Region imagePreview = new javafx.scene.layout.Region();
+            imagePreview.prefWidthProperty().bind(imageContainer.widthProperty());
+            imagePreview.prefHeightProperty().bind(imageContainer.heightProperty());
+            imagePreview.getStyleClass().add("card");
+            
+            javafx.scene.image.Image img = new javafx.scene.image.Image(fullUrl, true);
+            img.progressProperty().addListener((obs, old, progress) -> {
+                if (progress.doubleValue() == 1.0) {
+                    javafx.application.Platform.runLater(() -> {
+                        imagePreview.setBackground(new javafx.scene.layout.Background(
+                            new javafx.scene.layout.BackgroundImage(
+                                img,
+                                javafx.scene.layout.BackgroundRepeat.NO_REPEAT,
+                                javafx.scene.layout.BackgroundRepeat.NO_REPEAT,
+                                javafx.scene.layout.BackgroundPosition.CENTER,
+                                new javafx.scene.layout.BackgroundSize(
+                                    javafx.scene.layout.BackgroundSize.AUTO, 
+                                    javafx.scene.layout.BackgroundSize.AUTO, 
+                                    false, false, false, true
+                                )
+                            )
+                        ));
+                    });
+                }
+            });
+            
+            // Rounded corner clip (matches .card radius 8)
+            javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle();
+            clip.widthProperty().bind(imagePreview.widthProperty());
+            clip.heightProperty().bind(imagePreview.heightProperty());
+            clip.setArcWidth(16);
+            clip.setArcHeight(16);
+            imagePreview.setClip(clip);
+            
+            imageContainer.getChildren().add(imagePreview);
+        } else {
+            // Placeholder Card
+            javafx.scene.layout.StackPane placeholder = new javafx.scene.layout.StackPane();
+            placeholder.prefWidthProperty().bind(imageContainer.widthProperty());
+            placeholder.prefHeightProperty().bind(imageContainer.heightProperty());
+            placeholder.getStyleClass().addAll("card", "image-placeholder");
+            
+            imagePlaceholderLabel.setVisible(true);
+            imagePlaceholderLabel.setManaged(true);
+            imagePlaceholderLabel.setText(detail.itemType().name());
+            placeholder.getChildren().add(imagePlaceholderLabel);
+            
+            imageContainer.getChildren().add(placeholder);
         }
 
         logger.info("UI updated for auction: {}", detail.title());

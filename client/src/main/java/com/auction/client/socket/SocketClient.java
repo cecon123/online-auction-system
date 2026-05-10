@@ -12,6 +12,8 @@ import java.net.Socket;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -44,6 +46,23 @@ public final class SocketClient {
     // Listeners for realtime events (requestId is null)
     private final Map<MessageType, List<Consumer<Response<?>>>> eventListeners = new ConcurrentHashMap<>();
 
+    private final ObjectProperty<ConnectionState> connectionState = new SimpleObjectProperty<>(ConnectionState.DISCONNECTED);
+
+    public ObjectProperty<ConnectionState> connectionStateProperty() {
+        return connectionState;
+    }
+
+    public ConnectionState getConnectionState() {
+        return connectionState.get();
+    }
+
+    // Listeners for connection status
+    private final List<Consumer<Boolean>> connectionListeners = new CopyOnWriteArrayList<>();
+
+    private int reconnectAttempts = 0;
+    private static final int MAX_RECONNECT_ATTEMPTS = 5;
+    private static final long RECONNECT_DELAY_MS = 3000;
+
     private SocketClient() {}
 
     public static SocketClient getInstance() {
@@ -67,34 +86,69 @@ public final class SocketClient {
         }
     }
 
+    public void addConnectionListener(Consumer<Boolean> listener) {
+        connectionListeners.add(listener);
+    }
+
+    public void removeConnectionListener(Consumer<Boolean> listener) {
+        connectionListeners.remove(listener);
+    }
+
+    private void notifyConnectionStatus(boolean connected) {
+        for (Consumer<Boolean> listener : connectionListeners) {
+            try {
+                listener.accept(connected);
+            } catch (Exception e) {
+                logger.error("Error in connection listener", e);
+            }
+        }
+    }
+
     /**
      * Connects to the server and starts the listener thread.
      */
     public synchronized void connect() throws IOException {
-        if (running) return;
+        if (running && isConnected()) return;
 
+        connectionState.set(ConnectionState.CONNECTING);
         logger.info("Connecting to server at {}:{}", host, port);
-        socket = new Socket(host, port);
-        out = new PrintWriter(socket.getOutputStream(), true);
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        try {
+            socket = new Socket(host, port);
+            out = new PrintWriter(socket.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-        running = true;
-        listenerThread = new Thread(this::listen, "SocketListener");
-        listenerThread.setDaemon(true);
-        listenerThread.start();
-        logger.info("Connected and listener thread started.");
+            running = true;
+            reconnectAttempts = 0;
+            connectionState.set(ConnectionState.CONNECTED);
+            
+            listenerThread = new Thread(this::listen, "SocketListener");
+            listenerThread.setDaemon(true);
+            listenerThread.start();
+            
+            notifyConnectionStatus(true);
+            logger.info("Connected and listener thread started.");
+        } catch (IOException e) {
+            connectionState.set(ConnectionState.DISCONNECTED);
+            notifyConnectionStatus(false);
+            throw e;
+        }
     }
 
     /**
      * Closes the connection.
      */
     public synchronized void disconnect() {
+        boolean wasRunning = running;
         running = false;
         try {
             if (socket != null) socket.close();
             if (listenerThread != null) listenerThread.interrupt();
         } catch (IOException e) {
             logger.error("Error while disconnecting", e);
+        }
+        connectionState.set(ConnectionState.DISCONNECTED);
+        if (wasRunning) {
+            notifyConnectionStatus(false);
         }
         logger.info("Disconnected from server.");
     }
@@ -138,11 +192,46 @@ public final class SocketClient {
             }
         } catch (IOException e) {
             if (running) {
-                logger.error("Connection lost", e);
-                // In a real app, we might trigger a reconnection logic here
+                logger.error("Connection lost: {}", e.getMessage());
+                notifyConnectionStatus(false);
+                handleReconnection();
             }
         } finally {
-            disconnect();
+            if (!running) {
+                cleanup();
+            }
+        }
+    }
+
+    private void handleReconnection() {
+        if (!running) return;
+        
+        if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+            reconnectAttempts++;
+            connectionState.set(ConnectionState.RECONNECTING);
+            logger.info("Attempting to reconnect ({}/{})...", reconnectAttempts, MAX_RECONNECT_ATTEMPTS);
+            try {
+                Thread.sleep(RECONNECT_DELAY_MS);
+                connect();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } catch (IOException e) {
+                logger.error("Reconnection attempt failed: {}", e.getMessage());
+                handleReconnection(); // Recursive retry
+            }
+        } else {
+            logger.error("Max reconnection attempts reached. Giving up.");
+            running = false;
+            connectionState.set(ConnectionState.DISCONNECTED);
+            cleanup();
+        }
+    }
+
+    private void cleanup() {
+        try {
+            if (socket != null) socket.close();
+        } catch (IOException e) {
+            logger.error("Error closing socket", e);
         }
     }
 

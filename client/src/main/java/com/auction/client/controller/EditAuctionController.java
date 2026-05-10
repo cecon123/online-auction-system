@@ -21,6 +21,9 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
+import javafx.scene.input.DragEvent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
 
 import com.auction.common.dto.auction.UpdateAuctionRequest;
 
@@ -58,8 +61,8 @@ public class EditAuctionController {
                     }
                     
                     if (detail.imagePath() != null) {
-                        selectedImageFile = new File(detail.imagePath());
-                        selectedImageLabel.setText(selectedImageFile.getName());
+                        selectedImageLabel.setText(detail.imagePath());
+                        // We don't set selectedImageFile here because it's already on the server
                     }
                 } else {
                     showError("Failed to load auction details.");
@@ -164,8 +167,45 @@ public class EditAuctionController {
 
         Window window = productNameField.getScene().getWindow();
         File file = fileChooser.showOpenDialog(window);
+        processSelectedFile(file);
+    }
 
+    @FXML
+    private void handleDragOver(DragEvent event) {
+        if (event.getDragboard().hasFiles()) {
+            event.acceptTransferModes(TransferMode.COPY);
+        }
+        event.consume();
+    }
+
+    @FXML
+    private void handleDragDropped(DragEvent event) {
+        Dragboard db = event.getDragboard();
+        boolean success = false;
+        if (db.hasFiles()) {
+            File file = db.getFiles().get(0);
+            processSelectedFile(file);
+            success = true;
+        }
+        event.setDropCompleted(success);
+        event.consume();
+    }
+
+    private void processSelectedFile(File file) {
         if (file != null) {
+            // Basic extension check
+            String name = file.getName().toLowerCase();
+            if (!(name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".gif"))) {
+                showError("Invalid file type. Please select an image (PNG, JPG, GIF).");
+                return;
+            }
+
+            if (file.length() > 2 * 1024 * 1024) {
+                showError("Image size too large (max 2MB)");
+                selectedImageFile = null;
+                selectedImageLabel.setText("No image selected");
+                return;
+            }
             selectedImageFile = file;
             selectedImageLabel.setText(file.getName());
             showSuccess("Selected image: " + file.getName());
@@ -237,6 +277,19 @@ public class EditAuctionController {
             return;
         }
 
+        String imageBase64 = null;
+        String imagePath = selectedImageLabel.getText();
+
+        if (selectedImageFile != null) {
+            try {
+                imageBase64 = com.auction.client.util.FileUtil.toBase64(selectedImageFile);
+                imagePath = selectedImageFile.getName();
+            } catch (Exception e) {
+                showError("Failed to process image: " + e.getMessage());
+                return;
+            }
+        }
+
         UpdateAuctionRequest request = new UpdateAuctionRequest(
             currentAuctionId,
             productName,
@@ -247,7 +300,8 @@ public class EditAuctionController {
             reservePrice,
             startTime,
             endTime,
-            selectedImageFile.getAbsolutePath()
+            imagePath,
+            imageBase64
         );
 
         messageLabel.setText("Updating auction...");
