@@ -25,6 +25,7 @@ public class AuctionDetailController {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     @FXML private StackPane imageContainer;
+    @FXML private javafx.scene.layout.Region imagePreview;
     @FXML private Label imagePlaceholderLabel;
     @FXML private Label statusLabel;
     @FXML private Label titleLabel;
@@ -47,6 +48,25 @@ public class AuctionDetailController {
 
     private final AuctionClientService auctionService = new AuctionClientService();
     private Long auctionId;
+    private String currentImageUrl = null;
+
+    @FXML
+    private void initialize() {
+        // Setup image preview once
+        imagePreview.prefWidthProperty().bind(imageContainer.widthProperty());
+        imagePreview.prefHeightProperty().bind(imageContainer.heightProperty());
+        imagePreview.getStyleClass().add("card");
+        
+        // Rounded corner clip (matches .card radius 8)
+        javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle();
+        clip.widthProperty().bind(imagePreview.widthProperty());
+        clip.heightProperty().bind(imagePreview.heightProperty());
+        clip.setArcWidth(16);
+        clip.setArcHeight(16);
+        imagePreview.setClip(clip);
+        
+        logger.info("AuctionDetailController initialized.");
+    }
 
     public void setAuctionId(Long auctionId) {
         this.auctionId = auctionId;
@@ -188,63 +208,57 @@ public class AuctionDetailController {
 
         // Update Image
         String fullUrl = com.auction.client.util.ImageUrlUtil.getImageUrl(detail.imagePath());
-        imageContainer.getChildren().clear();
         
         if (fullUrl != null) {
             imagePlaceholderLabel.setVisible(false);
             imagePlaceholderLabel.setManaged(false);
+            imagePreview.setVisible(true);
+            imagePreview.setManaged(true);
             
-            javafx.scene.layout.Region imagePreview = new javafx.scene.layout.Region();
-            imagePreview.prefWidthProperty().bind(imageContainer.widthProperty());
-            imagePreview.prefHeightProperty().bind(imageContainer.heightProperty());
-            imagePreview.getStyleClass().add("card");
-            
-            javafx.scene.image.Image img = new javafx.scene.image.Image(fullUrl, true);
-            img.progressProperty().addListener((obs, old, progress) -> {
-                if (progress.doubleValue() == 1.0) {
-                    javafx.application.Platform.runLater(() -> {
-                        imagePreview.setBackground(new javafx.scene.layout.Background(
-                            new javafx.scene.layout.BackgroundImage(
-                                img,
-                                javafx.scene.layout.BackgroundRepeat.NO_REPEAT,
-                                javafx.scene.layout.BackgroundRepeat.NO_REPEAT,
-                                javafx.scene.layout.BackgroundPosition.CENTER,
-                                new javafx.scene.layout.BackgroundSize(
-                                    javafx.scene.layout.BackgroundSize.AUTO, 
-                                    javafx.scene.layout.BackgroundSize.AUTO, 
-                                    false, false, false, true
-                                )
-                            )
-                        ));
-                    });
+            // Only update background if URL has changed to prevent flickering
+            if (!fullUrl.equals(currentImageUrl)) {
+                currentImageUrl = fullUrl;
+                javafx.scene.image.Image img = new javafx.scene.image.Image(fullUrl, true);
+                
+                img.progressProperty().addListener((obs, old, progress) -> {
+                    if (progress.doubleValue() == 1.0) {
+                        applyImageBackground(img);
+                    }
+                });
+
+                // If image is already loaded or cached, set background immediately
+                if (img.getProgress() == 1.0) {
+                    applyImageBackground(img);
                 }
-            });
-            
-            // Rounded corner clip (matches .card radius 8)
-            javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle();
-            clip.widthProperty().bind(imagePreview.widthProperty());
-            clip.heightProperty().bind(imagePreview.heightProperty());
-            clip.setArcWidth(16);
-            clip.setArcHeight(16);
-            imagePreview.setClip(clip);
-            
-            imageContainer.getChildren().add(imagePreview);
+            }
         } else {
-            // Placeholder Card
-            javafx.scene.layout.StackPane placeholder = new javafx.scene.layout.StackPane();
-            placeholder.prefWidthProperty().bind(imageContainer.widthProperty());
-            placeholder.prefHeightProperty().bind(imageContainer.heightProperty());
-            placeholder.getStyleClass().addAll("card", "image-placeholder");
+            currentImageUrl = null;
+            imagePreview.setVisible(false);
+            imagePreview.setManaged(false);
+            imagePreview.setBackground(null); // Clear old image
             
             imagePlaceholderLabel.setVisible(true);
             imagePlaceholderLabel.setManaged(true);
             imagePlaceholderLabel.setText(detail.itemType().name());
-            placeholder.getChildren().add(imagePlaceholderLabel);
-            
-            imageContainer.getChildren().add(placeholder);
         }
+    }
 
-        logger.info("UI updated for auction: {}", detail.title());
+    private void applyImageBackground(javafx.scene.image.Image img) {
+        javafx.application.Platform.runLater(() -> {
+            imagePreview.setBackground(new javafx.scene.layout.Background(
+                new javafx.scene.layout.BackgroundImage(
+                    img,
+                    javafx.scene.layout.BackgroundRepeat.NO_REPEAT,
+                    javafx.scene.layout.BackgroundRepeat.NO_REPEAT,
+                    javafx.scene.layout.BackgroundPosition.CENTER,
+                    new javafx.scene.layout.BackgroundSize(
+                        javafx.scene.layout.BackgroundSize.AUTO, 
+                        javafx.scene.layout.BackgroundSize.AUTO, 
+                        false, false, false, true
+                    )
+                )
+            ));
+        });
     }
 
     @FXML

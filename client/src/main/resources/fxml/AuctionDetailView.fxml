@@ -28,6 +28,7 @@
                 prefWidth="560"
                 prefHeight="360"
             >
+                <Region fx:id="imagePreview" />
                 <Label
                     fx:id="imagePlaceholderLabel"
                     text="Product Image Placeholder"
