@@ -62,17 +62,18 @@ mvn fmt:format
 ```
 
 ### Chạy Unit Test
-Thực hiện kiểm tra toàn diện logic nghiệp vụ (Bidding, Seller, Auth, Wallet) và Concurrency:
+Thực hiện kiểm tra toàn diện logic nghiệp vụ và Concurrency:
 ```bash
 mvn test
 ```
+*Dự án sử dụng **Mockito** để viết Unit Test cô lập logic (Service layer) và **JUnit 5** cho Integration Test (DAO layer).*
 
-### Đóng gói ứng dụng (Production)
-Tạo file JAR thực thi (Fat JAR) cho Server:
-```bash
-mvn clean package -DskipTests
-```
-*File JAR của server sẽ nằm tại `server/target/auction-server.jar`.*
+## 🧪 Hệ thống Kiểm thử (Testing)
+
+Hệ thống được đảm bảo tính ổn định thông qua bộ test bao phủ các luồng quan trọng:
+- **Unit Test (Mockito):** Kiểm thử cô lập logic nghiệp vụ của `BidService`, `AuctionService`, `AuthService`, `WalletService`. Giả lập (mock) các DAO để kiểm tra edge-cases (số dư không đủ, đấu giá đã kết thúc, anti-sniping...).
+- **Integration Test (SQLite):** Kiểm tra tính đúng đắn của các câu lệnh SQL và tính toàn vẹn dữ liệu trong database thực tế.
+- **Concurrency Test:** Kiểm tra khả năng xử lý đồng thời khi có hàng trăm lượt bid gửi đến cùng một lúc (Sử dụng `CountDownLatch` và `ExecutorService`).
 
 ## 📂 Cấu trúc thư mục
 
