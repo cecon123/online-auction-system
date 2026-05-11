@@ -684,7 +684,9 @@ LiveBiddingController {
                 updateAutoBidButton.setDisable(true);
                 disableAutoBidButton.setDisable(true);
                 
-                if ("CANCELED".equals(finalStatus)) {
+                boolean isFinished = "FINISHED".equals(finalStatus);
+                
+                if (!isFinished) {
                     showManualMessage("This auction was canceled (e.g. reserve not met).", false);
                 } else {
                     showManualMessage("This auction has ended successfully.", true);
@@ -692,8 +694,11 @@ LiveBiddingController {
 
                 if (event.winnerUsername() != null) {
                     highestBidderLabel.setText(event.winnerUsername());
-                    if (event.winnerUsername().equals(SceneManager.getCurrentUsername())) {
+                    // Only show "You won" if the status is FINISHED
+                    if (isFinished && event.winnerUsername().equals(SceneManager.getCurrentUsername())) {
                         showManualMessage("Congratulations! You won this auction!", true);
+                    } else if (!isFinished && event.winnerUsername().equals(SceneManager.getCurrentUsername())) {
+                        showManualMessage("Auction ended. Reserve price wasn't met. You will be refunded.", false);
                     }
                 }
             });
