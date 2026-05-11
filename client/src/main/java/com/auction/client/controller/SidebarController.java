@@ -85,6 +85,8 @@ public class SidebarController {
 
     @FXML
     private void logout() {
+        com.auction.client.socket.SocketClient.getInstance().setCredentials(null, null);
+        com.auction.client.socket.SocketClient.getInstance().setToken(null);
         SceneManager.showLogin();
     }
 
