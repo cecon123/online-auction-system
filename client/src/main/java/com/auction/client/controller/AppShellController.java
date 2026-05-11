@@ -85,6 +85,16 @@ public class AppShellController {
                 com.auction.common.dto.notification.SystemNotificationDto event = JsonMapper.getInstance().convertData(response.getData(), com.auction.common.dto.notification.SystemNotificationDto.class);
                 if (event != null) {
                     NotificationManager.showToast(event.title(), event.message(), event.type());
+
+                    // Refresh balance/stats for any system notification (often involves financial changes)
+                    new com.auction.client.service.AuctionClientService().getDashboard().thenAccept(dashResponse -> {
+                        if (dashResponse.isSuccess()) {
+                            com.auction.common.dto.dashboard.DashboardDto stats = dashResponse.getData();
+                            Platform.runLater(() -> {
+                                com.auction.client.util.SceneManager.setCurrentBalances(stats.balance(), stats.lockedBalance());
+                            });
+                        }
+                    });
                 }
             } catch (Exception e) {
                 logger.error("Error processing global SYSTEM_NOTIFICATION", e);

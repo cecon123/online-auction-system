@@ -50,7 +50,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.auction.client.util.PriceChartManager;
 
-public class LiveBiddingController {
+public class
+LiveBiddingController {
 
     private static final Logger logger = LoggerFactory.getLogger(LiveBiddingController.class);
     private static final NumberFormat USD_FORMAT = NumberFormat.getCurrencyInstance(Locale.US);
@@ -212,7 +213,7 @@ public class LiveBiddingController {
         StackPane iconPane = new StackPane();
         iconPane.getStyleClass().add("bid-card-icon-pane");
         if (isLatest) iconPane.getStyleClass().add("bid-card-icon-latest");
-        
+
         FontIcon icon = new FontIcon(isLatest ? "mdi2g-gavel" : "mdi2c-check-circle-outline");
         icon.setIconSize(16);
         iconPane.getChildren().add(icon);
@@ -220,23 +221,23 @@ public class LiveBiddingController {
         // Main Content (Name, You tag, Time)
         VBox contentBox = new VBox(2);
         HBox.setHgrow(contentBox, Priority.ALWAYS);
-        
+
         HBox topRow = new HBox(8);
         topRow.setAlignment(Pos.CENTER_LEFT);
-        
+
         Label nameLabel = new Label(bidder != null ? bidder : "Unknown");
         nameLabel.getStyleClass().add("bid-card-name");
         topRow.getChildren().add(nameLabel);
-        
+
         if (isSelf) {
             Label youTag = new Label("YOU");
             youTag.getStyleClass().add("bid-card-you-tag");
             topRow.getChildren().add(youTag);
         }
-        
+
         Label timeLabel = new Label(time);
         timeLabel.getStyleClass().add("bid-card-time");
-        
+
         contentBox.getChildren().addAll(topRow, timeLabel);
 
         // Amount (Highlight if latest)
@@ -244,7 +245,7 @@ public class LiveBiddingController {
         amountLabel.getStyleClass().add(isLatest ? "bid-card-amount-latest" : "bid-card-amount");
 
         card.getChildren().addAll(iconPane, contentBox, amountLabel);
-        
+
         // Add to container (at top)
         bidHistoryContainer.getChildren().add(0, card);
 
@@ -345,7 +346,7 @@ public class LiveBiddingController {
 
     private void loadBidHistory() {
         if (auctionId == null) return;
-        
+
         // Show loading state immediately to prevent layout shift and inform user
         Platform.runLater(() -> {
             bidHistoryContainer.getChildren().clear();
@@ -361,7 +362,7 @@ public class LiveBiddingController {
                 List<PlaceBidResponse> history = response.getData();
                 Platform.runLater(() -> {
                     bidHistoryContainer.getChildren().clear();
-                    
+
                     if (history.isEmpty()) {
                         Label emptyLabel = new Label("No bids yet.");
                         emptyLabel.getStyleClass().add("bid-history-subtitle");

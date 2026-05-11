@@ -160,7 +160,7 @@ public class AuctionManagerService {
                     );
                 }
 
-                // --- Global Seller Notification ---
+                // --- Global Seller & Winner Notification ---
                 if (newStatus == AuctionStatus.FINISHED) {
                     com.auction.common.dto.notification.SystemNotificationDto successNotice = new com.auction.common.dto.notification.SystemNotificationDto(
                         "Auction Sold! \uD83D\uDCB0", // 💰
@@ -169,6 +169,17 @@ public class AuctionManagerService {
                         now
                     );
                     notificationService.notifyUser(auction.getSellerId(), com.auction.common.protocol.MessageType.SYSTEM_NOTIFICATION, successNotice);
+
+                    // Notify Winner as well
+                    if (auction.getHighestBidderId() != null) {
+                        com.auction.common.dto.notification.SystemNotificationDto winNotice = new com.auction.common.dto.notification.SystemNotificationDto(
+                            "Auction Won! \uD83C\uDF89", // 🎉
+                            "Congratulations! You won auction #" + auction.getId() + " for $" + auction.getCurrentPrice() + ".",
+                            "SUCCESS",
+                            now
+                        );
+                        notificationService.notifyUser(auction.getHighestBidderId(), com.auction.common.protocol.MessageType.SYSTEM_NOTIFICATION, winNotice);
+                    }
                 } else if (newStatus == AuctionStatus.CANCELED) {
                     String reason = (auction.getHighestBidderId() != null) ? "reserve price not met." : "no bids were placed.";
                     com.auction.common.dto.notification.SystemNotificationDto failNotice = new com.auction.common.dto.notification.SystemNotificationDto(

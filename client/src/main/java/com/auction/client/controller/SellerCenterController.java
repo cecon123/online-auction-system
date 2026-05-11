@@ -43,6 +43,17 @@ public class SellerCenterController {
 
         loadSellerAuctions();
         loadSellerStats();
+
+        // Register for real-time updates to refresh seller dashboard
+        com.auction.client.socket.SocketClient.getInstance().addEventListener(
+            com.auction.common.protocol.MessageType.AUCTION_LIST_UPDATED,
+            response -> Platform.runLater(this::handleRefresh)
+        );
+
+        com.auction.client.socket.SocketClient.getInstance().addEventListener(
+            com.auction.common.protocol.MessageType.AUCTION_CLOSED,
+            response -> Platform.runLater(this::handleRefresh)
+        );
     }
 
     @FXML
