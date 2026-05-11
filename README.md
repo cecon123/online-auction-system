@@ -19,7 +19,7 @@ AuctionPro là một hệ thống đấu giá trực tuyến chuyên nghiệp đ
 - **Frontend:** JavaFX 21, Ikonli (icons), CSS modern styling.
 - **Networking:** TCP Socket, Newline-delimited JSON Protocol.
 - **Build System:** Maven Multi-module.
-- **Standards:** Tuân thủ Google Java Style, tích hợp CI/CD GitHub Actions.
+- **CI/CD:** GitHub Actions integration.
 
 ## 🛠️ Hướng dẫn cài đặt & Chạy ứng dụng
 
@@ -48,18 +48,6 @@ mvn -pl client javafx:run
 ```
 
 ## 📋 Các lệnh Maven hữu ích
-
-### Kiểm tra Tiêu chuẩn Code (Checkstyle)
-Dự án áp dụng Google Java Style. Kiểm tra xem mã nguồn có vi phạm quy tắc không:
-```bash
-mvn checkstyle:check
-```
-
-### Tự động định dạng Code
-Sử dụng plugin để tự động sửa lỗi thụt lề (indentation) và sắp xếp import theo chuẩn Google:
-```bash
-mvn fmt:format
-```
 
 ### Chạy Unit Test
 Thực hiện kiểm tra toàn diện logic nghiệp vụ và Concurrency:

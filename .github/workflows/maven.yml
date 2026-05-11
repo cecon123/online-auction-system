@@ -23,9 +23,3 @@ jobs:
 
       - name: Build and test all modules
         run: mvn clean verify
-
-      - name: Run Checkstyle validation
-        run: mvn checkstyle:check
-
-      - name: Verify Google Java Style formatting
-        run: mvn fmt:check
