@@ -675,13 +675,21 @@ LiveBiddingController {
             response.getData(), com.auction.common.dto.auction.AuctionEventDto.class);
         if (event.auctionId().equals(auctionId)) {
             Platform.runLater(() -> {
-                this.statusLabel.setText("FINISHED");
-                updateStatusStyle("FINISHED");
+                String finalStatus = event.status().name();
+                this.statusLabel.setText(finalStatus);
+                updateStatusStyle(finalStatus);
+                
                 bidAmountField.setDisable(true);
                 enableAutoBidButton.setDisable(true);
                 updateAutoBidButton.setDisable(true);
                 disableAutoBidButton.setDisable(true);
-                showManualMessage("This auction has ended.", true);
+                
+                if ("CANCELED".equals(finalStatus)) {
+                    showManualMessage("This auction was canceled (e.g. reserve not met).", false);
+                } else {
+                    showManualMessage("This auction has ended successfully.", true);
+                }
+
                 if (event.winnerUsername() != null) {
                     highestBidderLabel.setText(event.winnerUsername());
                     if (event.winnerUsername().equals(SceneManager.getCurrentUsername())) {
