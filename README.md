@@ -1,235 +1,85 @@
-# Online Auction System - AuctionPro
+# AuctionPro - Online Auction System
 
-> Bài tập lớn Lập trình nâng cao 2026: xây dựng hệ thống đấu giá trực tuyến theo kiến trúc **Client-Server**, sử dụng **Java 21**, **JavaFX**, **Socket JSON**, **SQLite**, **Maven multi-module**, **JUnit 5** và **Git/GitHub**.
+AuctionPro là một hệ thống đấu giá trực tuyến chuyên nghiệp được xây dựng trên nền tảng Java, áp dụng kiến trúc **Client-Server** với giao thức truyền tải JSON qua Socket. Dự án được thiết kế theo tiêu chuẩn công nghiệp, chú trọng vào tính concurrency (xử lý đồng thời), bảo mật và hiệu năng cao.
 
-## 1. Thông tin dự án
+## 🚀 Tính năng chính
 
-- **Tên dự án:** Online Auction System / AuctionPro
-- **Repository:** `https://github.com/cecon123/online-auction-system`
-- **Môn học:** Lập trình nâng cao - LTNC 2026
-- **Mô hình:** Client-Server + MVC
-- **Ngôn ngữ:** Java 21
-- **GUI:** JavaFX + FXML + CSS
-- **Giao tiếp:** TCP Socket + JSON
-- **Database:** SQLite
-- **Build tool:** Maven multi-module
-- **Testing:** JUnit 5, JaCoCo
-- **CI/CD:** GitHub Actions
-- **Quản lý mã nguồn:** Git + Pull Request review
+- **Đấu giá thời gian thực (Real-time Bidding):** Cập nhật giá và lịch sử bid tức thì thông qua Socket.
+- **Tự động đấu giá (Auto-bidding):** Hệ thống thông minh tự động đặt giá dựa trên ngân sách và bước giá tối đa của người dùng.
+- **Quản lý đa vai trò:**
+  - **Bidder:** Tìm kiếm, xem chi tiết và tham gia đấu giá.
+  - **Seller:** Tạo, quản lý và chỉnh sửa các phiên đấu giá của riêng mình.
+  - **Admin:** Quản trị người dùng, theo dõi hệ thống và xử lý các vấn đề phát sinh.
+- **Ví điện tử (Wallet):** Quản lý số dư, thực hiện nạp/rút và tự động khóa quỹ (locked balance) khi tham gia đấu giá để đảm bảo tính thanh khoản.
+- **Bảo mật:** Băm mật khẩu bằng BCrypt, xác thực Token-based đơn giản.
 
-## 2. Thành viên và phân công chính
+## 🏗️ Kiến trúc kỹ thuật
 
-| Vai trò | Thành viên | Phụ trách chính |
-|---|---|---|
-| Backend 1 / Lead | **Huy** | Kiến trúc tổng thể, Security, Concurrency, Reviewer chính, Auth & Admin Logic |
-| Backend 2 | **Mạnh** | DAO/Repository, SQLite, Unit Test Backend, CI/CD, SQL Optimization |
-| Frontend 1 | **Linh** | Login/Register, Dashboard, Auction List, Filter/Search, My Bids Logic |
-| Frontend 2 | **Hải Anh** | Auction Detail UI, Live Bidding, Realtime Chart, Notification System, Admin UI |
+- **Backend:** Java 21, SQLite (optimistic locking), SLF4J + Logback.
+- **Frontend:** JavaFX 21, Ikonli (icons), CSS modern styling.
+- **Networking:** TCP Socket, Newline-delimited JSON Protocol.
+- **Build System:** Maven Multi-module.
+- **Standards:** Tuân thủ Google Java Style, tích hợp CI/CD GitHub Actions.
 
-## 3. Mục tiêu chức năng
+## 🛠️ Hướng dẫn cài đặt & Chạy ứng dụng
 
-### 3.1 Chức năng bắt buộc (Core)
-- [x] Đăng ký / đăng nhập tài khoản.
-- [x] Role người dùng: `BIDDER`, `SELLER`, `ADMIN`.
-- [x] Quản lý sản phẩm & đấu giá (Seller): Thêm/Sửa/Xóa.
-- [x] Đấu giá thời gian thực: Đặt giá, kiểm tra bid hợp lệ, cập nhật highest bidder.
-- [x] Concurrency: Xử lý nhiều bidder cùng lúc bằng `ReentrantLock`.
-- [x] SQLite Persistence: Lưu trữ dữ liệu an toàn.
+### 1. Yêu cầu hệ thống
+- **Java JDK 21** trở lên.
+- **Maven 3.8+**.
+- Hệ điều hành: Windows, macOS, hoặc Linux.
 
-### 3.2 Chức năng đang hoàn thiện (In Progress)
-- [x] Filter & Search: Lọc theo danh mục và trạng thái tại Auction List.
-- [x] My Bids: Xem lại các phiên đấu giá đã tham gia.
-- [ ] Notification System: Thông báo Toast khi bị vượt giá hoặc đấu giá kết thúc.
-- [ ] Admin Panel: Quản lý người dùng và phiên đấu giá.
-
-## 4. Kiến trúc tổng thể
-
-```text
-JavaFX Client
-    |
-    | TCP Socket + JSON
-    v
-Auction Server
-    |
-    v
-Controller Layer
-    |
-    v
-Service Layer
-    |
-    v
-DAO / Repository Layer
-    |
-    v
-SQLite Database
+### 2. Cài đặt các thư viện phụ thuộc
+Trước khi chạy ứng dụng lần đầu, hãy thực hiện build toàn bộ dự án:
+```bash
+mvn clean install -DskipTests
 ```
 
-## 5. Cấu trúc Maven multi-module
+### 3. Chạy Server
+Server quản lý logic nghiệp vụ, database SQLite và các kết nối Socket.
+```bash
+mvn -pl server exec:java
+```
+*Mặc định Server chạy tại port 8080.*
 
-```text
-online-auction-system/
-├── common/ (DTO, Enum, Model dùng chung)
-├── server/ (Socket Server, Business Logic, SQLite DAO)
-└── client/ (JavaFX UI, Socket Client)
+### 4. Chạy Client
+Khởi động giao diện người dùng (mỗi lệnh sẽ mở một cửa sổ ứng dụng mới).
+```bash
+mvn -pl client javafx:run
 ```
 
-## 6. Module dependency rule
+## 📋 Các lệnh Maven hữu ích
 
-```text
-common  <- không phụ thuộc module nào
-server  -> phụ thuộc common
-client  -> phụ thuộc common
+### Kiểm tra Tiêu chuẩn Code (Checkstyle)
+Dự án áp dụng Google Java Style. Kiểm tra xem mã nguồn có vi phạm quy tắc không:
+```bash
+mvn checkstyle:check
 ```
 
-## 7. JSON protocol
-Chi tiết tại `docs/protocol.md`. Tất cả message đều là một dòng JSON duy nhất kết thúc bằng ký tự xuống dòng.
+### Tự động định dạng Code
+Sử dụng plugin để tự động sửa lỗi thụt lề (indentation) và sắp xếp import theo chuẩn Google:
+```bash
+mvn fmt:format
+```
 
-## 8. Database SQLite
-File schema: `server/src/main/resources/db/schema.sql`.
-Sử dụng WAL mode để tăng hiệu năng concurrency.
+### Chạy Unit Test
+Thực hiện kiểm tra logic DAO và Concurrency (BidService):
+```bash
+mvn test
+```
 
-## 9. Auction state machine
-`OPEN -> RUNNING -> FINISHED -> PAID/CANCELED`
+### Đóng gói ứng dụng (Production)
+Tạo file JAR thực thi (Fat JAR) cho Server:
+```bash
+mvn clean package -DskipTests
+```
+*File JAR của server sẽ nằm tại `server/target/auction-server.jar`.*
 
-## 10. Logic đặt giá placeBid()
-- Sử dụng `ReentrantLock` theo `auctionId`.
-- Kiểm tra số dư, thời gian, giá hiện tại trong cùng một transaction/lock block.
+## 📂 Cấu trúc thư mục
 
-## 11. Design Patterns
-- **Singleton**: Database, SessionManager.
-- **Factory Method**: ItemFactory.
-- **Observer**: BroadcastService (Realtime updates).
-
-## 12. UI / JavaFX design
-- Sử dụng FXML cho layout và CSS cho styling.
-- Giao diện hiện đại theo phong cách Material Design.
-
-## 13. Lộ trình theo tuần (Roadmap)
-- **W14 (Hoàn thành):** Tích hợp và hoàn thiện (Integration & Polishing).
-- **W15 (Hiện tại):** Kiểm thử cuối cùng, Tối ưu UX & Sẵn sàng Demo (Final Testing & Demo Readiness).
-
-## 14. Git workflow
-- Branch: `feature/<name>/<task>`. (VD: `feature/huy/final-audit`)
-- Pull Request review bởi Huy (Lead).
-- Conventional Commits: `feat:`, `fix:`, `docs:`, `test:`.
+- `common/`: Chứa các DTO, Enum và Model dùng chung cho cả Client và Server.
+- `server/`: Logic xử lý phía Server, Database access (DAO) và Socket Server.
+- `client/`: Giao diện JavaFX, Socket Client và xử lý luồng người dùng.
+- `docs/`: Tài liệu chi tiết về Protocol, Database ERD và Class Diagram.
 
 ---
-
-## 15. Task Board (Sprint Week 15: Final Polish & Demo)
-
-Các thành viên sử dụng **Gemini CLI** hãy tuân thủ nghiêm ngặt mọi quy tắc trong @GEMINI.md.
-
-### 🔴 ƯU TIÊN 1: Hệ thống & Độ tin cậy (System & Reliability)
-- **Mạnh (Backend)** - `feature/manh/refactor-and-audit`
-    - [x] **Global Exception Handling:** Cài đặt bộ bắt lỗi tập trung (`UncaughtExceptionHandler`).
-    - [x] **Database & Concurrency Audit:** Kiểm tra `WAL Mode` và thêm index cho `auto_bids`.
-    - [x] **Socket Retry Fix:** Sửa lỗi đệ quy và race condition khi reconnect socket.
-    - [x] **Silent Re-authentication:** Tự động đăng nhập lại sau khi reconnect để tránh lỗi Unauthorized.
-    - > **Prompt:** "Gemini, hãy giúp tôi cài đặt UncaughtExceptionHandler toàn cục tại Client và Server. Sau đó, kiểm tra Database.java xem lệnh PRAGMA journal_mode=WAL đã có chưa và thực hiện thêm index cho auto_bids(bidder_id)."
-- **Hải Anh (Frontend 2)** - `feature/haianh/realtime-polish`
-    - [x] **Socket Resilience:** Xử lý sự kiện ngắt kết nối socket, hiển thị Banner cảnh báo "Disconnected".
-    - > **Prompt:** "Gemini, hãy triển khai logic xử lý sự kiện ngắt kết nối Socket trong SocketClient và hiển thị Banner cảnh báo 'Disconnected' kèm nút Retry trên UI."
-
-### 🟡 ƯU TIÊN 2: Logic Nghiệp vụ & UX mượt mà (Business Logic & Smooth UX)
-- **Linh (Frontend 1)** - `feature/linh/design-system`
-    - [x] **Wallet Refinement:** Sử dụng `NumberFormat.getCurrencyInstance()` và cải thiện Validation.
-    - > **Prompt:** "Gemini, hãy cập nhật WalletController để format toàn bộ tiền tệ theo USD bằng NumberFormat và cải thiện các thông báo lỗi khi nạp tiền/rút tiền."
-- **Mạnh (Backend)**
-    - [x] **Refactor `LiveBiddingController`:** Tách logic Chart, Countdown và BidHistory sang Helper.
-    - [x] **Real-time Wallet Update:** Sửa lỗi không cập nhật số dư ví realtime cho Seller và Winner khi kết thúc đấu giá.
-    - [x] **Fix Auction End Logic:** Sửa lỗi hiển thị sai trạng thái FINISHED và lời chúc mừng khi đấu giá không đạt reserve price.
-    - [x] **Fix Countdown Smoothness:** Sửa lỗi đồng hồ đếm ngược cập nhật chậm hoặc nhảy cóc (do lệch pha bộ đếm).
-    - [x] **Fix Edit Auction Image Requirement:** Allow saving auction edits without re-uploading an image if one already exists.
-    - [x] **Fix Seller Center Price Display:** Correctly display Starting Price and Current Price in the auction list.
-    - [x] **Add Seller Center Column Titles:** Add visual headers for the auction list in Seller Center.
-    - > **Prompt:** "Gemini, hãy rà soát codebase và sửa lỗi không cập nhật số dư ví realtime cho seller khi kết thúc đấu giá."
-- **Hải Anh (Frontend 2)**
-    - [x] **Visual Feedback:** Thêm hiệu ứng Animation (Color flash) khi giá tiền thay đổi realtime.
-    - > **Prompt:** "Gemini, trong LiveBiddingController, hãy thêm logic để khi nhận BID_UPDATE, nhãn giá tiền sẽ nháy màu xanh (Color flash) trong 0.5s để tạo hiệu ứng trực quan."
-
-### 🔵 ƯU TIÊN 3: Thẩm mỹ & Hoàn thiện (Aesthetics & Polishing)
-- **Linh (Frontend 1)**
-    - [ ] **Tokenize Design System:** Di chuyển màu sắc hardcoded vào `variables.css`.
-    - [x] **Empty States & Transitions:** Thêm placeholder khi danh sách trống.
-    - > **Prompt:** "Gemini, hãy rà soát variables.css để định nghĩa các màu chuẩn (.root) và thay thế các mã hex trong common.css. Sau đó, thêm các nhãn/placeholder trực quan khi danh sách Auction hoặc My Bids trống."
-- **Hải Anh (Frontend 2)**
-    - [x] **Live UI Polish:** Cập nhật CSS theo Design System mới và thêm Tooltip.
-- **Huy (Lead)** - `feature/huy/final-audit-and-polish`
-    - [x] **Auction UI/UX Polish:** Triển khai Drag & Drop, Image Cover (Object-fit) và Placeholder chuyên nghiệp.
-- **Mạnh (Backend)**
-    - [x] **JavaDoc:** Hoàn thiện JavaDoc cho các Service core.
-
----
-
-## 16. Archived Tasks (Sprint Week 14)
-<details>
-<summary>Nhấn để xem các task đã hoàn thành</summary>
-
-#### 🔴 ƯU TIÊN 1: Hoàn thiện Logic Nghiệp vụ & Dashboard (Core)
-- **Huy (Lead):**
-    - [x] Task: `GET_MY_BIDS` API & Admin Logic.
-    - [x] Task: Triển khai `GET_DASHBOARD` API (trả về stats thực tế cho từng role).
-    - [x] Task: Triển khai Proxy Bidding chuyên nghiệp (Server-side) & Anti-sniping.
-    - [x] Task: Logic đấu giá truyền thống (Manual Bid) kết hợp phản hồi Auto-bid.
-- **Hải Anh:**
-    - [x] Task: Auction Detail Data Binding & `NotificationManager`.
-    - [x] Task: Admin Protection (Admins cannot be deactivated).
-    - [x] Task: Hoàn thiện Admin Panel UI (Kết nối API `ADMIN_GET_USERS` và `ADMIN_UPDATE_USER_STATUS`).
-    - [x] Task: Xử lý sự kiện realtime `AUCTION_CLOSED` và `TIME_EXTENDED` trên UI.
-
-#### 🟡 ƯU TIÊN 2: Seller Features & UX Refinement
-- **Linh:**
-    - [x] Task: Filter/Search tại `AuctionList` & `MyBidsController` implementation.
-    - [x] Task: Cài đặt và sử dụng **Ikonli** cho toàn bộ UI.
-    - [x] Task: Cập nhật Seller Center: Hiển thị danh sách Auction của chính mình.
-    - [x] Task: Chính xác hóa trạng thái "Winning/Outbid" trong My Bids dựa trên `highestBidderId`.
-- **Mạnh:**
-    - [x] Task: `findByBidderId` in DAO & Concurrency Stress Test.
-    - [x] Task: Kích hoạt `WAL Mode` trong SQLite và tối ưu hóa Transaction.
-    - [x] Task: Triển khai `DELETE_ITEM` (Soft delete) và ràng buộc nghiệp vụ.
-    - [x] Task: Triển khai Escrow & Settlement (Trừ tiền khi thắng, hoàn tiền khi outbid/hủy).
-
-#### 🔵 ƯU TIÊN 3: Polish & Final Test
-- **Hải Anh:** [x] Tích hợp thông báo cá nhân hóa cho Seller và Toast realtime.
-- **Mạnh:** [x] Bổ sung bộ JUnit E2E Test cho luồng tiền và đấu giá (`AuctionSettlementTest`).
-- **Huy:** [x] Final Security & Performance Review trước khi demo.
-</details>
-
----
-
-## 17. Setup môi trường
-- Java 21, Maven 3.9+, SQLite.
-- Server: `mvn -pl server exec:java`
-- Client: `mvn -pl client javafx:run`
-
-## 18. GitHub Actions
-Tự động chạy `mvn test` trên mỗi PR vào `dev` và `main`.
-
-## 19. Test plan
-- Unit tests cho Service và DAO.
-- E2E Testing với nhiều client cùng lúc.
-
-## 20. Definition of Done
-- Build success, Pass Tests, Lead Approved, Merged to `dev`.
-
-## 21. Checklist chấm điểm
-- OOP, Design Patterns, Concurrency, Realtime, Client-Server, MVC.
-
-## 22. Rủi ro và cách tránh
-- SQLite Busy: Sử dụng WAL mode và Lock nghiệp vụ.
-- JavaFX Threading: Luôn dùng `Platform.runLater()`.
-
-## 23. Việc cần làm ngay (Action Items)
-- Huy: Khai báo MessageType mới cho My Bids và Admin.
-- Linh: Cập nhật UI Auction List để nhận sự kiện filter.
-
-## 24. Ghi chú cuối
-Tập trung vào luồng: **Register/Login -> Browse -> Bid -> Realtime Update -> Close.**
-
-## 25. Tài liệu tham khảo
-- `docs/protocol.md` (Giao thức Socket JSON)
-- `docs/class-diagram.md` (Sơ đồ Lớp & Kiến trúc)
-- `docs/database-erd.md` (Sơ đồ ERD & Tối ưu SQLite)
-- `docs/user-manual.md` (Hướng dẫn sử dụng hệ thống)
-- `docs/design-patterns.md` (Các mẫu thiết kế áp dụng)
-- `docs/mock-interview-guide.md` (Tài liệu ôn tập vấn đáp chuyên sâu)
+© 2026 AuctionPro Team. Sản phẩm phục vụ mục đích học tập và nghiên cứu Lập trình nâng cao.
