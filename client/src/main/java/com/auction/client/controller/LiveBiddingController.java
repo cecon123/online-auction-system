@@ -298,35 +298,48 @@ LiveBiddingController {
         socket.addEventListener(MessageType.TIME_EXTENDED, timeExtendedListener);
     }
 
+    private String lastCountdownText = "";
+
     private void setupCountdownTimeline() {
-        countdownTimeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> updateCountdown()));
+        countdownTimeline = new Timeline(new KeyFrame(Duration.millis(250), e -> updateCountdown()));
         countdownTimeline.setCycleCount(Animation.INDEFINITE);
         countdownTimeline.play();
     }
 
     private void updateCountdown() {
-        if (endTime == null) { countdownLabel.setText("--:--:--"); return; }
+        if (endTime == null) { 
+            updateCountdownUI("--:--:--"); 
+            return; 
+        }
         String status = statusLabel.getText();
         if ("FINISHED".equals(status) || "CANCELED".equals(status)) {
             countdownHeaderLabel.setText("ENDED");
-            countdownLabel.setText("--:--:--");
+            updateCountdownUI("--:--:--");
             return;
         }
         LocalDateTime targetTime = endTime;
         if ("OPEN".equals(status)) {
             countdownHeaderLabel.setText("START IN");
             targetTime = startTime;
-            if (targetTime == null) { countdownLabel.setText("Opening..."); return; }
+            if (targetTime == null) { updateCountdownUI("Opening..."); return; }
         } else {
             countdownHeaderLabel.setText("TIME REMAINING");
         }
         java.time.Duration duration = java.time.Duration.between(LocalDateTime.now(), targetTime);
         if (duration.isNegative() || duration.isZero()) {
-            countdownLabel.setText("OPEN".equals(status) ? "Starting..." : "00:00:00");
+            updateCountdownUI("OPEN".equals(status) ? "Starting..." : "00:00:00");
             return;
         }
         long s = duration.toSeconds();
-        countdownLabel.setText(String.format("%02d:%02d:%02d", s / 3600, (s % 3600) / 60, s % 60));
+        String timeText = String.format("%02d:%02d:%02d", s / 3600, (s % 3600) / 60, s % 60);
+        updateCountdownUI(timeText);
+    }
+
+    private void updateCountdownUI(String text) {
+        if (!text.equals(lastCountdownText)) {
+            countdownLabel.setText(text);
+            lastCountdownText = text;
+        }
     }
 
     private void loadAuctionData() {
