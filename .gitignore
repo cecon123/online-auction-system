@@ -38,3 +38,6 @@ build/
 # AI Agent
 .claude
 CLAUDE.md
+
+# Uploads
+uploads/
