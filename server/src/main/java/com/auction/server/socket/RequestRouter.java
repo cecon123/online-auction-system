@@ -468,11 +468,13 @@ public class RequestRouter {
                     : ItemType.ELECTRONICS;
                 String image = (item != null) ? item.getImagePath() : null;
 
+                BigDecimal startingPrice = (item != null) ? item.getStartingPrice() : a.getCurrentPrice();
+
                 return new AuctionSummaryDto(
                     a.getId(),
                     title,
                     itemType,
-                    a.getCurrentPrice(), // Initial price not tracked in summary for now
+                    startingPrice,
                     a.getCurrentPrice(),
                     a.getHighestBidderId(),
                     a.getStartTime(),
@@ -832,11 +834,13 @@ public class RequestRouter {
                 ItemType type = (item != null) ? item.getItemType() : ItemType.ELECTRONICS;
                 String image = (item != null) ? item.getImagePath() : null;
 
+                BigDecimal startingPrice = (item != null) ? item.getStartingPrice() : a.getCurrentPrice();
+
                 return new AuctionSummaryDto(
                     a.getId(),
                     title,
                     type,
-                    a.getCurrentPrice(), // Initial price not tracked in summary for now
+                    startingPrice,
                     a.getCurrentPrice(),
                     a.getHighestBidderId(),
                     a.getStartTime(),

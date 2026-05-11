@@ -106,8 +106,8 @@ public class SellerCenterController {
     }
 
     private void displayAuctions(List<AuctionSummaryDto> auctions) {
-        // Clear previous items except the title and empty label
-        auctionListContainer.getChildren().removeIf(node -> node instanceof HBox);
+        // Clear previous data rows (keep headers and empty label)
+        auctionListContainer.getChildren().removeIf(node -> node.getStyleClass().contains("auction-row"));
 
         if (auctions == null || auctions.isEmpty()) {
             emptyPlaceholder.setVisible(true);
