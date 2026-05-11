@@ -198,9 +198,8 @@ LiveBiddingController {
 
     // ── Bid History Cards ────────────────────────────────
 
-    private void addBidHistoryCard(String time, String bidder, BigDecimal amount) {
+    private void addBidHistoryCard(String time, String bidder, BigDecimal amount, boolean isLatest) {
         boolean isSelf = bidder != null && bidder.equals(SceneManager.getCurrentUsername());
-        boolean isLatest = bidHistoryContainer.getChildren().isEmpty();
 
         HBox card = new HBox(12);
         card.setAlignment(Pos.CENTER_LEFT);
@@ -246,8 +245,12 @@ LiveBiddingController {
 
         card.getChildren().addAll(iconPane, contentBox, amountLabel);
 
-        // Add to container (at top)
-        bidHistoryContainer.getChildren().add(0, card);
+        // Add to container
+        if (isLatest) {
+            bidHistoryContainer.getChildren().add(0, card);
+        } else {
+            bidHistoryContainer.getChildren().add(card);
+        }
 
         // Performance Optimization: Limit history items to top 50 to avoid UI lag
         if (bidHistoryContainer.getChildren().size() > 50) {
@@ -256,6 +259,32 @@ LiveBiddingController {
 
         // Auto-scroll to top
         bidHistoryScrollPane.setVvalue(0);
+    }
+
+    private void demoteLatestCard() {
+        if (bidHistoryContainer.getChildren().isEmpty()) return;
+        
+        // The newest bid is always at index 0
+        javafx.scene.Node node = bidHistoryContainer.getChildren().get(0);
+        if (node instanceof HBox card) {
+            card.getStyleClass().remove("bid-card-latest");
+            
+            // Icon pane is the first child
+            if (!card.getChildren().isEmpty() && card.getChildren().get(0) instanceof StackPane iconPane) {
+                iconPane.getStyleClass().remove("bid-card-icon-latest");
+                if (!iconPane.getChildren().isEmpty() && iconPane.getChildren().get(0) instanceof FontIcon icon) {
+                    icon.setIconLiteral("mdi2c-check-circle-outline");
+                }
+            }
+            
+            // Amount label is the third child (index 2)
+            if (card.getChildren().size() > 2 && card.getChildren().get(2) instanceof Label amountLabel) {
+                amountLabel.getStyleClass().remove("bid-card-amount-latest");
+                if (!amountLabel.getStyleClass().contains("bid-card-amount")) {
+                    amountLabel.getStyleClass().add("bid-card-amount");
+                }
+            }
+        }
     }
 
     // ── Existing Logic (adapted) ─────────────────────────
@@ -378,10 +407,12 @@ LiveBiddingController {
                         // Update chart using manager
                         chartManager.setData(chronological);
 
-                        // Populate bid history cards (newest first — original order)
+                        // Populate bid history cards (newest first)
+                        boolean first = true;
                         for (PlaceBidResponse bid : history) {
                             String time = bid.timestamp().format(TIME_FMT);
-                            addBidHistoryCard(time, bid.highestBidderUsername(), bid.currentPrice());
+                            addBidHistoryCard(time, bid.highestBidderUsername(), bid.currentPrice(), first);
+                            first = false;
                         }
                     }
                 });
@@ -398,8 +429,19 @@ LiveBiddingController {
                 this.highestBidderLabel.setText(event.bidderUsername());
                 this.endTime = event.newEndTime();
 
+                // 1. Remove "No bids yet" label if it exists
+                bidHistoryContainer.getChildren().removeIf(node -> 
+                    node instanceof Label && ((Label) node).getText().contains("No bids yet")
+                );
+                bidHistoryContainer.setAlignment(Pos.TOP_LEFT);
+
+                // 2. Demote current latest card
+                demoteLatestCard();
+
+                // 3. Add new latest card
                 String time = LocalDateTime.now().format(TIME_FMT);
-                addBidHistoryCard(time, event.bidderUsername(), this.currentPrice);
+                addBidHistoryCard(time, event.bidderUsername(), this.currentPrice, true);
+
                 chartManager.addPricePoint(this.currentPrice);
                 refreshCurrentPrice();
                 triggerColorFlash();
