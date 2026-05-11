@@ -24,8 +24,8 @@ public class BidService {
     );
 
     private static final java.math.BigDecimal MIN_INCREMENT = new java.math.BigDecimal("10.00");
-    private static final int ANTI_SNIPING_WINDOW_SECONDS = 30;
-    private static final int EXTENSION_DURATION_SECONDS = 60;
+    private static final int ANTI_SNIPING_WINDOW_SECONDS = 60;
+    private static final int EXTENSION_DURATION_SECONDS = 120;
     private static final long MIN_BID_INTERVAL_MS = 1000;
 
     private final java.util.Map<String, Long> lastBidTimes = new java.util.concurrent.ConcurrentHashMap<>();
