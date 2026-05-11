@@ -7,5 +7,4 @@ public record RegisterResponse(
     String username,
     Role role,
     java.math.BigDecimal balance,
-    java.math.BigDecimal lockedBalance
-) {}
+    java.math.BigDecimal lockedBalance) {}

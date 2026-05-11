@@ -5,9 +5,7 @@ import com.auction.common.enums.ItemType;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * Lightweight auction data used in auction list cards.
- */
+/** Lightweight auction data used in auction list cards. */
 public record AuctionSummaryDto(
     long id,
     String title,
@@ -18,5 +16,4 @@ public record AuctionSummaryDto(
     LocalDateTime startTime,
     LocalDateTime endTime,
     AuctionStatus status,
-    String imagePath
-) {}
+    String imagePath) {}

@@ -12,5 +12,4 @@ public record UserDto(
     BigDecimal balance,
     BigDecimal lockedBalance,
     boolean active,
-    LocalDateTime createdAt
-) {}
+    LocalDateTime createdAt) {}

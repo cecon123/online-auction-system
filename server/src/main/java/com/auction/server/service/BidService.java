@@ -14,603 +14,493 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Service for handling bidding business logic.
- * Integrates locking for thread-safety and real database persistence.
+ * Service for handling bidding business logic. Integrates locking for thread-safety and real
+ * database persistence.
  */
 public class BidService {
 
-    private static final Logger logger = LoggerFactory.getLogger(
-        BidService.class
-    );
+  private static final Logger logger = LoggerFactory.getLogger(BidService.class);
 
-    private static final java.math.BigDecimal MIN_INCREMENT =
-        new java.math.BigDecimal("10.00");
-    private static final int ANTI_SNIPING_WINDOW_SECONDS = 30;
-    private static final int EXTENSION_DURATION_SECONDS = 60;
-    private static final long MIN_BID_INTERVAL_MS = 1000;
+  private static final java.math.BigDecimal MIN_INCREMENT = new java.math.BigDecimal("10.00");
+  private static final int ANTI_SNIPING_WINDOW_SECONDS = 30;
+  private static final int EXTENSION_DURATION_SECONDS = 60;
+  private static final long MIN_BID_INTERVAL_MS = 1000;
 
-    private final java.util.Map<String, Long> lastBidTimes =
-        new java.util.concurrent.ConcurrentHashMap<>();
+  private final java.util.Map<String, Long> lastBidTimes =
+      new java.util.concurrent.ConcurrentHashMap<>();
 
-    private static String formatMoney(java.math.BigDecimal amount) {
-        if (amount == null) return "$0.00";
-        return (
-            "$" + amount.setScale(2, java.math.RoundingMode.HALF_UP).toString()
-        );
-    }
+  private static String formatMoney(java.math.BigDecimal amount) {
+    if (amount == null) return "$0.00";
+    return ("$" + amount.setScale(2, java.math.RoundingMode.HALF_UP).toString());
+  }
 
-    private final AuctionLockManager lockManager;
-    private final AuctionDao auctionDao;
-    private final BidDao bidDao;
-    private final AutoBidDao autoBidDao;
-    private final com.auction.server.dao.UserDao userDao;
-    private final WalletService walletService;
-    private final NotificationService notificationService;
+  private final AuctionLockManager lockManager;
+  private final AuctionDao auctionDao;
+  private final BidDao bidDao;
+  private final AutoBidDao autoBidDao;
+  private final com.auction.server.dao.UserDao userDao;
+  private final WalletService walletService;
+  private final NotificationService notificationService;
 
-    public BidService(
-        AuctionDao auctionDao,
-        BidDao bidDao,
-        com.auction.server.dao.UserDao userDao,
-        AutoBidDao autoBidDao,
-        WalletService walletService
-    ) {
-        this.lockManager = AuctionLockManager.getInstance();
-        this.auctionDao = auctionDao;
-        this.bidDao = bidDao;
-        this.userDao = userDao;
-        this.autoBidDao = autoBidDao;
-        this.walletService = walletService;
-        this.notificationService = NotificationService.getInstance();
-    }
+  public BidService(
+      AuctionDao auctionDao,
+      BidDao bidDao,
+      com.auction.server.dao.UserDao userDao,
+      AutoBidDao autoBidDao,
+      WalletService walletService) {
+    this.lockManager = AuctionLockManager.getInstance();
+    this.auctionDao = auctionDao;
+    this.bidDao = bidDao;
+    this.userDao = userDao;
+    this.autoBidDao = autoBidDao;
+    this.walletService = walletService;
+    this.notificationService = NotificationService.getInstance();
+  }
 
-    /**
-     * Processes a manual bid request (Traditional Bidding).
-     * The price jumps exactly to the requested amount.
-     *
-     * @param bidderId The ID of the bidder.
-     * @param request  The bid details.
-     * @return PlaceBidResponse on success.
-     */
-    public PlaceBidResponse placeBid(long bidderId, PlaceBidRequest request) {
-        PlaceBidResponse response = lockManager.executeLocked(
+  /**
+   * Processes a manual bid request (Traditional Bidding). The price jumps exactly to the requested
+   * amount.
+   *
+   * @param bidderId The ID of the bidder.
+   * @param request The bid details.
+   * @return PlaceBidResponse on success.
+   */
+  public PlaceBidResponse placeBid(long bidderId, PlaceBidRequest request) {
+    PlaceBidResponse response =
+        lockManager.executeLocked(
             request.auctionId(),
             () -> {
-                LocalDateTime now = LocalDateTime.now();
-                java.math.BigDecimal bidAmount = request.amount();
+              LocalDateTime now = LocalDateTime.now();
+              java.math.BigDecimal bidAmount = request.amount();
 
-                // 0. Rate limiting check (per user, per auction)
-                String rateKey = bidderId + ":" + request.auctionId();
-                long currentTime = System.currentTimeMillis();
-                Long lastTime = lastBidTimes.get(rateKey);
-                if (
-                    lastTime != null &&
-                    (currentTime - lastTime) < MIN_BID_INTERVAL_MS
-                ) {
-                    throw new IllegalStateException(
-                        "You are bidding too fast. Please wait a moment."
-                    );
+              // 0. Rate limiting check (per user, per auction)
+              String rateKey = bidderId + ":" + request.auctionId();
+              long currentTime = System.currentTimeMillis();
+              Long lastTime = lastBidTimes.get(rateKey);
+              if (lastTime != null && (currentTime - lastTime) < MIN_BID_INTERVAL_MS) {
+                throw new IllegalStateException("You are bidding too fast. Please wait a moment.");
+              }
+              lastBidTimes.put(rateKey, currentTime);
+
+              // 1. Fetch auction and bidder
+              Auction auction =
+                  auctionDao
+                      .findById(request.auctionId())
+                      .orElseThrow(() -> new IllegalArgumentException("Auction not found."));
+
+              com.auction.server.dao.UserDao.UserRecord bidder =
+                  userDao
+                      .findById(bidderId)
+                      .orElseThrow(() -> new IllegalArgumentException("Bidder not found."));
+
+              // 2. Preliminary Validations
+              if (auction.getSellerId() == bidderId) {
+                throw new IllegalArgumentException("You cannot bid on your own auction.");
+              }
+              if (auction.getStatus() != AuctionStatus.RUNNING
+                  || now.isAfter(auction.getEndTime())) {
+                throw new IllegalArgumentException("Auction is not active.");
+              }
+
+              // 3. Traditional Bidding Validation (Must be higher than current + increment)
+              java.math.BigDecimal minRequired = auction.getCurrentPrice();
+              if (auction.getHighestBidderId() != null) {
+                minRequired = minRequired.add(MIN_INCREMENT);
+              }
+
+              if (bidAmount.compareTo(minRequired) < 0) {
+                throw new IllegalArgumentException("Your bid must be at least " + minRequired);
+              }
+
+              // 4. Update Auction State (Traditional: Price = bidAmount)
+              Long previousLeaderId = auction.getHighestBidderId();
+              java.math.BigDecimal previousMax =
+                  auction.getHighestMaxBid(); // This was the old "Proxy" limit
+
+              // 5. ESCROW: Release old leader's funds (Full Max Lock model)
+              if (previousLeaderId != null && previousLeaderId != bidderId) {
+                walletService.releaseFunds(previousLeaderId, previousMax);
+              }
+
+              // 6. Refetch bidder to get most recent balance (especially if they were just outbid)
+              com.auction.server.dao.UserDao.UserRecord currentBidder =
+                  userDao.findById(bidderId).get();
+
+              // 7. Lock new bidder's funds
+              java.math.BigDecimal amountToLock = bidAmount;
+              if (previousLeaderId != null && previousLeaderId == bidderId) {
+                // Same bidder increasing their bid: only lock the difference
+                amountToLock = bidAmount.subtract(previousMax);
+              }
+
+              if (amountToLock.compareTo(java.math.BigDecimal.ZERO) > 0) {
+                java.math.BigDecimal available =
+                    currentBidder.balance().subtract(currentBidder.lockedBalance());
+                if (available.compareTo(amountToLock) < 0) {
+                  throw new IllegalArgumentException(
+                      String.format(
+                          "Insufficient balance. You need %s but only have %s available (check your active bids).",
+                          formatMoney(amountToLock), formatMoney(available)));
                 }
-                lastBidTimes.put(rateKey, currentTime);
+                walletService.lockFunds(bidderId, amountToLock);
+              } else if (amountToLock.compareTo(java.math.BigDecimal.ZERO) < 0) {
+                // Same bidder reducing their proxy max: release the difference
+                walletService.releaseFunds(bidderId, amountToLock.abs());
+              }
 
-                // 1. Fetch auction and bidder
-                Auction auction = auctionDao
-                    .findById(request.auctionId())
-                    .orElseThrow(() ->
-                        new IllegalArgumentException("Auction not found.")
-                    );
+              // 7. Update Auction
+              auction.setCurrentPrice(bidAmount);
+              auction.setHighestMaxBid(bidAmount); // In traditional bid, Max = Price
+              auction.setHighestBidderId(bidderId);
 
-                com.auction.server.dao.UserDao.UserRecord bidder = userDao
-                    .findById(bidderId)
-                    .orElseThrow(() ->
-                        new IllegalArgumentException("Bidder not found.")
-                    );
+              // 8. Anti-Sniping Extension
+              boolean timeExtended = false;
+              if (now.isAfter(auction.getEndTime().minusSeconds(ANTI_SNIPING_WINDOW_SECONDS))) {
+                auction.setEndTime(auction.getEndTime().plusSeconds(EXTENSION_DURATION_SECONDS));
+                timeExtended = true;
+                logger.info(
+                    "Auction {} extended by {}s", auction.getId(), EXTENSION_DURATION_SECONDS);
+              }
 
-                // 2. Preliminary Validations
-                if (auction.getSellerId() == bidderId) {
-                    throw new IllegalArgumentException(
-                        "You cannot bid on your own auction."
-                    );
-                }
-                if (
-                    auction.getStatus() != AuctionStatus.RUNNING ||
-                    now.isAfter(auction.getEndTime())
-                ) {
-                    throw new IllegalArgumentException(
-                        "Auction is not active."
-                    );
-                }
+              auctionDao.update(auction);
 
-                // 3. Traditional Bidding Validation (Must be higher than current + increment)
-                java.math.BigDecimal minRequired = auction.getCurrentPrice();
-                if (auction.getHighestBidderId() != null) {
-                    minRequired = minRequired.add(MIN_INCREMENT);
-                }
+              // 9. Record Transaction
+              BidTransaction transaction =
+                  new BidTransaction(0L, auction.getId(), bidderId, bidAmount, now);
+              bidDao.create(transaction);
 
-                if (bidAmount.compareTo(minRequired) < 0) {
-                    throw new IllegalArgumentException(
-                        "Your bid must be at least " + minRequired
-                    );
-                }
+              // 10. Notify
+              notificationService.broadcast(
+                  auction.getId(),
+                  com.auction.common.protocol.MessageType.BID_UPDATE,
+                  new com.auction.common.dto.bid.BidUpdateEvent(
+                      auction.getId(),
+                      bidder.username(),
+                      auction.getCurrentPrice(),
+                      now,
+                      auction.getEndTime()));
 
-                // 4. Update Auction State (Traditional: Price = bidAmount)
-                Long previousLeaderId = auction.getHighestBidderId();
-                java.math.BigDecimal previousMax = auction.getHighestMaxBid(); // This was the old "Proxy" limit
+              // 10.5 Seller Notification: First Bid
+              if (previousLeaderId == null) {
+                com.auction.common.dto.notification.SystemNotificationDto firstBidNotice =
+                    new com.auction.common.dto.notification.SystemNotificationDto(
+                        "First Bid Received! \uD83C\uDF89", // 🎉
+                        "Your auction #"
+                            + auction.getId()
+                            + " just received its first bid of $"
+                            + bidAmount
+                            + " from "
+                            + bidder.username()
+                            + ".",
+                        "INFO",
+                        now);
+                notificationService.notifyUser(
+                    auction.getSellerId(),
+                    com.auction.common.protocol.MessageType.SYSTEM_NOTIFICATION,
+                    firstBidNotice);
+              }
 
-                // 5. ESCROW: Release old leader's funds (Full Max Lock model)
-                if (previousLeaderId != null && previousLeaderId != bidderId) {
-                    walletService.releaseFunds(previousLeaderId, previousMax);
-                }
-
-                // 6. Refetch bidder to get most recent balance (especially if they were just outbid)
-                com.auction.server.dao.UserDao.UserRecord currentBidder =
-                    userDao.findById(bidderId).get();
-
-                // 7. Lock new bidder's funds
-                java.math.BigDecimal amountToLock = bidAmount;
-                if (previousLeaderId != null && previousLeaderId == bidderId) {
-                    // Same bidder increasing their bid: only lock the difference
-                    amountToLock = bidAmount.subtract(previousMax);
-                }
-
-                if (amountToLock.compareTo(java.math.BigDecimal.ZERO) > 0) {
-                    java.math.BigDecimal available = currentBidder
-                        .balance()
-                        .subtract(currentBidder.lockedBalance());
-                    if (available.compareTo(amountToLock) < 0) {
-                        throw new IllegalArgumentException(
-                            String.format(
-                                "Insufficient balance. You need %s but only have %s available (check your active bids).",
-                                formatMoney(amountToLock),
-                                formatMoney(available)
-                            )
-                        );
-                    }
-                    walletService.lockFunds(bidderId, amountToLock);
-                } else if (
-                    amountToLock.compareTo(java.math.BigDecimal.ZERO) < 0
-                ) {
-                    // Same bidder reducing their proxy max: release the difference
-                    walletService.releaseFunds(bidderId, amountToLock.abs());
-                }
-
-                // 7. Update Auction
-                auction.setCurrentPrice(bidAmount);
-                auction.setHighestMaxBid(bidAmount); // In traditional bid, Max = Price
-                auction.setHighestBidderId(bidderId);
-
-                // 8. Anti-Sniping Extension
-                boolean timeExtended = false;
-                if (
-                    now.isAfter(
-                        auction
-                            .getEndTime()
-                            .minusSeconds(ANTI_SNIPING_WINDOW_SECONDS)
-                    )
-                ) {
-                    auction.setEndTime(
-                        auction
-                            .getEndTime()
-                            .plusSeconds(EXTENSION_DURATION_SECONDS)
-                    );
-                    timeExtended = true;
-                    logger.info(
-                        "Auction {} extended by {}s",
-                        auction.getId(),
-                        EXTENSION_DURATION_SECONDS
-                    );
-                }
-
-                auctionDao.update(auction);
-
-                // 9. Record Transaction
-                BidTransaction transaction = new BidTransaction(
-                    0L,
-                    auction.getId(),
-                    bidderId,
-                    bidAmount,
-                    now
-                );
-                bidDao.create(transaction);
-
-                // 10. Notify
+              if (timeExtended) {
                 notificationService.broadcast(
                     auction.getId(),
-                    com.auction.common.protocol.MessageType.BID_UPDATE,
-                    new com.auction.common.dto.bid.BidUpdateEvent(
+                    com.auction.common.protocol.MessageType.TIME_EXTENDED,
+                    new com.auction.common.dto.auction.AuctionEventDto(
                         auction.getId(),
-                        bidder.username(),
-                        auction.getCurrentPrice(),
-                        now,
-                        auction.getEndTime()
-                    )
-                );
+                        auction.getStatus(),
+                        "Time extended!",
+                        null,
+                        null,
+                        auction.getEndTime()));
+              }
 
-                // 10.5 Seller Notification: First Bid
-                if (previousLeaderId == null) {
-                    com.auction.common.dto.notification.SystemNotificationDto firstBidNotice =
-                        new com.auction.common.dto.notification.SystemNotificationDto(
-                            "First Bid Received! \uD83C\uDF89", // 🎉
-                            "Your auction #" +
-                                auction.getId() +
-                                " just received its first bid of $" +
-                                bidAmount +
-                                " from " +
-                                bidder.username() +
-                                ".",
-                            "INFO",
-                            now
-                        );
-                    notificationService.notifyUser(
-                        auction.getSellerId(),
-                        com.auction.common.protocol.MessageType.SYSTEM_NOTIFICATION,
-                        firstBidNotice
-                    );
-                }
+              return new PlaceBidResponse(
+                  auction.getId(), auction.getCurrentPrice(), bidder.username(), now);
+            });
 
-                if (timeExtended) {
-                    notificationService.broadcast(
-                        auction.getId(),
-                        com.auction.common.protocol.MessageType.TIME_EXTENDED,
-                        new com.auction.common.dto.auction.AuctionEventDto(
-                            auction.getId(),
-                            auction.getStatus(),
-                            "Time extended!",
-                            null,
-                            null,
-                            auction.getEndTime()
-                        )
-                    );
-                }
+    // 11. AFTER Manual Bid: Trigger Auto-bids for others to respond!
+    triggerAutoBids(request.auctionId(), bidderId);
 
-                return new PlaceBidResponse(
-                    auction.getId(),
-                    auction.getCurrentPrice(),
-                    bidder.username(),
-                    now
-                );
-            }
-        );
+    return response;
+  }
 
-        // 11. AFTER Manual Bid: Trigger Auto-bids for others to respond!
-        triggerAutoBids(request.auctionId(), bidderId);
+  /**
+   * Sets or updates an auto-bid rule (Proxy Bidding limit). This allows the system to bid on behalf
+   * of the user up to a maximum amount.
+   *
+   * @param userId The ID of the user.
+   * @param request The auto-bid request containing max bid and auction ID.
+   * @throws IllegalArgumentException if user or auction is not found, or max bid is too low.
+   */
+  public void setAutoBid(long userId, com.auction.common.dto.bid.SetAutoBidRequest request) {
+    lockManager.executeLocked(
+        request.auctionId(),
+        () -> {
+          com.auction.server.dao.UserDao.UserRecord user =
+              userDao
+                  .findById(userId)
+                  .orElseThrow(() -> new IllegalArgumentException("User not found."));
 
-        return response;
-    }
+          // Validation: Max bid must be higher than current price + increment
+          Auction auction =
+              auctionDao
+                  .findById(request.auctionId())
+                  .orElseThrow(() -> new IllegalArgumentException("Auction not found."));
 
-    /**
-     * Sets or updates an auto-bid rule (Proxy Bidding limit).
-     * This allows the system to bid on behalf of the user up to a maximum amount.
-     *
-     * @param userId  The ID of the user.
-     * @param request The auto-bid request containing max bid and auction ID.
-     * @throws IllegalArgumentException if user or auction is not found, or max bid is too low.
-     */
-    public void setAutoBid(
-        long userId,
-        com.auction.common.dto.bid.SetAutoBidRequest request
-    ) {
-        lockManager.executeLocked(request.auctionId(), () -> {
-            com.auction.server.dao.UserDao.UserRecord user = userDao
-                .findById(userId)
-                .orElseThrow(() ->
-                    new IllegalArgumentException("User not found.")
-                );
+          java.math.BigDecimal minRequired = auction.getCurrentPrice().add(MIN_INCREMENT);
+          if (request.maxBid().compareTo(minRequired) < 0) {
+            throw new IllegalArgumentException("Max bid must be at least " + minRequired);
+          }
 
-            // Validation: Max bid must be higher than current price + increment
-            Auction auction = auctionDao
-                .findById(request.auctionId())
-                .orElseThrow(() ->
-                    new IllegalArgumentException("Auction not found.")
-                );
+          // Wallet check: Must be able to lock the full max bid
+          // IMPORTANT: Account for money already locked for THIS auction if they are already the
+          // leader
+          java.math.BigDecimal currentLockedForThis = java.math.BigDecimal.ZERO;
+          if (auction.getHighestBidderId() != null && auction.getHighestBidderId() == userId) {
+            currentLockedForThis = auction.getHighestMaxBid();
+          }
 
-            java.math.BigDecimal minRequired = auction
-                .getCurrentPrice()
-                .add(MIN_INCREMENT);
-            if (request.maxBid().compareTo(minRequired) < 0) {
-                throw new IllegalArgumentException(
-                    "Max bid must be at least " + minRequired
-                );
-            }
+          java.math.BigDecimal available =
+              user.balance().subtract(user.lockedBalance()).add(currentLockedForThis);
+          if (available.compareTo(request.maxBid()) < 0) {
+            throw new IllegalArgumentException(
+                "Insufficient balance to set auto-bid limit of " + request.maxBid());
+          }
 
-            // Wallet check: Must be able to lock the full max bid
-            // IMPORTANT: Account for money already locked for THIS auction if they are already the leader
-            java.math.BigDecimal currentLockedForThis =
-                java.math.BigDecimal.ZERO;
-            if (
-                auction.getHighestBidderId() != null &&
-                auction.getHighestBidderId() == userId
-            ) {
-                currentLockedForThis = auction.getHighestMaxBid();
-            }
-
-            java.math.BigDecimal available = user
-                .balance()
-                .subtract(user.lockedBalance())
-                .add(currentLockedForThis);
-            if (available.compareTo(request.maxBid()) < 0) {
-                throw new IllegalArgumentException(
-                    "Insufficient balance to set auto-bid limit of " +
-                        request.maxBid()
-                );
-            }
-
-            com.auction.common.model.AutoBidRule rule =
-                new com.auction.common.model.AutoBidRule(
-                    0L,
-                    request.auctionId(),
-                    userId,
-                    request.maxBid(),
-                    MIN_INCREMENT,
-                    request.active(),
-                    LocalDateTime.now()
-                );
-            autoBidDao.createOrUpdate(rule);
-            logger.info(
-                "Auto-bid limit set to {} for User {} on Auction {}",
-                request.maxBid(),
-                userId,
-                request.auctionId()
-            );
-            return null;
+          com.auction.common.model.AutoBidRule rule =
+              new com.auction.common.model.AutoBidRule(
+                  0L,
+                  request.auctionId(),
+                  userId,
+                  request.maxBid(),
+                  MIN_INCREMENT,
+                  request.active(),
+                  LocalDateTime.now());
+          autoBidDao.createOrUpdate(rule);
+          logger.info(
+              "Auto-bid limit set to {} for User {} on Auction {}",
+              request.maxBid(),
+              userId,
+              request.auctionId());
+          return null;
         });
 
-        // Trigger check immediately
-        triggerAutoBids(request.auctionId(), 0L);
-    }
+    // Trigger check immediately
+    triggerAutoBids(request.auctionId(), 0L);
+  }
 
-    /**
-     * Triggers the auto-bidding system for a specific auction.
-     * Iterates through all active auto-bid rules and places bids if necessary.
-     *
-     * @param auctionId     The ID of the auction.
-     * @param lastBidderId  The ID of the user who just placed a manual bid (to avoid auto-bidding against themselves).
-     */
-    private void triggerAutoBids(long auctionId, long lastBidderId) {
-        lockManager.executeLocked(auctionId, () -> {
-            Auction auction = auctionDao.findById(auctionId).orElse(null);
-            if (
-                auction == null || auction.getStatus() != AuctionStatus.RUNNING
-            ) return null;
+  /**
+   * Triggers the auto-bidding system for a specific auction. Iterates through all active auto-bid
+   * rules and places bids if necessary.
+   *
+   * @param auctionId The ID of the auction.
+   * @param lastBidderId The ID of the user who just placed a manual bid (to avoid auto-bidding
+   *     against themselves).
+   */
+  private void triggerAutoBids(long auctionId, long lastBidderId) {
+    lockManager.executeLocked(
+        auctionId,
+        () -> {
+          Auction auction = auctionDao.findById(auctionId).orElse(null);
+          if (auction == null || auction.getStatus() != AuctionStatus.RUNNING) return null;
 
-            // Find all active auto-bid rules for this auction
-            java.util.List<com.auction.common.model.AutoBidRule> rules =
-                autoBidDao.findActiveByAuction(auctionId);
+          // Find all active auto-bid rules for this auction
+          java.util.List<com.auction.common.model.AutoBidRule> rules =
+              autoBidDao.findActiveByAuction(auctionId);
 
-            for (com.auction.common.model.AutoBidRule rule : rules) {
-                if (rule.getBidderId() == lastBidderId) continue;
+          for (com.auction.common.model.AutoBidRule rule : rules) {
+            if (rule.getBidderId() == lastBidderId) continue;
 
-                // Double check: If user is already the leader, skip
-                if (
-                    auction.getHighestBidderId() != null &&
-                    auction.getHighestBidderId() == rule.getBidderId()
-                ) {
-                    continue;
-                }
-
-                // Calculate next bid: Current Price + Increment
-                java.math.BigDecimal nextBid = auction
-                    .getCurrentPrice()
-                    .add(MIN_INCREMENT);
-
-                // Can this auto-bid rule cover it?
-                if (rule.canBidUpTo(nextBid)) {
-                    logger.info(
-                        "Triggering Auto-bid response for User {} on Auction {}",
-                        rule.getBidderId(),
-                        auctionId
-                    );
-
-                    // Place the auto-bid (this updates the auction object in place)
-                    placeAutoStep(
-                        rule.getBidderId(),
-                        auctionId,
-                        nextBid,
-                        rule.getMaxBid()
-                    );
-
-                    // After one auto-bid is placed, we might need to re-evaluate others,
-                    // but the next iteration of the loop will handle it with the updated auction state.
-                }
+            // Double check: If user is already the leader, skip
+            if (auction.getHighestBidderId() != null
+                && auction.getHighestBidderId() == rule.getBidderId()) {
+              continue;
             }
-            return null;
+
+            // Calculate next bid: Current Price + Increment
+            java.math.BigDecimal nextBid = auction.getCurrentPrice().add(MIN_INCREMENT);
+
+            // Can this auto-bid rule cover it?
+            if (rule.canBidUpTo(nextBid)) {
+              logger.info(
+                  "Triggering Auto-bid response for User {} on Auction {}",
+                  rule.getBidderId(),
+                  auctionId);
+
+              // Place the auto-bid (this updates the auction object in place)
+              placeAutoStep(rule.getBidderId(), auctionId, nextBid, rule.getMaxBid());
+
+              // After one auto-bid is placed, we might need to re-evaluate others,
+              // but the next iteration of the loop will handle it with the updated auction state.
+            }
+          }
+          return null;
         });
+  }
+
+  /**
+   * Internal step for auto-bidding. Updates the auction price to the next increment and locks the
+   * full max bid for the proxy leader.
+   *
+   * @param bidderId The ID of the auto-bidder.
+   * @param auctionId The ID of the auction.
+   * @param nextPrice The next price point to jump to.
+   * @param userMaxBid The maximum budget defined in the auto-bid rule.
+   */
+  private void placeAutoStep(
+      long bidderId,
+      long auctionId,
+      java.math.BigDecimal nextPrice,
+      java.math.BigDecimal userMaxBid) {
+    LocalDateTime now = LocalDateTime.now();
+    Auction auction = auctionDao.findById(auctionId).get();
+
+    Long previousLeaderId = auction.getHighestBidderId();
+    java.math.BigDecimal previousMax = auction.getHighestMaxBid();
+
+    java.math.BigDecimal amountToLock = userMaxBid;
+    if (previousLeaderId != null) {
+      if (previousLeaderId == bidderId) {
+        // Same bidder increasing their bid: only lock the difference
+        amountToLock = userMaxBid.subtract(previousMax);
+      } else {
+        // Outbidding someone else: release their full max bid
+        walletService.releaseFunds(previousLeaderId, previousMax);
+      }
     }
 
-    /**
-     * Internal step for auto-bidding.
-     * Updates the auction price to the next increment and locks the full max bid for the proxy leader.
-     *
-     * @param bidderId  The ID of the auto-bidder.
-     * @param auctionId The ID of the auction.
-     * @param nextPrice The next price point to jump to.
-     * @param userMaxBid The maximum budget defined in the auto-bid rule.
-     */
-    private void placeAutoStep(
-        long bidderId,
-        long auctionId,
-        java.math.BigDecimal nextPrice,
-        java.math.BigDecimal userMaxBid
-    ) {
-        LocalDateTime now = LocalDateTime.now();
-        Auction auction = auctionDao.findById(auctionId).get();
+    // Lock funds for the new leader
+    if (amountToLock.compareTo(java.math.BigDecimal.ZERO) > 0) {
+      walletService.lockFunds(bidderId, amountToLock);
+    } else if (amountToLock.compareTo(java.math.BigDecimal.ZERO) < 0) {
+      // If they lowered their max bid but are still leading, release the difference
+      walletService.releaseFunds(bidderId, amountToLock.abs());
+    }
 
-        Long previousLeaderId = auction.getHighestBidderId();
-        java.math.BigDecimal previousMax = auction.getHighestMaxBid();
+    // Update Auction
+    auction.setCurrentPrice(nextPrice);
+    auction.setHighestMaxBid(userMaxBid);
+    auction.setHighestBidderId(bidderId);
 
-        java.math.BigDecimal amountToLock = userMaxBid;
-        if (previousLeaderId != null) {
-            if (previousLeaderId == bidderId) {
-                // Same bidder increasing their bid: only lock the difference
-                amountToLock = userMaxBid.subtract(previousMax);
-            } else {
-                // Outbidding someone else: release their full max bid
-                walletService.releaseFunds(previousLeaderId, previousMax);
-            }
-        }
+    // Anti-sniping check
+    if (now.isAfter(auction.getEndTime().minusSeconds(ANTI_SNIPING_WINDOW_SECONDS))) {
+      auction.setEndTime(auction.getEndTime().plusSeconds(EXTENSION_DURATION_SECONDS));
+      logger.info("Auction {} extended by 60s", auctionId);
+    }
 
-        // Lock funds for the new leader
-        if (amountToLock.compareTo(java.math.BigDecimal.ZERO) > 0) {
-            walletService.lockFunds(bidderId, amountToLock);
-        } else if (amountToLock.compareTo(java.math.BigDecimal.ZERO) < 0) {
-            // If they lowered their max bid but are still leading, release the difference
-            walletService.releaseFunds(bidderId, amountToLock.abs());
-        }
+    auctionDao.update(auction);
+    bidDao.create(new BidTransaction(0L, auctionId, bidderId, nextPrice, now));
 
-        // Update Auction
-        auction.setCurrentPrice(nextPrice);
-        auction.setHighestMaxBid(userMaxBid);
-        auction.setHighestBidderId(bidderId);
-
-        // Anti-sniping check
-        if (
-            now.isAfter(
-                auction.getEndTime().minusSeconds(ANTI_SNIPING_WINDOW_SECONDS)
-            )
-        ) {
-            auction.setEndTime(
-                auction.getEndTime().plusSeconds(EXTENSION_DURATION_SECONDS)
-            );
-            logger.info("Auction {} extended by 60s", auctionId);
-        }
-
-        auctionDao.update(auction);
-        bidDao.create(
-            new BidTransaction(0L, auctionId, bidderId, nextPrice, now)
-        );
-
-        notificationService.broadcast(
+    notificationService.broadcast(
+        auctionId,
+        com.auction.common.protocol.MessageType.BID_UPDATE,
+        new com.auction.common.dto.bid.BidUpdateEvent(
             auctionId,
-            com.auction.common.protocol.MessageType.BID_UPDATE,
-            new com.auction.common.dto.bid.BidUpdateEvent(
-                auctionId,
-                userDao
-                    .findById(bidderId)
-                    .map(u -> u.username())
-                    .orElse("Auto"),
-                auction.getCurrentPrice(),
-                now,
-                auction.getEndTime()
-            )
-        );
-    }
+            userDao.findById(bidderId).map(u -> u.username()).orElse("Auto"),
+            auction.getCurrentPrice(),
+            now,
+            auction.getEndTime()));
+  }
 
-    /**
-     * Retrieves the current auto-bid rule for a user on a specific auction.
-     *
-     * @param userId    The ID of the user.
-     * @param auctionId The ID of the auction.
-     * @return An Optional containing the auto-bid details if found.
-     */
-    public java.util.Optional<com.auction.common.dto.bid.AutoBidDto> getAutoBid(
-        long userId,
-        long auctionId
-    ) {
-        return autoBidDao
-            .findByAuctionAndBidder(auctionId, userId)
-            .map(rule ->
+  /**
+   * Retrieves the current auto-bid rule for a user on a specific auction.
+   *
+   * @param userId The ID of the user.
+   * @param auctionId The ID of the auction.
+   * @return An Optional containing the auto-bid details if found.
+   */
+  public java.util.Optional<com.auction.common.dto.bid.AutoBidDto> getAutoBid(
+      long userId, long auctionId) {
+    return autoBidDao
+        .findByAuctionAndBidder(auctionId, userId)
+        .map(
+            rule ->
                 new com.auction.common.dto.bid.AutoBidDto(
-                    rule.getAuctionId(),
-                    rule.getMaxBid(),
-                    rule.getIncrement(),
-                    rule.isActive()
-                )
-            );
-    }
+                    rule.getAuctionId(), rule.getMaxBid(), rule.getIncrement(), rule.isActive()));
+  }
 
-    /**
-     * Retrieves the bid history for a specific auction.
-     *
-     * @param auctionId The ID of the auction.
-     * @return List of bid responses.
-     */
-    public java.util.List<PlaceBidResponse> getBidHistory(long auctionId) {
-        return bidDao
-            .findByAuctionId(auctionId)
-            .stream()
-            .map(transaction -> {
-                String username = userDao
-                    .findById(transaction.getBidderId())
-                    .map(com.auction.server.dao.UserDao.UserRecord::username)
-                    .orElse("Unknown");
+  /**
+   * Retrieves the bid history for a specific auction.
+   *
+   * @param auctionId The ID of the auction.
+   * @return List of bid responses.
+   */
+  public java.util.List<PlaceBidResponse> getBidHistory(long auctionId) {
+    return bidDao.findByAuctionId(auctionId).stream()
+        .map(
+            transaction -> {
+              String username =
+                  userDao
+                      .findById(transaction.getBidderId())
+                      .map(com.auction.server.dao.UserDao.UserRecord::username)
+                      .orElse("Unknown");
 
-                return new PlaceBidResponse(
-                    transaction.getAuctionId(),
-                    transaction.getAmount(),
-                    username,
-                    transaction.getCreatedAt()
-                );
+              return new PlaceBidResponse(
+                  transaction.getAuctionId(),
+                  transaction.getAmount(),
+                  username,
+                  transaction.getCreatedAt());
             })
-            .collect(java.util.stream.Collectors.toList());
-    }
+        .collect(java.util.stream.Collectors.toList());
+  }
 
-    /**
-     * Retrieves all auction IDs where the user has placed at least one bid.
-     *
-     * @param userId The ID of the user.
-     * @return List of unique auction IDs.
-     */
-    public java.util.List<Long> getMyBids(long userId) {
-        return bidDao
-            .findByBidderId(userId)
-            .stream()
-            .map(BidTransaction::getAuctionId)
-            .distinct()
-            .collect(java.util.stream.Collectors.toList());
-    }
+  /**
+   * Retrieves all auction IDs where the user has placed at least one bid.
+   *
+   * @param userId The ID of the user.
+   * @return List of unique auction IDs.
+   */
+  public java.util.List<Long> getMyBids(long userId) {
+    return bidDao.findByBidderId(userId).stream()
+        .map(BidTransaction::getAuctionId)
+        .distinct()
+        .collect(java.util.stream.Collectors.toList());
+  }
 
-    /**
-     * Gets a detailed bid history for a specific user, including the results (WON/WINNING/OUTBID).
-     *
-     * @param userId The ID of the user.
-     * @return A list of bid history DTOs.
-     */
-    public java.util.List<
-        com.auction.common.dto.bid.BidHistoryDto
-    > getUserBidHistory(long userId) {
-        return bidDao
-            .findByBidderId(userId)
-            .stream()
-            .map(bid -> {
-                com.auction.common.model.Auction auction = auctionDao
-                    .findById(bid.getAuctionId())
-                    .orElse(null);
-                String title = "Unknown Auction";
-                String result = "OUTBID";
+  /**
+   * Gets a detailed bid history for a specific user, including the results (WON/WINNING/OUTBID).
+   *
+   * @param userId The ID of the user.
+   * @return A list of bid history DTOs.
+   */
+  public java.util.List<com.auction.common.dto.bid.BidHistoryDto> getUserBidHistory(long userId) {
+    return bidDao.findByBidderId(userId).stream()
+        .map(
+            bid -> {
+              com.auction.common.model.Auction auction =
+                  auctionDao.findById(bid.getAuctionId()).orElse(null);
+              String title = "Unknown Auction";
+              String result = "OUTBID";
 
-                if (auction != null) {
-                    title = "Auction #" + auction.getId();
+              if (auction != null) {
+                title = "Auction #" + auction.getId();
 
-                    if (
-                        auction.getStatus() ==
-                        com.auction.common.enums.AuctionStatus.FINISHED
-                    ) {
-                        result =
-                            userId ==
-                            (auction.getHighestBidderId() != null
-                                ? auction.getHighestBidderId()
-                                : -1)
-                                ? "WON"
-                                : "LOST";
-                    } else {
-                        result =
-                            userId ==
-                            (auction.getHighestBidderId() != null
-                                ? auction.getHighestBidderId()
-                                : -1)
-                                ? "WINNING"
-                                : "OUTBID";
-                    }
+                if (auction.getStatus() == com.auction.common.enums.AuctionStatus.FINISHED) {
+                  result =
+                      userId
+                              == (auction.getHighestBidderId() != null
+                                  ? auction.getHighestBidderId()
+                                  : -1)
+                          ? "WON"
+                          : "LOST";
+                } else {
+                  result =
+                      userId
+                              == (auction.getHighestBidderId() != null
+                                  ? auction.getHighestBidderId()
+                                  : -1)
+                          ? "WINNING"
+                          : "OUTBID";
                 }
+              }
 
-                return new com.auction.common.dto.bid.BidHistoryDto(
-                    bid.getId(),
-                    bid.getAuctionId(),
-                    title,
-                    bid.getAmount(),
-                    bid.getCreatedAt(),
-                    result
-                );
+              return new com.auction.common.dto.bid.BidHistoryDto(
+                  bid.getId(),
+                  bid.getAuctionId(),
+                  title,
+                  bid.getAmount(),
+                  bid.getCreatedAt(),
+                  result);
             })
-            .collect(java.util.stream.Collectors.toList());
-    }
+        .collect(java.util.stream.Collectors.toList());
+  }
 }

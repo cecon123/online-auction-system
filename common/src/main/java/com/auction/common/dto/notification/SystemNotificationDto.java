@@ -6,5 +6,4 @@ public record SystemNotificationDto(
     String title,
     String message,
     String type, // "SUCCESS", "INFO", "WARNING", "ERROR"
-    LocalDateTime timestamp
-) {}
+    LocalDateTime timestamp) {}

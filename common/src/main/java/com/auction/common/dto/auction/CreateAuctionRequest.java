@@ -7,14 +7,8 @@ import java.time.LocalDateTime;
 /**
  * Payload for seller creating a new auction.
  *
- * This DTO is aligned with CreateAuctionView.fxml:
- * - item name
- * - item type
- * - condition
- * - description
- * - starting price
- * - start/end time
- * - image path
+ * <p>This DTO is aligned with CreateAuctionView.fxml: - item name - item type - condition -
+ * description - starting price - start/end time - image path
  */
 public record CreateAuctionRequest(
     String itemName,
@@ -26,5 +20,4 @@ public record CreateAuctionRequest(
     LocalDateTime startTime,
     LocalDateTime endTime,
     String imagePath,
-    String imageBase64
-) {}
+    String imageBase64) {}

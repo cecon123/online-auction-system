@@ -2,9 +2,7 @@ package com.auction.common.dto.auth;
 
 import com.auction.common.enums.Role;
 
-/**
- * Payload returned after successful login.
- */
+/** Payload returned after successful login. */
 public record LoginResponse(
     long userId,
     String username,
@@ -12,5 +10,4 @@ public record LoginResponse(
     Role role,
     java.math.BigDecimal balance,
     java.math.BigDecimal lockedBalance,
-    String token
-) {}
+    String token) {}

@@ -21,37 +21,35 @@ import org.junit.jupiter.api.Test;
 
 class SQLiteItemDaoTest {
 
-    private ItemDao itemDao;
-    private UserDao userDao;
-    private long sellerId;
+  private ItemDao itemDao;
+  private UserDao userDao;
+  private long sellerId;
 
-    @BeforeEach
-    void setUp() throws Exception {
-        Path tempDatabase = Files.createTempFile("auction-item-test-", ".db");
-        System.setProperty(
-            "auction.db.url",
-            "jdbc:sqlite:" + tempDatabase.toAbsolutePath()
-        );
-        System.setProperty("auction.skip.seed", "true");
+  @BeforeEach
+  void setUp() throws Exception {
+    Path tempDatabase = Files.createTempFile("auction-item-test-", ".db");
+    System.setProperty("auction.db.url", "jdbc:sqlite:" + tempDatabase.toAbsolutePath());
+    System.setProperty("auction.skip.seed", "true");
 
-        SchemaInitializer.initialize();
-        itemDao = new SQLiteItemDao();
-        userDao = new SQLiteUserDao();
+    SchemaInitializer.initialize();
+    itemDao = new SQLiteItemDao();
+    userDao = new SQLiteUserDao();
 
-        // Create a seller for items
-        sellerId = userDao.create(
+    // Create a seller for items
+    sellerId =
+        userDao.create(
             "seller",
             "pass",
             "The Seller",
             Role.SELLER,
             java.math.BigDecimal.ZERO,
-            java.math.BigDecimal.ZERO
-        );
-    }
+            java.math.BigDecimal.ZERO);
+  }
 
-    @Test
-    void createElectronicsShouldReturnId() {
-        Electronics electronics = new Electronics(
+  @Test
+  void createElectronicsShouldReturnId() {
+    Electronics electronics =
+        new Electronics(
             0,
             sellerId,
             "Laptop",
@@ -61,23 +59,23 @@ class SQLiteItemDaoTest {
             null,
             "Dell",
             "Alienware",
-            LocalDateTime.now()
-        );
+            LocalDateTime.now());
 
-        long id = itemDao.create(electronics);
-        assertTrue(id > 0);
+    long id = itemDao.create(electronics);
+    assertTrue(id > 0);
 
-        Optional<Item> found = itemDao.findById(id);
-        assertTrue(found.isPresent());
-        assertTrue(found.get() instanceof Electronics);
-        Electronics e = (Electronics) found.get();
-        assertEquals("Laptop", e.getName());
-        assertEquals("Dell", e.getBrand());
-    }
+    Optional<Item> found = itemDao.findById(id);
+    assertTrue(found.isPresent());
+    assertTrue(found.get() instanceof Electronics);
+    Electronics e = (Electronics) found.get();
+    assertEquals("Laptop", e.getName());
+    assertEquals("Dell", e.getBrand());
+  }
 
-    @Test
-    void createArtShouldReturnId() {
-        Art art = new Art(
+  @Test
+  void createArtShouldReturnId() {
+    Art art =
+        new Art(
             0,
             sellerId,
             "Mona Lisa",
@@ -87,22 +85,22 @@ class SQLiteItemDaoTest {
             null,
             "Da Vinci",
             "Oil on wood",
-            LocalDateTime.now()
-        );
+            LocalDateTime.now());
 
-        long id = itemDao.create(art);
-        assertTrue(id > 0);
+    long id = itemDao.create(art);
+    assertTrue(id > 0);
 
-        Optional<Item> found = itemDao.findById(id);
-        assertTrue(found.isPresent());
-        assertTrue(found.get() instanceof Art);
-        Art a = (Art) found.get();
-        assertEquals("Da Vinci", a.getArtist());
-    }
+    Optional<Item> found = itemDao.findById(id);
+    assertTrue(found.isPresent());
+    assertTrue(found.get() instanceof Art);
+    Art a = (Art) found.get();
+    assertEquals("Da Vinci", a.getArtist());
+  }
 
-    @Test
-    void createVehicleShouldReturnId() {
-        Vehicle vehicle = new Vehicle(
+  @Test
+  void createVehicleShouldReturnId() {
+    Vehicle vehicle =
+        new Vehicle(
             0,
             sellerId,
             "Model S",
@@ -112,30 +110,62 @@ class SQLiteItemDaoTest {
             null,
             "Tesla",
             2022,
-            LocalDateTime.now()
-        );
+            LocalDateTime.now());
 
-        long id = itemDao.create(vehicle);
-        assertTrue(id > 0);
+    long id = itemDao.create(vehicle);
+    assertTrue(id > 0);
 
-        Optional<Item> found = itemDao.findById(id);
-        assertTrue(found.isPresent());
-        assertTrue(found.get() instanceof Vehicle);
-        Vehicle v = (Vehicle) found.get();
-        assertEquals(2022, v.getYear());
-    }
+    Optional<Item> found = itemDao.findById(id);
+    assertTrue(found.isPresent());
+    assertTrue(found.get() instanceof Vehicle);
+    Vehicle v = (Vehicle) found.get();
+    assertEquals(2022, v.getYear());
+  }
 
-    @Test
-    void findBySellerIdShouldReturnOnlySellerItems() {
-        long otherSellerId = userDao.create(
+  @Test
+  void findBySellerIdShouldReturnOnlySellerItems() {
+    long otherSellerId =
+        userDao.create(
             "other",
             "pass",
             "Other Seller",
             Role.SELLER,
             java.math.BigDecimal.ZERO,
-            java.math.BigDecimal.ZERO
-        );
+            java.math.BigDecimal.ZERO);
 
+    itemDao.create(
+        new Electronics(
+            0,
+            sellerId,
+            "L1",
+            "D",
+            "C",
+            new BigDecimal("100"),
+            null,
+            "B",
+            "M",
+            LocalDateTime.now()));
+    itemDao.create(
+        new Electronics(
+            0,
+            otherSellerId,
+            "L2",
+            "D",
+            "C",
+            new BigDecimal("100"),
+            null,
+            "B",
+            "M",
+            LocalDateTime.now()));
+
+    List<Item> sellerItems = itemDao.findBySellerId(sellerId);
+    assertEquals(1, sellerItems.size());
+    assertEquals("L1", sellerItems.get(0).getName());
+  }
+
+  @Test
+  void deleteShouldRemoveItem() {
+    long id =
         itemDao.create(
             new Electronics(
                 0,
@@ -147,48 +177,10 @@ class SQLiteItemDaoTest {
                 null,
                 "B",
                 "M",
-                LocalDateTime.now()
-            )
-        );
-        itemDao.create(
-            new Electronics(
-                0,
-                otherSellerId,
-                "L2",
-                "D",
-                "C",
-                new BigDecimal("100"),
-                null,
-                "B",
-                "M",
-                LocalDateTime.now()
-            )
-        );
+                LocalDateTime.now()));
+    assertTrue(itemDao.findById(id).isPresent());
 
-        List<Item> sellerItems = itemDao.findBySellerId(sellerId);
-        assertEquals(1, sellerItems.size());
-        assertEquals("L1", sellerItems.get(0).getName());
-    }
-
-    @Test
-    void deleteShouldRemoveItem() {
-        long id = itemDao.create(
-            new Electronics(
-                0,
-                sellerId,
-                "L1",
-                "D",
-                "C",
-                new BigDecimal("100"),
-                null,
-                "B",
-                "M",
-                LocalDateTime.now()
-            )
-        );
-        assertTrue(itemDao.findById(id).isPresent());
-
-        itemDao.delete(id);
-        assertFalse(itemDao.findById(id).isPresent());
-    }
+    itemDao.delete(id);
+    assertFalse(itemDao.findById(id).isPresent());
+  }
 }

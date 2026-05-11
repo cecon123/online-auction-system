@@ -22,45 +22,43 @@ import org.junit.jupiter.api.Test;
 
 class SQLiteBidDaoTest {
 
-    private BidDao bidDao;
-    private AuctionDao auctionDao;
-    private ItemDao itemDao;
-    private UserDao userDao;
-    private long bidderId;
-    private long auctionId;
+  private BidDao bidDao;
+  private AuctionDao auctionDao;
+  private ItemDao itemDao;
+  private UserDao userDao;
+  private long bidderId;
+  private long auctionId;
 
-    @BeforeEach
-    void setUp() throws Exception {
-        Path tempDatabase = Files.createTempFile("auction-bid-test-", ".db");
-        System.setProperty(
-            "auction.db.url",
-            "jdbc:sqlite:" + tempDatabase.toAbsolutePath()
-        );
-        System.setProperty("auction.skip.seed", "true");
+  @BeforeEach
+  void setUp() throws Exception {
+    Path tempDatabase = Files.createTempFile("auction-bid-test-", ".db");
+    System.setProperty("auction.db.url", "jdbc:sqlite:" + tempDatabase.toAbsolutePath());
+    System.setProperty("auction.skip.seed", "true");
 
-        SchemaInitializer.initialize();
-        bidDao = new SQLiteBidDao();
-        auctionDao = new SQLiteAuctionDao();
-        itemDao = new SQLiteItemDao();
-        userDao = new SQLiteUserDao();
+    SchemaInitializer.initialize();
+    bidDao = new SQLiteBidDao();
+    auctionDao = new SQLiteAuctionDao();
+    itemDao = new SQLiteItemDao();
+    userDao = new SQLiteUserDao();
 
-        long sellerId = userDao.create(
+    long sellerId =
+        userDao.create(
             "seller",
             "pass",
             "The Seller",
             Role.SELLER,
             java.math.BigDecimal.ZERO,
-            java.math.BigDecimal.ZERO
-        );
-        bidderId = userDao.create(
+            java.math.BigDecimal.ZERO);
+    bidderId =
+        userDao.create(
             "bidder",
             "pass",
             "The Bidder",
             Role.BIDDER,
             new java.math.BigDecimal("1000"),
-            java.math.BigDecimal.ZERO
-        );
-        long itemId = itemDao.create(
+            java.math.BigDecimal.ZERO);
+    long itemId =
+        itemDao.create(
             new Electronics(
                 0,
                 sellerId,
@@ -71,10 +69,9 @@ class SQLiteBidDaoTest {
                 null,
                 "B",
                 "M",
-                LocalDateTime.now()
-            )
-        );
-        auctionId = auctionDao.create(
+                LocalDateTime.now()));
+    auctionId =
+        auctionDao.create(
             new Auction(
                 0,
                 itemId,
@@ -87,50 +84,29 @@ class SQLiteBidDaoTest {
                 LocalDateTime.now().plusDays(1),
                 AuctionStatus.RUNNING,
                 0,
-                LocalDateTime.now()
-            )
-        );
-    }
+                LocalDateTime.now()));
+  }
 
-    @Test
-    void createBidShouldReturnId() {
-        BidTransaction bid = new BidTransaction(
-            0,
-            auctionId,
-            bidderId,
-            new BigDecimal("150"),
-            LocalDateTime.now()
-        );
-        long id = bidDao.create(bid);
-        assertTrue(id > 0);
+  @Test
+  void createBidShouldReturnId() {
+    BidTransaction bid =
+        new BidTransaction(0, auctionId, bidderId, new BigDecimal("150"), LocalDateTime.now());
+    long id = bidDao.create(bid);
+    assertTrue(id > 0);
 
-        List<BidTransaction> bids = bidDao.findByAuctionId(auctionId);
-        assertEquals(1, bids.size());
-        assertEquals(new BigDecimal("150"), bids.get(0).getAmount());
-    }
+    List<BidTransaction> bids = bidDao.findByAuctionId(auctionId);
+    assertEquals(1, bids.size());
+    assertEquals(new BigDecimal("150"), bids.get(0).getAmount());
+  }
 
-    @Test
-    void findByBidderIdShouldReturnBids() {
-        bidDao.create(
-            new BidTransaction(
-                0,
-                auctionId,
-                bidderId,
-                new BigDecimal("150"),
-                LocalDateTime.now()
-            )
-        );
-        bidDao.create(
-            new BidTransaction(
-                0,
-                auctionId,
-                bidderId,
-                new BigDecimal("200"),
-                LocalDateTime.now()
-            )
-        );
+  @Test
+  void findByBidderIdShouldReturnBids() {
+    bidDao.create(
+        new BidTransaction(0, auctionId, bidderId, new BigDecimal("150"), LocalDateTime.now()));
+    bidDao.create(
+        new BidTransaction(0, auctionId, bidderId, new BigDecimal("200"), LocalDateTime.now()));
 
-        List<BidTransaction> bids = bidDao.findByBidderId(bidderId);
-        assertEquals(2, bids.size());
-    }
+    List<BidTransaction> bids = bidDao.findByBidderId(bidderId);
+    assertEquals(2, bids.size());
+  }
 }

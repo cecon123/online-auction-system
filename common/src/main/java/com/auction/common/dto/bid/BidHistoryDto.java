@@ -3,9 +3,7 @@ package com.auction.common.dto.bid;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * Data Transfer Object for a user's bid history entry.
- */
+/** Data Transfer Object for a user's bid history entry. */
 public record BidHistoryDto(
     long bidId,
     long auctionId,
@@ -13,4 +11,4 @@ public record BidHistoryDto(
     BigDecimal amount,
     LocalDateTime timestamp,
     String result // e.g., "WINNING", "OUTBID", "WON", "LOST"
-) {}
+    ) {}

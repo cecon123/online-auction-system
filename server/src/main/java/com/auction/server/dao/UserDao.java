@@ -8,41 +8,40 @@ import java.util.Optional;
 /**
  * Data access interface for users.
  *
- * Service classes depend on this interface instead of concrete SQLite code.
+ * <p>Service classes depend on this interface instead of concrete SQLite code.
  */
 public interface UserDao {
-    long create(
-        String username,
-        String passwordHash,
-        String fullName,
-        Role role,
-        java.math.BigDecimal balance,
-        java.math.BigDecimal lockedBalance
-    );
+  long create(
+      String username,
+      String passwordHash,
+      String fullName,
+      Role role,
+      java.math.BigDecimal balance,
+      java.math.BigDecimal lockedBalance);
 
-    Optional<UserRecord> findByUsername(String username);
+  Optional<UserRecord> findByUsername(String username);
 
-    Optional<UserRecord> findById(long id);
+  Optional<UserRecord> findById(long id);
 
-    List<UserRecord> findAll();
+  List<UserRecord> findAll();
 
-    void updateActiveStatus(long userId, boolean active);
+  void updateActiveStatus(long userId, boolean active);
 
-    void updateBalance(long userId, java.math.BigDecimal balance);
+  void updateBalance(long userId, java.math.BigDecimal balance);
 
-    void updateLockedBalance(long userId, java.math.BigDecimal lockedBalance);
+  void updateLockedBalance(long userId, java.math.BigDecimal lockedBalance);
 
-    void updateBalances(long userId, java.math.BigDecimal balance, java.math.BigDecimal lockedBalance);
+  void updateBalances(
+      long userId, java.math.BigDecimal balance, java.math.BigDecimal lockedBalance);
 
-    record UserRecord(
-        long id,
-        String username,
-        String passwordHash,
-        String fullName,
-        Role role,
-        java.math.BigDecimal balance,
-        java.math.BigDecimal lockedBalance,
-        boolean active,
-        LocalDateTime createdAt
-    ) {}
+  record UserRecord(
+      long id,
+      String username,
+      String passwordHash,
+      String fullName,
+      Role role,
+      java.math.BigDecimal balance,
+      java.math.BigDecimal lockedBalance,
+      boolean active,
+      LocalDateTime createdAt) {}
 }

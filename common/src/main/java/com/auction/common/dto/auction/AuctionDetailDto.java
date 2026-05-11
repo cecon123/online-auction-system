@@ -5,9 +5,7 @@ import com.auction.common.enums.ItemType;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * Detailed auction data used by AuctionDetailView and LiveBiddingView.
- */
+/** Detailed auction data used by AuctionDetailView and LiveBiddingView. */
 public record AuctionDetailDto(
     long auctionId,
     long itemId,
@@ -24,5 +22,4 @@ public record AuctionDetailDto(
     LocalDateTime startTime,
     LocalDateTime endTime,
     AuctionStatus status,
-    String imagePath
-) {}
+    String imagePath) {}

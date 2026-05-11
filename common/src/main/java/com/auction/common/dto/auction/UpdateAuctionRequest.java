@@ -5,8 +5,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Payload for seller updating an existing auction.
- * Only allowed when auction has no bids and is OPEN or RUNNING.
+ * Payload for seller updating an existing auction. Only allowed when auction has no bids and is
+ * OPEN or RUNNING.
  */
 public record UpdateAuctionRequest(
     long auctionId,
@@ -19,5 +19,4 @@ public record UpdateAuctionRequest(
     LocalDateTime startTime,
     LocalDateTime endTime,
     String imagePath,
-    String imageBase64
-) {}
+    String imageBase64) {}

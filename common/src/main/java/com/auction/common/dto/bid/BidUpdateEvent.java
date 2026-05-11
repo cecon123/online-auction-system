@@ -8,5 +8,4 @@ public record BidUpdateEvent(
     String bidderUsername,
     BigDecimal amount,
     LocalDateTime timestamp,
-    LocalDateTime newEndTime
-) {}
+    LocalDateTime newEndTime) {}

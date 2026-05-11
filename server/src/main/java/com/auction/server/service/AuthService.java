@@ -11,116 +11,93 @@ import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Service for authentication-related operations.
- * Uses BCrypt for password security.
- */
+/** Service for authentication-related operations. Uses BCrypt for password security. */
 public class AuthService {
 
-    private static final Logger logger = LoggerFactory.getLogger(
-        AuthService.class
-    );
+  private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
-    private final UserDao userDao;
-    private final SessionManager sessionManager;
+  private final UserDao userDao;
+  private final SessionManager sessionManager;
 
-    public AuthService(UserDao userDao) {
-        this.userDao = userDao;
-        this.sessionManager = SessionManager.getInstance();
+  public AuthService(UserDao userDao) {
+    this.userDao = userDao;
+    this.sessionManager = SessionManager.getInstance();
+  }
+
+  /**
+   * Registers a new user. Hashes password using BCrypt before storing in DB.
+   *
+   * @param request The registration request details.
+   * @return A response containing the newly created user's info.
+   * @throws IllegalArgumentException if the username already exists.
+   */
+  public RegisterResponse register(RegisterRequest request) {
+    // 1. Check if username exists
+    if (userDao.findByUsername(request.username()).isPresent()) {
+      throw new IllegalArgumentException("Username already exists.");
     }
 
-    /**
-     * Registers a new user.
-     * Hashes password using BCrypt before storing in DB.
-     *
-     * @param request The registration request details.
-     * @return A response containing the newly created user's info.
-     * @throws IllegalArgumentException if the username already exists.
-     */
-    public RegisterResponse register(RegisterRequest request) {
-        // 1. Check if username exists
-        if (userDao.findByUsername(request.username()).isPresent()) {
-            throw new IllegalArgumentException("Username already exists.");
-        }
+    // 2. Hash password
+    String salt = BCrypt.gensalt(12);
+    String hashed = BCrypt.hashpw(request.password(), salt);
 
-        // 2. Hash password
-        String salt = BCrypt.gensalt(12);
-        String hashed = BCrypt.hashpw(request.password(), salt);
-
-        // 3. Store in DB
-        BigDecimal initialBalance = BigDecimal.ZERO;
-        BigDecimal initialLocked = BigDecimal.ZERO;
-        long id = userDao.create(
+    // 3. Store in DB
+    BigDecimal initialBalance = BigDecimal.ZERO;
+    BigDecimal initialLocked = BigDecimal.ZERO;
+    long id =
+        userDao.create(
             request.username(),
             hashed,
             request.fullName(),
             request.role(),
             initialBalance,
-            initialLocked
-        );
+            initialLocked);
 
-        logger.info(
-            "Successfully registered new user: {} with ID: {}",
-            request.username(),
-            id
-        );
+    logger.info("Successfully registered new user: {} with ID: {}", request.username(), id);
 
-        return new RegisterResponse(
-            id,
-            request.username(),
-            request.role(),
-            initialBalance,
-            initialLocked
-        );
+    return new RegisterResponse(
+        id, request.username(), request.role(), initialBalance, initialLocked);
+  }
+
+  /**
+   * Authenticates a user. Verifies password hash and issues a session token.
+   *
+   * @param request The login credentials.
+   * @return A response containing user details and a session token.
+   * @throws IllegalArgumentException if username or password is invalid.
+   * @throws IllegalStateException if the account is suspended.
+   */
+  public LoginResponse login(LoginRequest request) {
+    // 1. Find user
+    Optional<UserDao.UserRecord> userOpt = userDao.findByUsername(request.username());
+
+    if (userOpt.isEmpty()) {
+      throw new IllegalArgumentException("Invalid username or password.");
     }
 
-    /**
-     * Authenticates a user.
-     * Verifies password hash and issues a session token.
-     *
-     * @param request The login credentials.
-     * @return A response containing user details and a session token.
-     * @throws IllegalArgumentException if username or password is invalid.
-     * @throws IllegalStateException    if the account is suspended.
-     */
-    public LoginResponse login(LoginRequest request) {
-        // 1. Find user
-        Optional<UserDao.UserRecord> userOpt = userDao.findByUsername(
-            request.username()
-        );
+    UserDao.UserRecord user = userOpt.get();
 
-        if (userOpt.isEmpty()) {
-            throw new IllegalArgumentException("Invalid username or password.");
-        }
-
-        UserDao.UserRecord user = userOpt.get();
-
-        // 2. Check active status
-        if (!user.active()) {
-            throw new IllegalStateException("Your account has been suspended.");
-        }
-
-        // 3. Verify password
-        if (!BCrypt.checkpw(request.password(), user.passwordHash())) {
-            throw new IllegalArgumentException("Invalid username or password.");
-        }
-
-        // 4. Issue token
-        String token = sessionManager.createSession(user.id());
-        logger.info(
-            "User {} logged in successfully. Issued token: {}",
-            user.username(),
-            token
-        );
-
-        return new LoginResponse(
-            user.id(),
-            user.username(),
-            user.fullName(),
-            user.role(),
-            user.balance(),
-            user.lockedBalance(),
-            token
-        );
+    // 2. Check active status
+    if (!user.active()) {
+      throw new IllegalStateException("Your account has been suspended.");
     }
+
+    // 3. Verify password
+    if (!BCrypt.checkpw(request.password(), user.passwordHash())) {
+      throw new IllegalArgumentException("Invalid username or password.");
+    }
+
+    // 4. Issue token
+    String token = sessionManager.createSession(user.id());
+    logger.info("User {} logged in successfully. Issued token: {}", user.username(), token);
+
+    return new LoginResponse(
+        user.id(),
+        user.username(),
+        user.fullName(),
+        user.role(),
+        user.balance(),
+        user.lockedBalance(),
+        token);
+  }
 }

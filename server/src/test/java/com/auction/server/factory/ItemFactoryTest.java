@@ -14,11 +14,12 @@ import org.junit.jupiter.api.Test;
 
 class ItemFactoryTest {
 
-    private final ItemFactory itemFactory = new ItemFactory();
+  private final ItemFactory itemFactory = new ItemFactory();
 
-    @Test
-    void shouldCreateElectronicsItem() {
-        Item item = itemFactory.create(
+  @Test
+  void shouldCreateElectronicsItem() {
+    Item item =
+        itemFactory.create(
             new ItemFactory.CreateItemData(
                 1L,
                 10L,
@@ -34,18 +35,17 @@ class ItemFactoryTest {
                 null,
                 null,
                 0,
-                LocalDateTime.now()
-            )
-        );
+                LocalDateTime.now()));
 
-        assertInstanceOf(Electronics.class, item);
-        assertEquals(ItemType.ELECTRONICS, item.getItemType());
-        assertEquals("Used - Excellent", item.getCondition());
-    }
+    assertInstanceOf(Electronics.class, item);
+    assertEquals(ItemType.ELECTRONICS, item.getItemType());
+    assertEquals("Used - Excellent", item.getCondition());
+  }
 
-    @Test
-    void shouldCreateArtItem() {
-        Item item = itemFactory.create(
+  @Test
+  void shouldCreateArtItem() {
+    Item item =
+        itemFactory.create(
             new ItemFactory.CreateItemData(
                 2L,
                 10L,
@@ -61,18 +61,17 @@ class ItemFactoryTest {
                 "Canvas",
                 null,
                 0,
-                LocalDateTime.now()
-            )
-        );
+                LocalDateTime.now()));
 
-        assertInstanceOf(Art.class, item);
-        assertEquals(ItemType.ART, item.getItemType());
-        assertEquals("Brand New", item.getCondition());
-    }
+    assertInstanceOf(Art.class, item);
+    assertEquals(ItemType.ART, item.getItemType());
+    assertEquals("Brand New", item.getCondition());
+  }
 
-    @Test
-    void shouldCreateVehicleItem() {
-        Item item = itemFactory.create(
+  @Test
+  void shouldCreateVehicleItem() {
+    Item item =
+        itemFactory.create(
             new ItemFactory.CreateItemData(
                 3L,
                 10L,
@@ -88,12 +87,10 @@ class ItemFactoryTest {
                 null,
                 "Honda",
                 1985,
-                LocalDateTime.now()
-            )
-        );
+                LocalDateTime.now()));
 
-        assertInstanceOf(Vehicle.class, item);
-        assertEquals(ItemType.VEHICLE, item.getItemType());
-        assertEquals("Used - Good", item.getCondition());
-    }
+    assertInstanceOf(Vehicle.class, item);
+    assertEquals(ItemType.VEHICLE, item.getItemType());
+    assertEquals("Used - Good", item.getCondition());
+  }
 }

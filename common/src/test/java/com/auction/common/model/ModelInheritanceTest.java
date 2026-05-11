@@ -11,11 +11,12 @@ import org.junit.jupiter.api.Test;
 
 class ModelInheritanceTest {
 
-    @Test
-    void userSubclassesShouldHaveCorrectRoles() {
-        LocalDateTime now = LocalDateTime.now();
+  @Test
+  void userSubclassesShouldHaveCorrectRoles() {
+    LocalDateTime now = LocalDateTime.now();
 
-        User bidder = new Bidder(
+    User bidder =
+        new Bidder(
             1L,
             "bidder01",
             "hash",
@@ -23,10 +24,10 @@ class ModelInheritanceTest {
             new BigDecimal("100.00"),
             BigDecimal.ZERO,
             true,
-            now
-        );
+            now);
 
-        User seller = new Seller(
+    User seller =
+        new Seller(
             2L,
             "seller01",
             "hash",
@@ -34,36 +35,28 @@ class ModelInheritanceTest {
             new BigDecimal("200.00"),
             BigDecimal.ZERO,
             true,
-            now
-        );
+            now);
 
-        User admin = new Admin(
-            3L,
-            "admin01",
-            "hash",
-            "Admin One",
-            BigDecimal.ZERO,
-            BigDecimal.ZERO,
-            true,
-            now
-        );
+    User admin =
+        new Admin(3L, "admin01", "hash", "Admin One", BigDecimal.ZERO, BigDecimal.ZERO, true, now);
 
-        assertEquals(Role.BIDDER, bidder.getRole());
-        assertEquals(Role.SELLER, seller.getRole());
-        assertEquals(Role.ADMIN, admin.getRole());
-        assertEquals(new BigDecimal("100.00"), bidder.getBalance());
-        assertEquals(new BigDecimal("200.00"), seller.getBalance());
+    assertEquals(Role.BIDDER, bidder.getRole());
+    assertEquals(Role.SELLER, seller.getRole());
+    assertEquals(Role.ADMIN, admin.getRole());
+    assertEquals(new BigDecimal("100.00"), bidder.getBalance());
+    assertEquals(new BigDecimal("200.00"), seller.getBalance());
 
-        assertTrue(((Bidder) bidder).canBid());
-        assertTrue(((Seller) seller).canCreateAuction());
-        assertTrue(((Admin) admin).canManageSystem());
-    }
+    assertTrue(((Bidder) bidder).canBid());
+    assertTrue(((Seller) seller).canCreateAuction());
+    assertTrue(((Admin) admin).canManageSystem());
+  }
 
-    @Test
-    void itemSubclassesShouldHaveCorrectTypesAndCondition() {
-        LocalDateTime now = LocalDateTime.now();
+  @Test
+  void itemSubclassesShouldHaveCorrectTypesAndCondition() {
+    LocalDateTime now = LocalDateTime.now();
 
-        Item electronics = new Electronics(
+    Item electronics =
+        new Electronics(
             1L,
             10L,
             "Camera",
@@ -73,10 +66,10 @@ class ModelInheritanceTest {
             "camera.png",
             "Canon",
             "X100",
-            now
-        );
+            now);
 
-        Item art = new Art(
+    Item art =
+        new Art(
             2L,
             10L,
             "Painting",
@@ -86,10 +79,10 @@ class ModelInheritanceTest {
             "painting.png",
             "Unknown Artist",
             "Canvas",
-            now
-        );
+            now);
 
-        Item vehicle = new Vehicle(
+    Item vehicle =
+        new Vehicle(
             3L,
             10L,
             "Scooter",
@@ -99,19 +92,18 @@ class ModelInheritanceTest {
             "scooter.png",
             "Honda",
             1985,
-            now
-        );
+            now);
 
-        assertEquals(ItemType.ELECTRONICS, electronics.getItemType());
-        assertEquals(ItemType.ART, art.getItemType());
-        assertEquals(ItemType.VEHICLE, vehicle.getItemType());
+    assertEquals(ItemType.ELECTRONICS, electronics.getItemType());
+    assertEquals(ItemType.ART, art.getItemType());
+    assertEquals(ItemType.VEHICLE, vehicle.getItemType());
 
-        assertEquals("Used - Excellent", electronics.getCondition());
-        assertEquals("Brand New", art.getCondition());
-        assertEquals("Used - Good", vehicle.getCondition());
+    assertEquals("Used - Excellent", electronics.getCondition());
+    assertEquals("Brand New", art.getCondition());
+    assertEquals("Used - Good", vehicle.getCondition());
 
-        assertTrue(electronics.categoryDescription().contains("Canon"));
-        assertTrue(art.categoryDescription().contains("Unknown Artist"));
-        assertTrue(vehicle.categoryDescription().contains("Honda"));
-    }
+    assertTrue(electronics.categoryDescription().contains("Canon"));
+    assertTrue(art.categoryDescription().contains("Unknown Artist"));
+    assertTrue(vehicle.categoryDescription().contains("Honda"));
+  }
 }
