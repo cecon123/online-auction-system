@@ -267,7 +267,7 @@ public class EditAuctionController {
             return;
         }
 
-        if (selectedImageFile == null) {
+        if (selectedImageFile == null && (selectedImageLabel.getText() == null || selectedImageLabel.getText().equals("No image selected"))) {
             showError("Please choose an item image.");
             return;
         }
