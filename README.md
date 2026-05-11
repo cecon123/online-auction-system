@@ -62,7 +62,7 @@ mvn fmt:format
 ```
 
 ### Chạy Unit Test
-Thực hiện kiểm tra logic DAO và Concurrency (BidService):
+Thực hiện kiểm tra toàn diện logic nghiệp vụ (Bidding, Seller, Auth, Wallet) và Concurrency:
 ```bash
 mvn test
 ```
