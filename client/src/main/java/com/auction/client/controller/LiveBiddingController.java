@@ -3,6 +3,7 @@ package com.auction.client.controller;
 import com.auction.client.service.AuctionClientService;
 import com.auction.client.socket.SocketClient;
 import com.auction.client.util.JsonMapper;
+import com.auction.client.util.NotificationManager;
 import com.auction.client.util.PriceChartManager;
 import com.auction.client.util.SceneManager;
 import com.auction.common.dto.auction.AuctionDetailDto;
@@ -553,7 +554,7 @@ public class LiveBiddingController {
   @FXML
   private void handleEnableAutoBid() {
     if (auctionId == null) {
-      showAutoMessage("No auction selected.");
+      NotificationManager.showToast("Warning", "No auction selected.", "WARNING");
       return;
     }
     BigDecimal parsedMaxBudget = parsePositiveMoney(autoMaxBudgetField.getText());
@@ -565,7 +566,7 @@ public class LiveBiddingController {
     autoMaxBudget = parsedMaxBudget;
     autoStep = parsedStep;
     autoBidEnabled = true;
-    showAutoMessage("Auto bidding is active.");
+    NotificationManager.showToast("Success", "Auto bidding is active.", "SUCCESS");
     autoLastActionLabel.setText("Watching this auction.");
     refreshAutoBidPanel();
     if (!SceneManager.getCurrentUsername().equals(highestBidderLabel.getText())) {
@@ -584,7 +585,7 @@ public class LiveBiddingController {
     autoMaxBudget = parsedMaxBudget;
     autoStep = parsedStep;
     autoBidEnabled = true;
-    showAutoMessage("Auto bidding budget was updated.");
+    NotificationManager.showToast("Success", "Auto bidding budget was updated.", "SUCCESS");
     autoLastActionLabel.setText("Max budget: " + formatMoney(autoMaxBudget) + ".");
     refreshAutoBidPanel();
   }
@@ -592,34 +593,34 @@ public class LiveBiddingController {
   @FXML
   private void handleDisableAutoBid() {
     autoBidEnabled = false;
-    showAutoMessage("Auto bidding disabled. You can enable it again anytime.");
+    NotificationManager.showToast("Info", "Auto bidding disabled. You can enable it again anytime.");
     autoLastActionLabel.setText("Auto bidding is off.");
     refreshAutoBidPanel();
   }
 
   private boolean validateAutoBidInput(BigDecimal parsedMaxBudget, BigDecimal parsedStep) {
     if (parsedMaxBudget == null) {
-      showAutoMessage("Please enter a valid maximum budget.");
+      NotificationManager.showToast("Error", "Please enter a valid maximum budget.", "ERROR");
       return false;
     }
     if (parsedStep == null) {
-      showAutoMessage("Please select a valid bid step.");
+      NotificationManager.showToast("Error", "Please select a valid bid step.", "ERROR");
       return false;
     }
     BigDecimal minimumNextBid = currentPrice.add(minimumIncrement);
     if (parsedMaxBudget.compareTo(minimumNextBid) < 0) {
-      showAutoMessage("Your maximum budget must be at least " + formatMoney(minimumNextBid) + ".");
+      NotificationManager.showToast("Error", "Your maximum budget must be at least " + formatMoney(minimumNextBid) + ".", "ERROR");
       return false;
     }
     if (parsedMaxBudget.compareTo(SceneManager.getCurrentBalance()) > 0) {
-      showAutoMessage(
+      NotificationManager.showToast("Error",
           "Your maximum budget cannot exceed wallet balance "
               + formatMoney(SceneManager.getCurrentBalance())
-              + ".");
+              + ".", "ERROR");
       return false;
     }
     if (parsedStep.compareTo(minimumIncrement) < 0) {
-      showAutoMessage("Bid step must be at least " + formatMoney(minimumIncrement) + ".");
+      NotificationManager.showToast("Error", "Bid step must be at least " + formatMoney(minimumIncrement) + ".", "ERROR");
       return false;
     }
     return true;
@@ -630,7 +631,7 @@ public class LiveBiddingController {
     if (nextAutoBid.compareTo(autoMaxBudget) > 0) {
       autoBidEnabled = false;
       autoLastActionLabel.setText("Maximum budget reached.");
-      showAutoMessage("Auto bidding stopped because your maximum budget was reached.", false);
+      NotificationManager.showToast("Info", "Auto bidding stopped because your maximum budget was reached.");
       refreshAutoBidPanel();
       return;
     }
@@ -644,10 +645,11 @@ public class LiveBiddingController {
                     if (response.isSuccess()) {
                       autoLastActionLabel.setText(
                           "Auto bid placed: " + formatMoney(nextAutoBid) + ".");
-                      showAutoMessage("Auto bidding responded successfully.", true);
+                      NotificationManager.showToast("Success", "Auto bidding responded successfully.", "SUCCESS");
                     } else {
                       autoLastActionLabel.setText("Auto bid failed.");
                       autoBidEnabled = false;
+                      NotificationManager.showToast("Error", "Auto bid failed.", "ERROR");
                     }
                     refreshAutoBidPanel();
                   });
@@ -811,6 +813,7 @@ public class LiveBiddingController {
               // Only show "You won" if the status is FINISHED
               if (isFinished && event.winnerUsername().equals(SceneManager.getCurrentUsername())) {
                 showManualMessage("Congratulations! You won this auction!", true);
+                // Notification handled globally by AppShellController to avoid duplicate toasts
               } else if (!isFinished
                   && event.winnerUsername().equals(SceneManager.getCurrentUsername())) {
                 showManualMessage(
