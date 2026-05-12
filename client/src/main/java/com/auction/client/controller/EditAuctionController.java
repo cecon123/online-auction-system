@@ -305,9 +305,8 @@ public class EditAuctionController {
               Platform.runLater(
                   () -> {
                     if (response.isSuccess()) {
-                      com.auction.client.util.NotificationManager.showToast(
-                          "Auction updated successfully!", "SUCCESS");
-                      SceneManager.showSellerCenter();
+                      showSuccess("Auction updated successfully!");
+                      // SceneManager.showSellerCenter(); // Stay on current screen
                     } else {
                       showError("Failed to update auction: " + response.getMessage());
                     }
