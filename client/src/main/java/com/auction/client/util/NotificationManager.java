@@ -68,19 +68,40 @@ public final class NotificationManager {
                 mapper.convertData(
                     response.getData(), com.auction.common.dto.auction.AuctionEventDto.class);
 
+            String currentUsername = SceneManager.getCurrentUsername();
+            boolean isWinner =
+                event.winnerUsername() != null && event.winnerUsername().equals(currentUsername);
+
             String title = "Auction Ended!";
             String message;
-            if (event.winnerUsername() != null) {
-              message =
-                  String.format(
-                      "Auction #%d closed. Winner: %s with %s",
-                      event.auctionId(),
-                      event.winnerUsername(),
-                      CURRENCY_FORMAT.format(event.finalPrice()));
+            String type = "INFO";
+            Duration duration = DISPLAY_TIME;
+
+            if (event.status() == com.auction.common.enums.AuctionStatus.FINISHED) {
+              if (isWinner) {
+                title = "Congratulations!";
+                message =
+                    String.format(
+                        "You won Auction #%d with a bid of %s!",
+                        event.auctionId(), CURRENCY_FORMAT.format(event.finalPrice()));
+                type = "SUCCESS";
+                duration = Duration.seconds(5); // 5 seconds for winner as requested
+              } else if (event.winnerUsername() != null) {
+                message =
+                    String.format(
+                        "Auction #%d finished. Winner: %s with %s",
+                        event.auctionId(),
+                        event.winnerUsername(),
+                        CURRENCY_FORMAT.format(event.finalPrice()));
+              } else {
+                message = String.format("Auction #%d closed with no winner.", event.auctionId());
+              }
             } else {
-              message = String.format("Auction #%d closed with no winner.", event.auctionId());
+              message = String.format("Auction #%d was canceled.", event.auctionId());
+              type = "WARNING";
             }
-            showToast(title, message);
+
+            showToast(title, message, type, duration);
           } catch (Exception e) {
             logger.error("Error processing AUCTION_CLOSED for notification", e);
           }
@@ -127,17 +148,30 @@ public final class NotificationManager {
    *
    * @param title The notification title.
    * @param message The notification message.
-   * @param type The notification type (e.g. INFO, SUCCESS, WARNING)
+   * @param type The notification type (e.g. INFO, SUCCESS, WARNING, ERROR)
    */
   public static void showToast(String title, String message, String type) {
-    Platform.runLater(() -> createAndShowToast(title, message, type));
+    showToast(title, message, type, DISPLAY_TIME);
+  }
+
+  /**
+   * Shows a toast notification with a custom duration.
+   *
+   * @param title The notification title.
+   * @param message The notification message.
+   * @param type The notification type.
+   * @param duration The display duration.
+   */
+  public static void showToast(String title, String message, String type, Duration duration) {
+    Platform.runLater(() -> createAndShowToast(title, message, type, duration));
   }
 
   public static void showToast(String title, String message) {
     showToast(title, message, "INFO");
   }
 
-  private static void createAndShowToast(String title, String message, String type) {
+  private static void createAndShowToast(
+      String title, String message, String type, Duration duration) {
     Stage toastStage = new Stage();
     toastStage.initStyle(StageStyle.TRANSPARENT);
     toastStage.setAlwaysOnTop(true);
@@ -186,7 +220,7 @@ public final class NotificationManager {
     FadeTransition fadeOut = new FadeTransition(Duration.millis(500), root);
     fadeOut.setFromValue(1);
     fadeOut.setToValue(0);
-    fadeOut.setDelay(DISPLAY_TIME);
+    fadeOut.setDelay(duration != null ? duration : DISPLAY_TIME);
     fadeOut.setOnFinished(e -> toastStage.close());
 
     toastStage.show();
