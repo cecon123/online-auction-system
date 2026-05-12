@@ -248,9 +248,8 @@ public class CreateAuctionController {
               Platform.runLater(
                   () -> {
                     if (response.isSuccess()) {
-                      com.auction.client.util.NotificationManager.showToast(
-                          "Auction created successfully!", "SUCCESS");
-                      SceneManager.showSellerCenter();
+                      showSuccess("Auction created successfully!");
+                      // SceneManager.showSellerCenter(); // Keep on current screen as requested
                     } else {
                       showError("Failed to create auction: " + response.getMessage());
                     }
