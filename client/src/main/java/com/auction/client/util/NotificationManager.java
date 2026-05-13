@@ -173,12 +173,24 @@ public final class NotificationManager {
   private static void createAndShowToast(
       String title, String message, String type, Duration duration) {
     Stage toastStage = new Stage();
+    // Set the main application stage as owner if available
+    javafx.stage.Stage owner = (javafx.stage.Stage) javafx.stage.Window.getWindows().stream()
+        .filter(w -> w instanceof javafx.stage.Stage)
+        .findFirst()
+        .orElse(null);
+    if (owner != null) {
+      toastStage.initOwner(owner);
+    }
     toastStage.initStyle(StageStyle.TRANSPARENT);
     toastStage.setAlwaysOnTop(true);
+    // Prevents the toast from taking focus from the main application window
+    toastStage.initModality(javafx.stage.Modality.NONE); 
 
     VBox root = new VBox(5);
     root.setAlignment(Pos.CENTER_LEFT);
     root.setPadding(new Insets(15));
+    // Set mouse transparency to prevent interaction and accidental focus
+    root.setMouseTransparent(true);
 
     String bgColor = "#3525cd"; // Default INFO (purple)
     if ("SUCCESS".equalsIgnoreCase(type)) {
