@@ -280,45 +280,100 @@
 /* ── DatePicker ── */
 
 .create-input.date-picker {
-    -fx-pref-height: 40px;
-    -fx-min-height: 40px;
-    -fx-padding: 0; /* remove outer padding */
+    -fx-pref-height: 42px;
+    -fx-min-height: 42px;
+    -fx-padding: 0;
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-color: #d1d5db;
+    -fx-border-width: 1;
+}
+
+.create-input.date-picker:focused {
+    -fx-border-color: #3525cd;
+    -fx-border-width: 1.5;
 }
 
 .create-input.date-picker > .text-field {
     -fx-padding: 8 12 8 12;
     -fx-background-color: transparent;
+    -fx-font-size: 13px;
+    -fx-text-fill: #111827;
 }
 
 .create-input.date-picker .arrow-button {
-    -fx-background-color: transparent;
+    -fx-background-color: #f3f4f6;
+    -fx-background-radius: 0 10 10 0;
+    -fx-cursor: hand;
+    -fx-padding: 0 12 0 12;
+}
+
+.create-input.date-picker .arrow-button:hover {
+    -fx-background-color: #e5e7eb;
 }
 
 .create-input.date-picker .arrow-button .arrow {
-    -fx-background-color: #6b7280;
+    -fx-background-color: #4b5563;
+    -fx-shape: "M7 11l5 5 5-5H7z";
+    -fx-scale-x: 1.2;
+    -fx-scale-y: 1.2;
 }
 
 /* ── Spinner ── */
 
 .create-input.spinner {
-    -fx-pref-height: 40px;
-    -fx-min-height: 40px;
-    -fx-padding: 0; /* remove outer padding */
+    -fx-pref-height: 42px;
+    -fx-min-height: 42px;
+    -fx-padding: 0;
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-color: #d1d5db;
+    -fx-border-width: 1;
+}
+
+.create-input.spinner:focused {
+    -fx-border-color: #3525cd;
+    -fx-border-width: 1.5;
 }
 
 .create-input.spinner > .text-field {
     -fx-padding: 8 8 8 12;
     -fx-background-color: transparent;
+    -fx-font-size: 13px;
+    -fx-text-fill: #111827;
 }
 
 .create-input.spinner .increment-arrow-button,
 .create-input.spinner .decrement-arrow-button {
-    -fx-background-color: transparent;
-    -fx-border-color: transparent;
-    -fx-padding: 4;
+    -fx-background-color: #f3f4f6;
+    -fx-cursor: hand;
+    -fx-padding: 4 8 4 8;
+    -fx-border-color: #e5e7eb;
 }
 
-.create-input.spinner .increment-arrow-button .increment-arrow,
+.create-input.spinner .increment-arrow-button {
+    -fx-background-radius: 0 10 0 0;
+    -fx-border-width: 0 0 0.5 1;
+}
+
+.create-input.spinner .decrement-arrow-button {
+    -fx-background-radius: 0 0 10 0;
+    -fx-border-width: 0.5 0 0 1;
+}
+
+.create-input.spinner .increment-arrow-button:hover,
+.create-input.spinner .decrement-arrow-button:hover {
+    -fx-background-color: #e5e7eb;
+}
+
+.create-input.spinner .increment-arrow-button .increment-arrow {
+    -fx-background-color: #4b5563;
+    -fx-shape: "M7 14l5-5 5 5H7z";
+}
+
 .create-input.spinner .decrement-arrow-button .decrement-arrow {
-    -fx-background-color: #6b7280;
+    -fx-background-color: #4b5563;
+    -fx-shape: "M7 10l5 5 5-5H7z";
 }
