@@ -178,9 +178,9 @@
                                 <HBox spacing="8" alignment="CENTER_LEFT">
                                     <DatePicker fx:id="startDatePicker" promptText="Date"
                                                 HBox.hgrow="ALWAYS" maxWidth="Infinity" styleClass="create-input" />
-                                    <Spinner fx:id="startHourSpinner" prefWidth="80" styleClass="create-input" />
-                                    <Label text=":" style="-fx-font-weight: bold; -fx-font-size: 16px;" />
-                                    <Spinner fx:id="startMinuteSpinner" prefWidth="80" styleClass="create-input" />
+                                    <Spinner fx:id="startHourSpinner" prefWidth="90" styleClass="create-input" editable="true" />
+                                    <Label text=":" style="-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #6b7280;" />
+                                    <Spinner fx:id="startMinuteSpinner" prefWidth="90" styleClass="create-input" editable="true" />
                                 </HBox>
                             </VBox>
 
@@ -189,9 +189,9 @@
                                 <HBox spacing="8" alignment="CENTER_LEFT">
                                     <DatePicker fx:id="endDatePicker" promptText="Date"
                                                 HBox.hgrow="ALWAYS" maxWidth="Infinity" styleClass="create-input" />
-                                    <Spinner fx:id="endHourSpinner" prefWidth="80" styleClass="create-input" />
-                                    <Label text=":" style="-fx-font-weight: bold; -fx-font-size: 16px;" />
-                                    <Spinner fx:id="endMinuteSpinner" prefWidth="80" styleClass="create-input" />
+                                    <Spinner fx:id="endHourSpinner" prefWidth="90" styleClass="create-input" editable="true" />
+                                    <Label text=":" style="-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #6b7280;" />
+                                    <Spinner fx:id="endMinuteSpinner" prefWidth="90" styleClass="create-input" editable="true" />
                                 </HBox>
                             </VBox>
 
