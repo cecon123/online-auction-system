@@ -6,6 +6,8 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
@@ -31,7 +33,11 @@
             <Insets top="22" right="26" bottom="22" left="26" />
         </padding>
 
-        <Label text="⚖" styleClass="auth-icon-box" />
+        <ImageView fitWidth="80" preserveRatio="true">
+            <image>
+                <Image url="@../images/logo-image-auth.png" />
+            </image>
+        </ImageView>
 
         <Label text="Create an Account" styleClass="auth-title" />
 
