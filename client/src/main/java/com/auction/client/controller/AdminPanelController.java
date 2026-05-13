@@ -45,10 +45,36 @@ public class AdminPanelController {
   private final AdminClientService adminService = new AdminClientService();
   private final AuctionClientService auctionService = new AuctionClientService();
 
+  private final java.util.function.Consumer<com.auction.common.protocol.Response<?>> auctionListener =
+      resp -> loadAuctions();
+  private final java.util.function.Consumer<com.auction.common.protocol.Response<?>> userListener =
+      resp -> loadUsers();
+
   @FXML
   private void initialize() {
     messageLabel.setText("");
     loadData();
+
+    // Register realtime listeners
+    com.auction.client.socket.SocketClient.getInstance()
+        .addEventListener(com.auction.common.protocol.MessageType.AUCTION_LIST_UPDATED, auctionListener);
+    com.auction.client.socket.SocketClient.getInstance()
+        .addEventListener(com.auction.common.protocol.MessageType.USER_LIST_UPDATED, userListener);
+
+    // Cleanup when the view is removed from the scene
+    userTableContainer
+        .sceneProperty()
+        .addListener(
+            (obs, oldScene, newScene) -> {
+              if (newScene == null) {
+                com.auction.client.socket.SocketClient.getInstance()
+                    .removeEventListener(
+                        com.auction.common.protocol.MessageType.AUCTION_LIST_UPDATED, auctionListener);
+                com.auction.client.socket.SocketClient.getInstance()
+                    .removeEventListener(
+                        com.auction.common.protocol.MessageType.USER_LIST_UPDATED, userListener);
+              }
+            });
   }
 
   @FXML

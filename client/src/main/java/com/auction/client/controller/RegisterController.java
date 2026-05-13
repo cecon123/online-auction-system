@@ -61,6 +61,17 @@ public class RegisterController {
     Role role = bidderToggle.isSelected() ? Role.BIDDER : Role.SELLER;
     RegisterRequest request = new RegisterRequest(fullName, username, password, role);
 
+    // Ensure connected before registration
+    if (!com.auction.client.socket.SocketClient.getInstance().isConnected()) {
+      try {
+        com.auction.client.socket.SocketClient.getInstance().connect();
+      } catch (Exception e) {
+        logger.error("Failed to connect before register", e);
+        setErrorMessage("Could not connect to server.");
+        return;
+      }
+    }
+
     authService
         .register(request)
         .thenAccept(

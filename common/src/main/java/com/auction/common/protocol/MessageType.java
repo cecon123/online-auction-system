@@ -45,6 +45,7 @@ public enum MessageType {
   AUCTION_CLOSED,
   TIME_EXTENDED,
   AUCTION_LIST_UPDATED,
+  USER_LIST_UPDATED,
 
   // Wallet
   DEPOSIT,

@@ -94,6 +94,7 @@ Các sự kiện do server chủ động đẩy xuống (push) sẽ có `request
 | | `AUCTION_CLOSED` | Sự kiện Server: Phát sóng kết thúc phiên |
 | | `TIME_EXTENDED` | Sự kiện Server: Phát sóng gia hạn thời gian (Anti-sniping) |
 | | `AUCTION_LIST_UPDATED`| Sự kiện Server: Danh sách chung thay đổi |
+| | `USER_LIST_UPDATED`   | Sự kiện Server: Danh sách người dùng thay đổi (Admin) |
 | **VÍ TIỀN** | `DEPOSIT` | Nạp tiền vào số dư người dùng |
 | | `WITHDRAW` | Rút tiền từ số dư người dùng |
 | **TỰ ĐỘNG THẦU** | `SET_AUTO_BID` | Cấu hình mức thầu tối đa và bước giá |

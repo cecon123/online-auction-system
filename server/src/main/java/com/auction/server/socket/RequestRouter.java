@@ -108,13 +108,13 @@ public class RequestRouter {
           NotificationService.getInstance().registerUserConnection(authRes.userId(), clientWriter);
           yield Response.ok(type, request.getRequestId(), "Login successful", authRes);
         }
-        case REGISTER ->
-            Response.ok(
-                type,
-                request.getRequestId(),
-                "Registration successful",
-                authService.register(
-                    requireData(request, RegisterRequest.class, "Missing registration data")));
+        case REGISTER -> {
+          com.auction.common.dto.auth.RegisterResponse regRes =
+              authService.register(
+                  requireData(request, RegisterRequest.class, "Missing registration data"));
+          NotificationService.getInstance().broadcastToAllUsers(MessageType.USER_LIST_UPDATED, null);
+          yield Response.ok(type, request.getRequestId(), "Registration successful", regRes);
+        }
         case LOGOUT -> {
           sessionManager.invalidateSession(request.getToken());
           NotificationService.getInstance().unregisterUserConnection(clientWriter);
@@ -826,6 +826,8 @@ public class RequestRouter {
 
     userDao.updateActiveStatus(data.userId(), data.active());
     logger.info("Admin updated user {} active status to {}", data.userId(), data.active());
+
+    NotificationService.getInstance().broadcastToAllUsers(MessageType.USER_LIST_UPDATED, null);
 
     return Response.ok(
         MessageType.ADMIN_UPDATE_USER_STATUS,
