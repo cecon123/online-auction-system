@@ -75,12 +75,22 @@ public class CreateAuctionController {
 
     // Setup hour spinners (0-23)
     startHourSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 23, 9));
+    startHourSpinner.setEditable(true);
+    setupSpinnerValidation(startHourSpinner);
+
     endHourSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 23, 17));
+    endHourSpinner.setEditable(true);
+    setupSpinnerValidation(endHourSpinner);
 
     // Setup minute spinners (0-59)
     startMinuteSpinner.setValueFactory(
         new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 59, 0));
+    startMinuteSpinner.setEditable(true);
+    setupSpinnerValidation(startMinuteSpinner);
+
     endMinuteSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 59, 0));
+    endMinuteSpinner.setEditable(true);
+    setupSpinnerValidation(endMinuteSpinner);
 
     // Default dates: tomorrow and day after
     startDatePicker.setValue(LocalDate.now().plusDays(1));
@@ -88,6 +98,42 @@ public class CreateAuctionController {
 
     selectedImageLabel.setText("No image selected");
     messageLabel.setText("");
+  }
+
+  /**
+   * Sets up validation and commit-on-focus-lost for spinners.
+   */
+  private void setupSpinnerValidation(Spinner<Integer> spinner) {
+    spinner.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
+      if (!newVal.matches("\\d*")) {
+        spinner.getEditor().setText(oldVal);
+      }
+    });
+
+    spinner.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+      if (!isFocused) {
+        commitEditorText(spinner);
+      }
+    });
+  }
+
+  private void commitEditorText(Spinner<Integer> spinner) {
+    if (!spinner.isEditable()) return;
+    String text = spinner.getEditor().getText();
+    SpinnerValueFactory<Integer> valueFactory = spinner.getValueFactory();
+    if (valueFactory != null) {
+      try {
+        Integer value = Integer.parseInt(text);
+        // Constraint check is handled by ValueFactory usually, but we force it here for safety
+        if (valueFactory instanceof SpinnerValueFactory.IntegerSpinnerValueFactory factory) {
+          if (value < factory.getMin()) value = factory.getMin();
+          if (value > factory.getMax()) value = factory.getMax();
+        }
+        valueFactory.setValue(value);
+      } catch (NumberFormatException e) {
+        spinner.getEditor().setText(valueFactory.getValue().toString());
+      }
+    }
   }
 
   @FXML
