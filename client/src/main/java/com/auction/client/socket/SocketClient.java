@@ -300,7 +300,7 @@ public final class SocketClient {
     if (listeners != null) {
       for (Consumer<Response<?>> listener : listeners) {
         try {
-          listener.accept(event);
+          Platform.runLater(() -> listener.accept(event));
         } catch (Exception e) {
           logger.error("Error in event listener for {}", event.getType(), e);
         }

@@ -40,6 +40,17 @@ public class LoginController {
       return;
     }
 
+    // Ensure connected before login
+    if (!com.auction.client.socket.SocketClient.getInstance().isConnected()) {
+      try {
+        com.auction.client.socket.SocketClient.getInstance().connect();
+      } catch (Exception e) {
+        logger.error("Failed to connect before login", e);
+        showError("Could not connect to server.");
+        return;
+      }
+    }
+
     authService
         .login(username, password)
         .thenAccept(
