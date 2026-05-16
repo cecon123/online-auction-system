@@ -220,8 +220,15 @@ public class BidService {
                   auction.getId(), auction.getCurrentPrice(), bidder.username(), now);
                         }));
 
-    // 11. AFTER Manual Bid: Trigger Auto-bids for others to respond!
-    triggerAutoBids(request.auctionId(), bidderId);
+    try {
+      // 11. AFTER Manual Bid: Trigger Auto-bids for others to respond.
+      triggerAutoBids(request.auctionId(), bidderId);
+    } catch (RuntimeException e) {
+      logger.warn(
+          "Auto-bid resolver failed after accepted manual bid on auction {}. Manual bid remains valid.",
+          request.auctionId(),
+          e);
+    }
 
     return response;
   }
@@ -302,60 +309,87 @@ public class BidService {
    *     against themselves).
    */
   private void triggerAutoBids(long auctionId, long lastBidderId) {
-    java.util.List<com.auction.common.dto.bid.BidUpdateEvent> allEvents =
+    com.auction.common.dto.bid.BidUpdateEvent event =
         lockManager.executeLocked(
             auctionId,
             () -> {
               Auction auction = auctionDao.findById(auctionId).orElse(null);
               if (auction == null || auction.getStatus() != AuctionStatus.RUNNING) return null;
 
-              java.util.List<com.auction.common.dto.bid.BidUpdateEvent> events =
-                  new java.util.ArrayList<>();
-              for (int guard = 0; guard < 100; guard++) {
-                auction = auctionDao.findById(auctionId).orElse(null);
-                if (auction == null || auction.getStatus() != AuctionStatus.RUNNING) {
-                  return events;
-                }
-
-                boolean placed = false;
-                java.util.List<com.auction.common.model.AutoBidRule> rules =
-                    autoBidDao.findActiveByAuction(auctionId);
-
-                for (com.auction.common.model.AutoBidRule rule : rules) {
-                  // Skip if user is already the leader
-                  if (auction.getHighestBidderId() != null
-                      && auction.getHighestBidderId() == rule.getBidderId()) {
-                    continue;
-                  }
-
-                  java.math.BigDecimal nextBid = auction.getCurrentPrice().add(rule.getIncrement());
-                  if (rule.canBidUpTo(nextBid)) {
-                    logger.info(
-                        "Triggering Auto-bid response for User {} on Auction {}",
-                        rule.getBidderId(),
-                        auctionId);
-                    com.auction.common.dto.bid.BidUpdateEvent event =
-                        placeAutoStep(rule.getBidderId(), auctionId, nextBid, rule.getMaxBid());
-                    events.add(event);
-                    placed = true;
-                    break;
-                  }
-                }
-
-                if (!placed) {
-                  return events;
-                }
+              java.util.List<com.auction.common.model.AutoBidRule> rules =
+                  autoBidDao.findActiveByAuction(auctionId);
+              if (rules == null || rules.isEmpty()) {
+                return null;
               }
-              logger.warn("Auto-bid guard limit reached for auction {}", auctionId);
-              return events;
+              com.auction.common.model.AutoBidRule winningRule = findWinningAutoBidRule(rules);
+              if (winningRule == null) {
+                return null;
+              }
+
+              if (auction.getHighestBidderId() != null
+                  && auction.getHighestBidderId() == winningRule.getBidderId()) {
+                return null;
+              }
+
+              java.math.BigDecimal nextBid = calculateAutoBidPrice(auction, rules, winningRule);
+              if (!winningRule.canBidUpTo(nextBid)
+                  || nextBid.compareTo(auction.getCurrentPrice()) <= 0) {
+                return null;
+              }
+
+              try {
+                logger.info(
+                    "Triggering Auto-bid response for User {} on Auction {}",
+                    winningRule.getBidderId(),
+                    auctionId);
+                return placeAutoStep(
+                    winningRule.getBidderId(), auctionId, nextBid, winningRule.getMaxBid());
+              } catch (RuntimeException e) {
+                logger.warn(
+                    "Auto-bid rule failed for User {} on Auction {}. Removing the rule. Reason: {}",
+                    winningRule.getBidderId(),
+                    auctionId,
+                    e.getMessage());
+                autoBidDao.delete(auctionId, winningRule.getBidderId());
+                return null;
+              }
             });
 
-    if (allEvents != null) {
-      for (com.auction.common.dto.bid.BidUpdateEvent event : allEvents) {
-        notificationService.broadcast(
-            auctionId, com.auction.common.protocol.MessageType.BID_UPDATE, event);
+    if (event != null) {
+      notificationService.broadcast(
+          auctionId, com.auction.common.protocol.MessageType.BID_UPDATE, event);
+    }
+  }
+
+  private com.auction.common.model.AutoBidRule findWinningAutoBidRule(
+      java.util.List<com.auction.common.model.AutoBidRule> rules) {
+    com.auction.common.model.AutoBidRule winningRule = null;
+    for (com.auction.common.model.AutoBidRule rule : rules) {
+      if (winningRule == null || rule.getMaxBid().compareTo(winningRule.getMaxBid()) > 0) {
+        winningRule = rule;
       }
     }
+    return winningRule;
+  }
+
+  private java.math.BigDecimal calculateAutoBidPrice(
+      Auction auction,
+      java.util.List<com.auction.common.model.AutoBidRule> rules,
+      com.auction.common.model.AutoBidRule winningRule) {
+    java.math.BigDecimal secondBestMax = java.math.BigDecimal.ZERO;
+    for (com.auction.common.model.AutoBidRule rule : rules) {
+      if (rule.getBidderId() != winningRule.getBidderId()
+          && rule.getMaxBid().compareTo(secondBestMax) > 0) {
+        secondBestMax = rule.getMaxBid();
+      }
+    }
+
+    java.math.BigDecimal referencePrice = auction.getCurrentPrice().max(secondBestMax);
+    java.math.BigDecimal nextBid = referencePrice.add(winningRule.getIncrement());
+    if (nextBid.compareTo(winningRule.getMaxBid()) > 0) {
+      return winningRule.getMaxBid();
+    }
+    return nextBid;
   }
 
   /**

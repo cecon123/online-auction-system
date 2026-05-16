@@ -34,9 +34,6 @@ public final class SocketClient {
   private String host = "localhost";
   private int port = 8080;
   private String token;
-  private String lastUsername;
-  private String lastPassword;
-  private Runnable onReconnect;
 
   private Socket socket;
   private PrintWriter out;
@@ -66,10 +63,6 @@ public final class SocketClient {
   // Listeners for connection status
   private final List<Consumer<Boolean>> connectionListeners = new CopyOnWriteArrayList<>();
 
-  private int reconnectAttempts = 0;
-  private static final int MAX_RECONNECT_ATTEMPTS = 5;
-  private static final long RECONNECT_DELAY_MS = 3000;
-
   private SocketClient() {}
 
   public static SocketClient getInstance() {
@@ -98,9 +91,6 @@ public final class SocketClient {
   }
 
   private void notifyConnectionStatus(boolean connected) {
-    if (connected && onReconnect != null) {
-      onReconnect.run();
-    }
     for (Consumer<Boolean> listener : connectionListeners) {
       try {
         listener.accept(connected);
@@ -122,7 +112,6 @@ public final class SocketClient {
       in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
       running = true;
-      reconnectAttempts = 0;
       updateConnectionState(ConnectionState.CONNECTED);
 
       listenerThread = new Thread(this::listen, "SocketListener");
@@ -151,7 +140,7 @@ public final class SocketClient {
     boolean wasRunning = running;
     running = false;
     token = null;
-    clearCredentials();
+    failPendingRequests(new IOException("Disconnected from server"));
     try {
       if (socket != null) socket.close();
       if (listenerThread != null) listenerThread.interrupt();
@@ -181,13 +170,17 @@ public final class SocketClient {
     String json = JsonMapper.getInstance().toJson(request);
     logger.debug("TX {}", summarizeRequest(request));
     out.println(json);
+    if (out.checkError()) {
+      pendingRequests.remove(requestId);
+      return CompletableFuture.failedFuture(new IOException("Failed to send request to server"));
+    }
 
     // Cast to specific return type for the caller
     return future.thenApply(response -> (Response<R>) response);
   }
 
   public boolean isConnected() {
-    return running && socket != null && socket.isConnected() && out != null;
+    return running && socket != null && socket.isConnected() && !socket.isClosed() && out != null;
   }
 
   /** Listener loop that reads messages from the server. */
@@ -198,11 +191,14 @@ public final class SocketClient {
       while (running && (line = in.readLine()) != null) {
         handleMessage(line);
       }
+      if (running) {
+        logger.warn("Connection closed by server.");
+        handleConnectionLoss(new IOException("Connection closed by server"));
+      }
     } catch (IOException e) {
       if (running) {
         logger.error("Connection lost: {}", e.getMessage());
-        notifyConnectionStatus(false);
-        scheduleReconnection();
+        handleConnectionLoss(e);
       }
     } finally {
       try {
@@ -215,40 +211,17 @@ public final class SocketClient {
     }
   }
 
-  private void scheduleReconnection() {
-    if (!running) return;
+  private synchronized void handleConnectionLoss(IOException cause) {
+    running = false;
+    token = null;
+    failPendingRequests(cause);
+    updateConnectionState(ConnectionState.DISCONNECTED);
+    notifyConnectionStatus(false);
+  }
 
-    Thread reconnectThread =
-        new Thread(
-            () -> {
-              while (running && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-                reconnectAttempts++;
-                updateConnectionState(ConnectionState.RECONNECTING);
-                logger.info(
-                    "Attempting to reconnect ({}/{})...",
-                    reconnectAttempts,
-                    MAX_RECONNECT_ATTEMPTS);
-                try {
-                  Thread.sleep(RECONNECT_DELAY_MS);
-                  connect();
-                  return; // Success, exit thread
-                } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-                  break;
-                } catch (IOException e) {
-                  logger.error("Reconnection attempt failed: {}", e.getMessage());
-                }
-              }
-
-              if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-                logger.error("Max reconnection attempts reached. Giving up.");
-                running = false;
-                updateConnectionState(ConnectionState.DISCONNECTED);
-              }
-            },
-            "ReconnectThread");
-    reconnectThread.setDaemon(true);
-    reconnectThread.start();
+  private void failPendingRequests(IOException cause) {
+    pendingRequests.forEach((id, future) -> future.completeExceptionally(cause));
+    pendingRequests.clear();
   }
 
   private void handleMessage(String json) {
@@ -301,28 +274,6 @@ public final class SocketClient {
 
   public String getToken() {
     return token;
-  }
-
-  public void setCredentials(String username, String password) {
-    this.lastUsername = username;
-    this.lastPassword = password;
-  }
-
-  public void clearCredentials() {
-    this.lastUsername = null;
-    this.lastPassword = null;
-  }
-
-  public String getLastUsername() {
-    return lastUsername;
-  }
-
-  public String getLastPassword() {
-    return lastPassword;
-  }
-
-  public void setOnReconnect(Runnable onReconnect) {
-    this.onReconnect = onReconnect;
   }
 
   private String summarizeRequest(Request<?> request) {

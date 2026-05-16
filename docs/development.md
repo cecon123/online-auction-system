@@ -47,7 +47,7 @@ Dự án được tổ chức theo mô hình Maven Multi-module:
     1. Chạy `mvn clean install` để build toàn bộ.
     2. Chạy Server: `mvn -pl server exec:java`.
     3. Chạy Client: `mvn -pl client javafx:run`.
-    4. Sử dụng tài khoản `admin`/`admin123` để kiểm tra chức năng quản trị.
+    4. Sử dụng các tài khoản seed `admin`, `seller01`, `seller02`, `bidder01`, `bidder02` với password `password123` để kiểm tra flow demo.
 
 ## 5. Xử lý Lỗi & Logging
 

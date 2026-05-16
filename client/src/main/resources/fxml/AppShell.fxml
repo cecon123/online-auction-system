@@ -17,12 +17,11 @@
         <BorderPane fx:id="contentRoot" id="contentRoot">
             <top>
                 <VBox>
-                    <!-- Disconnected Banner -->
                     <HBox fx:id="disconnectedBanner" spacing="12" alignment="CENTER" visible="false" managed="false" style="-fx-background-color: #ef4444; -fx-padding: 8 16;">
                         <org.kordamp.ikonli.javafx.FontIcon iconLiteral="mdi2w-wifi-off" iconSize="16" iconColor="white" />
-                        <javafx.scene.control.Label text="Connection Lost. Attempting to reconnect..." style="-fx-text-fill: white; -fx-font-weight: bold;" />
+                        <javafx.scene.control.Label text="Connection lost. Please logout and login again." style="-fx-text-fill: white; -fx-font-weight: bold;" />
                         <javafx.scene.layout.Region HBox.hgrow="ALWAYS" />
-                        <javafx.scene.control.Button text="Retry Now" onAction="#handleRetryConnection" style="-fx-background-color: white; -fx-text-fill: #ef4444; -fx-font-size: 11px; -fx-font-weight: bold; -fx-background-radius: 4;" />
+                        <javafx.scene.control.Button text="Logout" onAction="#handleDisconnectedLogout" style="-fx-background-color: white; -fx-text-fill: #ef4444; -fx-font-size: 11px; -fx-font-weight: bold; -fx-background-radius: 4;" />
                     </HBox>
                     <fx:include source="components/TopBar.fxml" />
                 </VBox>

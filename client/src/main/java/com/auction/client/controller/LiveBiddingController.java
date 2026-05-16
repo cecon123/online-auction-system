@@ -1014,9 +1014,11 @@ public class LiveBiddingController {
     com.auction.common.dto.auction.AuctionEventDto event =
         JsonMapper.getInstance()
             .convertData(response.getData(), com.auction.common.dto.auction.AuctionEventDto.class);
-    if (event.auctionId().equals(auctionId)) {
-      Platform.runLater(
-          () -> {
+    if (event == null || event.auctionId() == null || !event.auctionId().equals(auctionId)) {
+      return;
+    }
+    Platform.runLater(
+        () -> {
             String finalStatus = event.status().name();
             this.statusLabel.setText(finalStatus);
             updateStatusStyle(finalStatus);
@@ -1048,22 +1050,22 @@ public class LiveBiddingController {
                     "Auction ended. Reserve price wasn't met. You will be refunded.", false);
               }
             }
-          });
-    }
+        });
   }
 
   private void handleTimeExtended(Response<?> response) {
     com.auction.common.dto.auction.AuctionEventDto event =
         JsonMapper.getInstance()
             .convertData(response.getData(), com.auction.common.dto.auction.AuctionEventDto.class);
-    if (event.auctionId().equals(auctionId)) {
-      Platform.runLater(
-          () -> {
+    if (event == null || event.auctionId() == null || !event.auctionId().equals(auctionId)) {
+      return;
+    }
+    Platform.runLater(
+        () -> {
             this.endTime = event.newEndTime();
             showManualMessage("Time extended! More time to bid.", true);
             updateCountdown();
-          });
-    }
+        });
   }
 
   private void handleAuctionListUpdated(Response<?> response) {
