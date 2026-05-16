@@ -2,6 +2,7 @@ package com.auction.server.dao;
 
 import com.auction.common.enums.AuctionStatus;
 import com.auction.common.model.Auction;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,4 +41,15 @@ public interface AuctionDao {
    * @throws IllegalStateException if the update fails due to a version mismatch.
    */
   void update(Auction auction);
+
+  default SettlementState getSettlementState(long auctionId) {
+    return new SettlementState(0, null, null);
+  }
+
+  default void markSettlementFailed(
+      long auctionId, int attempts, String lastError, LocalDateTime nextRetryAt) {}
+
+  default void clearSettlementFailure(long auctionId) {}
+
+  record SettlementState(int attempts, String lastError, LocalDateTime nextRetryAt) {}
 }

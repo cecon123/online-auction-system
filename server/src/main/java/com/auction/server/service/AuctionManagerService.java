@@ -3,6 +3,7 @@ package com.auction.server.service;
 import com.auction.common.enums.AuctionStatus;
 import com.auction.common.model.Auction;
 import com.auction.server.dao.AuctionDao;
+import com.auction.server.dao.Database;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -18,6 +19,8 @@ import org.slf4j.LoggerFactory;
 public class AuctionManagerService {
 
   private static final Logger logger = LoggerFactory.getLogger(AuctionManagerService.class);
+  private static final int MAX_SETTLEMENT_ATTEMPTS = 5;
+  private static final long[] SETTLEMENT_BACKOFF_SECONDS = {5, 15, 60, 300, 900};
 
   private final AuctionDao auctionDao;
   private final com.auction.server.dao.UserDao userDao;
@@ -75,15 +78,17 @@ public class AuctionManagerService {
     } else if (currentStatus == AuctionStatus.RUNNING && now.isAfter(auction.getEndTime())) {
       newStatus = AuctionStatus.FINISHED;
     } else if (currentStatus == AuctionStatus.FINISHED) {
-      newStatus = finalizeFinishedAuction(auction);
+      newStatus = AuctionStatus.FINISHED;
     }
 
-    if (newStatus != currentStatus) {
+    if (newStatus != currentStatus || currentStatus == AuctionStatus.FINISHED) {
       try {
-        logger.info(
-            "Transitioning Auction {} from {} to {}.", auction.getId(), currentStatus, newStatus);
-
         AuctionStatus finalStatus = newStatus;
+
+        if (newStatus != currentStatus) {
+          logger.info(
+              "Transitioning Auction {} from {} to {}.", auction.getId(), currentStatus, newStatus);
+        }
 
         if (newStatus == AuctionStatus.RUNNING || newStatus == AuctionStatus.FINISHED) {
           auction.setStatus(newStatus);
@@ -94,9 +99,23 @@ public class AuctionManagerService {
           finalStatus = finalizeFinishedAuction(auction);
           if (finalStatus != AuctionStatus.FINISHED) {
             if (finalStatus == AuctionStatus.PAID) {
-              settleFinishedAuction(auction);
+              if (!canAttemptSettlement(auction, now)) {
+                return;
+              }
+              try {
+                settleFinishedAuction(auction);
+                auctionDao.clearSettlementFailure(auction.getId());
+              } catch (RuntimeException e) {
+                markSettlementFailure(auction, now, e);
+                return;
+              }
             } else if (finalStatus == AuctionStatus.CANCELED) {
-              refundHighestBidderIfNecessary(auction);
+              Database.getInstance()
+                  .runInTransaction(
+                      () -> {
+                        refundHighestBidderIfNecessary(auction);
+                        return null;
+                      });
             }
             logger.info(
                 "Transitioning Auction {} from {} to {}.",
@@ -108,6 +127,7 @@ public class AuctionManagerService {
           }
         } else if (newStatus == AuctionStatus.PAID) {
           settleFinishedAuction(auction);
+          auctionDao.clearSettlementFailure(auction.getId());
           auction.setStatus(AuctionStatus.PAID);
           auctionDao.update(auction);
           finalStatus = AuctionStatus.PAID;
@@ -238,13 +258,18 @@ public class AuctionManagerService {
         finalPrice,
         maxLocked);
 
-    walletService.settleAuction(winnerId, auction.getSellerId(), finalPrice);
+    Database.getInstance()
+        .runInTransaction(
+            () -> {
+              walletService.settleAuction(winnerId, auction.getSellerId(), finalPrice);
 
-    java.math.BigDecimal leftover = maxLocked.subtract(finalPrice);
-    if (leftover.compareTo(java.math.BigDecimal.ZERO) > 0) {
-      logger.info("Releasing leftover Proxy funds: {}", leftover);
-      walletService.releaseFunds(winnerId, leftover);
-    }
+              java.math.BigDecimal leftover = maxLocked.subtract(finalPrice);
+              if (leftover.compareTo(java.math.BigDecimal.ZERO) > 0) {
+                logger.info("Releasing leftover Proxy funds: {}", leftover);
+                walletService.releaseFunds(winnerId, leftover);
+              }
+              return null;
+            });
   }
 
   private void refundHighestBidderIfNecessary(Auction auction) {
@@ -258,5 +283,38 @@ public class AuctionManagerService {
         auction.getHighestMaxBid(),
         auction.getHighestBidderId());
     walletService.releaseFunds(auction.getHighestBidderId(), auction.getHighestMaxBid());
+  }
+
+  private boolean canAttemptSettlement(Auction auction, LocalDateTime now) {
+    AuctionDao.SettlementState settlementState = auctionDao.getSettlementState(auction.getId());
+    if (settlementState.attempts() >= MAX_SETTLEMENT_ATTEMPTS) {
+      logger.warn(
+          "Settlement attempts exhausted for Auction {}. Last error: {}",
+          auction.getId(),
+          settlementState.lastError());
+      return false;
+    }
+
+    return settlementState.nextRetryAt() == null || !now.isBefore(settlementState.nextRetryAt());
+  }
+
+  private void markSettlementFailure(Auction auction, LocalDateTime now, RuntimeException e) {
+    AuctionDao.SettlementState settlementState = auctionDao.getSettlementState(auction.getId());
+    int attempts = settlementState.attempts() + 1;
+    LocalDateTime nextRetryAt = null;
+    if (attempts < MAX_SETTLEMENT_ATTEMPTS) {
+      long delaySeconds =
+          SETTLEMENT_BACKOFF_SECONDS[Math.min(attempts - 1, SETTLEMENT_BACKOFF_SECONDS.length - 1)];
+      nextRetryAt = now.plusSeconds(delaySeconds);
+    }
+
+    auctionDao.markSettlementFailed(auction.getId(), attempts, e.getMessage(), nextRetryAt);
+    logger.warn(
+        "Settlement failed for Auction {} on attempt {}/{}. Next retry: {}",
+        auction.getId(),
+        attempts,
+        MAX_SETTLEMENT_ATTEMPTS,
+        nextRetryAt,
+        e);
   }
 }

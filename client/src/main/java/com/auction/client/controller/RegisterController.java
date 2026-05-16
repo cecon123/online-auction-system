@@ -79,7 +79,7 @@ public class RegisterController {
               Platform.runLater(
                   () -> {
                     if (response.isSuccess()) {
-                      setSuccessMessage("Registration successful. Please go back to login.");
+                      SceneManager.showLogin();
                     } else {
                       setErrorMessage(response.getMessage());
                     }

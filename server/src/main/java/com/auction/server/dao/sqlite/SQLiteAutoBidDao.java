@@ -84,7 +84,12 @@ public class SQLiteAutoBidDao implements AutoBidDao {
 
   @Override
   public List<AutoBidRule> findActiveByAuction(long auctionId) {
-    String sql = "SELECT * FROM auto_bids WHERE auction_id = ? AND active = 1";
+    String sql =
+        """
+            SELECT * FROM auto_bids
+            WHERE auction_id = ? AND active = 1
+            ORDER BY created_at ASC, id ASC
+            """;
     List<AutoBidRule> rules = new ArrayList<>();
 
     try (Connection connection = database.getConnection();

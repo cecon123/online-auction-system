@@ -4,6 +4,7 @@ import com.auction.common.dto.auth.LoginRequest;
 import com.auction.common.dto.auth.LoginResponse;
 import com.auction.common.dto.auth.RegisterRequest;
 import com.auction.common.dto.auth.RegisterResponse;
+import com.auction.common.enums.Role;
 import com.auction.server.dao.UserDao;
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -32,6 +33,10 @@ public class AuthService {
    * @throws IllegalArgumentException if the username already exists.
    */
   public RegisterResponse register(RegisterRequest request) {
+    if (request.role() == Role.ADMIN) {
+      throw new IllegalArgumentException("Admin accounts cannot be created from public register.");
+    }
+
     // 1. Check if username exists
     if (userDao.findByUsername(request.username()).isPresent()) {
       throw new IllegalArgumentException("Username already exists.");
@@ -89,7 +94,7 @@ public class AuthService {
 
     // 4. Issue token
     String token = sessionManager.createSession(user.id());
-    logger.info("User {} logged in successfully. Issued token: {}", user.username(), token);
+    logger.info("User {} logged in successfully.", user.username());
 
     return new LoginResponse(
         user.id(),

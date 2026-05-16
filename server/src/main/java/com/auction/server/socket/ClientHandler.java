@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Handles a single connected client.
@@ -16,6 +18,8 @@ import java.net.Socket;
  * <p>The server uses newline-delimited JSON: each request must be sent as one JSON line.
  */
 public class ClientHandler implements Runnable {
+
+  private static final Logger logger = LoggerFactory.getLogger(ClientHandler.class);
 
   private final Socket socket;
   private final JsonMapper jsonMapper;
@@ -42,9 +46,9 @@ public class ClientHandler implements Runnable {
         writer.println(jsonMapper.toJson(response));
       }
     } catch (java.net.SocketTimeoutException e) {
-      System.err.println("Client timed out due to inactivity: " + socket.getRemoteSocketAddress());
+      logger.warn("Client timed out due to inactivity: {}", socket.getRemoteSocketAddress());
     } catch (IOException e) {
-      System.err.println("Client disconnected: " + e.getMessage());
+      logger.info("Client disconnected: {}", e.getMessage());
     } finally {
       if (writer != null) {
         notificationService.unsubscribeFromAll(writer);

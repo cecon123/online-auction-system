@@ -64,6 +64,18 @@ class AuthServiceTest {
   }
 
   @Test
+  void shouldRejectPublicAdminRegistration() {
+    RegisterRequest request =
+        new RegisterRequest("Admin User", "admin_user", "password123", Role.ADMIN);
+
+    IllegalArgumentException exception =
+        assertThrows(IllegalArgumentException.class, () -> authService.register(request));
+
+    assertTrue(exception.getMessage().contains("Admin accounts cannot be created"));
+    verify(userDao, never()).create(anyString(), anyString(), anyString(), any(), any(), any());
+  }
+
+  @Test
   void shouldLoginSuccessfully() {
     // Arrange
     String password = "password123";

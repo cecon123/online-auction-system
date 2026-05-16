@@ -27,6 +27,8 @@ public final class NotificationManager {
   private static final double TOAST_WIDTH = 300;
   private static final double TOAST_HEIGHT = 80;
   private static final Duration DISPLAY_TIME = Duration.seconds(3);
+  private static final long BID_TOAST_THROTTLE_MS = 2500;
+  private static long lastBidToastAt = 0;
 
   private NotificationManager() {}
 
@@ -46,6 +48,12 @@ public final class NotificationManager {
             if (event.bidderUsername().equals(currentUsername)) {
               return;
             }
+
+            long now = System.currentTimeMillis();
+            if (now - lastBidToastAt < BID_TOAST_THROTTLE_MS) {
+              return;
+            }
+            lastBidToastAt = now;
 
             String title = "New Bid Placed!";
             String message =

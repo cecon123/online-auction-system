@@ -35,8 +35,8 @@ public class ConcurrentBidTest {
     if (dbFile.exists()) {
       boolean deleted = dbFile.delete();
       if (!deleted) {
-        System.err.println(
-            "Warning: Could not delete existing test database file: " + TEST_DB_FILE);
+        throw new IllegalStateException(
+            "Could not delete existing test database file: " + TEST_DB_FILE);
       }
     }
 
@@ -88,8 +88,6 @@ public class ConcurrentBidTest {
     long auctionId = 1L; // From seed.sql
     long bidderId = 4L; // Alice Bidder (bidder01)
 
-    System.out.println("Starting stress test with " + threadCount + " threads on " + TEST_DB_FILE);
-
     for (int i = 0; i < threadCount; i++) {
       final int index = i;
       executor.submit(
@@ -114,24 +112,11 @@ public class ConcurrentBidTest {
           });
     }
 
-    long startTime = System.currentTimeMillis();
     startLatch.countDown(); // FIRE!
 
     boolean completed = finishLatch.await(15, TimeUnit.SECONDS);
-    long duration = System.currentTimeMillis() - startTime;
 
     executor.shutdown();
-
-    System.out.println("Test duration: " + duration + "ms");
-    System.out.println("Success: " + successCount.get());
-    System.out.println("Failure: " + failureCount.get());
-
-    if (firstError.get() != null) {
-      System.err.println("First error encountered: " + firstError.get().getMessage());
-      if (!(firstError.get() instanceof IllegalArgumentException)) {
-        firstError.get().printStackTrace();
-      }
-    }
 
     assertTrue(
         completed,
@@ -141,15 +126,7 @@ public class ConcurrentBidTest {
         successCount.get() + failureCount.get(),
         "Total results must match thread count");
 
-    // Verify final state in DB if any success
-    if (successCount.get() > 0) {
-      auctionDao
-          .findById(auctionId)
-          .ifPresent(
-              auction -> {
-                System.out.println("Final Price in DB: " + auction.getCurrentPrice());
-              });
-    }
+    assertTrue(auctionDao.findById(auctionId).isPresent(), "Auction should remain readable");
 
     assertTrue(
         successCount.get() > 0,
