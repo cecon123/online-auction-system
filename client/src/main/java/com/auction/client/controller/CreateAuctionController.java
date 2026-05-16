@@ -295,7 +295,7 @@ public class CreateAuctionController {
                   () -> {
                     if (response.isSuccess()) {
                       showSuccess("Auction created successfully!");
-                      // SceneManager.showSellerCenter(); // Keep on current screen as requested
+                      SceneManager.showSellerCenter();
                     } else {
                       showError("Failed to create auction: " + response.getMessage());
                     }

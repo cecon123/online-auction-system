@@ -52,7 +52,7 @@ public class NotificationService {
 
   /** Unsubscribes a client from all auctions (e.g., when they disconnect). */
   public void unsubscribeFromAll(PrintWriter clientWriter) {
-    subscriptions.values().forEach(clients -> clients.remove(clientWriter));
+    subscriptions.entrySet().removeIf(entry -> removeWriter(entry.getValue(), clientWriter));
     unregisterUserConnection(clientWriter);
   }
 
@@ -64,7 +64,7 @@ public class NotificationService {
 
   /** Removes a client's socket connection from any user ID mapping upon disconnect. */
   public void unregisterUserConnection(PrintWriter clientWriter) {
-    userConnections.values().forEach(clients -> clients.remove(clientWriter));
+    userConnections.entrySet().removeIf(entry -> removeWriter(entry.getValue(), clientWriter));
   }
 
   /** Sends a direct notification to all active connections of a specific user. */
@@ -84,9 +84,10 @@ public class NotificationService {
     clients.forEach(
         writer -> {
           try {
-            writer.println(json);
+            sendOrDrop(clients, writer, json);
           } catch (Exception e) {
             logger.error("Failed to send notification to User {}", userId, e);
+            clients.remove(writer);
           }
         });
   }
@@ -105,9 +106,13 @@ public class NotificationService {
         .forEach(
             writer -> {
               try {
-                writer.println(json);
+                sendOrDrop(userConnections.values().stream()
+                    .filter(clients -> clients.contains(writer))
+                    .findFirst()
+                    .orElse(Collections.emptySet()), writer, json);
               } catch (Exception e) {
                 logger.error("Failed to send broadcast to a user", e);
+                unregisterUserConnection(writer);
               }
             });
   }
@@ -130,10 +135,26 @@ public class NotificationService {
     clients.forEach(
         writer -> {
           try {
-            writer.println(json);
+            sendOrDrop(clients, writer, json);
           } catch (Exception e) {
             logger.error("Failed to send broadcast to a client", e);
+            clients.remove(writer);
           }
         });
+  }
+
+  private void sendOrDrop(Set<PrintWriter> clients, PrintWriter writer, String json) {
+    synchronized (writer) {
+      writer.println(json);
+      if (writer.checkError()) {
+        clients.remove(writer);
+        unregisterUserConnection(writer);
+      }
+    }
+  }
+
+  private boolean removeWriter(Set<PrintWriter> clients, PrintWriter writer) {
+    clients.remove(writer);
+    return clients.isEmpty();
   }
 }

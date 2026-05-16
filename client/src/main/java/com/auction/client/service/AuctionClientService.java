@@ -5,8 +5,10 @@ import com.auction.client.util.JsonMapper;
 import com.auction.common.dto.auction.AuctionDetailDto;
 import com.auction.common.dto.auction.AuctionSummaryDto;
 import com.auction.common.dto.auction.CreateAuctionRequest;
+import com.auction.common.dto.bid.AutoBidDto;
 import com.auction.common.dto.bid.PlaceBidRequest;
 import com.auction.common.dto.bid.PlaceBidResponse;
+import com.auction.common.dto.bid.SetAutoBidRequest;
 import com.auction.common.protocol.MessageType;
 import com.auction.common.protocol.Request;
 import com.auction.common.protocol.Response;
@@ -74,6 +76,29 @@ public class AuctionClientService {
               if (response.isSuccess()) {
                 PlaceBidResponse data =
                     jsonMapper.convertData(response.getData(), PlaceBidResponse.class);
+                response.setData(data);
+              }
+              return response;
+            });
+  }
+
+  /** Saves or disables a server-side auto-bid rule. */
+  public CompletableFuture<Response<Void>> setAutoBid(SetAutoBidRequest autoBidRequest) {
+    Request<SetAutoBidRequest> request =
+        new Request<>(MessageType.SET_AUTO_BID, null, null, autoBidRequest);
+    return socketClient.<SetAutoBidRequest, Void>sendRequest(request);
+  }
+
+  /** Fetches the current user's auto-bid rule for an auction. */
+  public CompletableFuture<Response<AutoBidDto>> getAutoBid(Long auctionId) {
+    Request<Long> request = new Request<>(MessageType.GET_AUTO_BID, null, null, auctionId);
+
+    return socketClient
+        .<Long, AutoBidDto>sendRequest(request)
+        .thenApply(
+            response -> {
+              if (response.isSuccess()) {
+                AutoBidDto data = jsonMapper.convertData(response.getData(), AutoBidDto.class);
                 response.setData(data);
               }
               return response;

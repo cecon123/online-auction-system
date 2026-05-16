@@ -66,9 +66,6 @@ public class BidServiceConcurrencyTest {
       Thread.sleep(100);
     }
 
-    System.out.println("Success bids: " + successCount.get());
-    System.out.println("Failed bids: " + failureCount.get());
-
     // Note: This test might have some failures now if the DB is empty,
     // but it still verifies that the Locking logic doesn't deadlock.
     // The important part is that it compiles and runs.

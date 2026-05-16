@@ -48,6 +48,9 @@ CREATE TABLE IF NOT EXISTS auctions (
     end_time TEXT NOT NULL,
     status TEXT NOT NULL CHECK (status IN ('OPEN', 'RUNNING', 'FINISHED', 'PAID', 'CANCELED')),
     version INTEGER NOT NULL DEFAULT 0,
+    settlement_attempts INTEGER NOT NULL DEFAULT 0,
+    settlement_last_error TEXT,
+    settlement_next_retry_at TEXT,
     created_at TEXT NOT NULL,
 
     FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,

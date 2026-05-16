@@ -6,8 +6,10 @@ import static org.mockito.Mockito.*;
 
 import com.auction.common.dto.bid.PlaceBidRequest;
 import com.auction.common.dto.bid.PlaceBidResponse;
+import com.auction.common.dto.bid.SetAutoBidRequest;
 import com.auction.common.enums.AuctionStatus;
 import com.auction.common.model.Auction;
+import com.auction.common.model.AutoBidRule;
 import com.auction.common.model.BidTransaction;
 import com.auction.server.dao.AuctionDao;
 import com.auction.server.dao.AutoBidDao;
@@ -20,6 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -170,6 +173,69 @@ class BidServiceTest {
     // Assert
     verify(walletService).releaseFunds(eq(previousBidderId), eq(previousMaxBid));
     verify(walletService).lockFunds(eq(BIDDER_ID), eq(bidAmount));
+  }
+
+  @Test
+  void shouldSaveCustomAutoBidIncrement() {
+    Auction auction = createMockAuction(new BigDecimal("100.00"));
+    UserDao.UserRecord bidder = createMockUser(BIDDER_ID, "bidder01", new BigDecimal("1000.00"));
+
+    when(auctionDao.findById(AUCTION_ID)).thenReturn(Optional.of(auction));
+    when(userDao.findById(BIDDER_ID)).thenReturn(Optional.of(bidder));
+    when(autoBidDao.findActiveByAuction(AUCTION_ID)).thenReturn(java.util.List.of());
+
+    bidService.setAutoBid(
+        BIDDER_ID,
+        new SetAutoBidRequest(
+            AUCTION_ID, new BigDecimal("500.00"), new BigDecimal("25.00"), true));
+
+    ArgumentCaptor<AutoBidRule> captor = ArgumentCaptor.forClass(AutoBidRule.class);
+    verify(autoBidDao).createOrUpdate(captor.capture());
+    assertEquals(new BigDecimal("25.00"), captor.getValue().getIncrement());
+    assertTrue(captor.getValue().isActive());
+  }
+
+  @Test
+  void shouldPersistDisabledAutoBidWithoutTriggeringResolver() {
+    Auction auction = createMockAuction(new BigDecimal("100.00"));
+    UserDao.UserRecord bidder = createMockUser(BIDDER_ID, "bidder01", new BigDecimal("1000.00"));
+
+    when(auctionDao.findById(AUCTION_ID)).thenReturn(Optional.of(auction));
+    when(userDao.findById(BIDDER_ID)).thenReturn(Optional.of(bidder));
+
+    bidService.setAutoBid(
+        BIDDER_ID,
+        new SetAutoBidRequest(
+            AUCTION_ID, new BigDecimal("500.00"), new BigDecimal("25.00"), false));
+
+    ArgumentCaptor<AutoBidRule> captor = ArgumentCaptor.forClass(AutoBidRule.class);
+    verify(autoBidDao).createOrUpdate(captor.capture());
+    assertFalse(captor.getValue().isActive());
+    verify(autoBidDao, never()).findActiveByAuction(AUCTION_ID);
+  }
+
+  @Test
+  void shouldNotRateLimitAfterFailedBidPersistence() {
+    BigDecimal bidAmount = new BigDecimal("120.00");
+    Auction firstAttempt = createMockAuction(new BigDecimal("100.00"));
+    Auction secondAttempt = createMockAuction(new BigDecimal("100.00"));
+    UserDao.UserRecord bidder = createMockUser(BIDDER_ID, "bidder01", new BigDecimal("1000.00"));
+
+    when(auctionDao.findById(AUCTION_ID))
+        .thenReturn(Optional.of(firstAttempt))
+        .thenReturn(Optional.of(secondAttempt));
+    when(userDao.findById(BIDDER_ID)).thenReturn(Optional.of(bidder));
+    doThrow(new IllegalStateException("database update failed"))
+        .doNothing()
+        .when(auctionDao)
+        .update(any(Auction.class));
+
+    PlaceBidRequest request = new PlaceBidRequest(AUCTION_ID, bidAmount);
+
+    assertThrows(IllegalStateException.class, () -> bidService.placeBid(BIDDER_ID, request));
+    PlaceBidResponse retryResponse = bidService.placeBid(BIDDER_ID, request);
+
+    assertEquals(bidAmount, retryResponse.currentPrice());
   }
 
   private Auction createMockAuction(BigDecimal startingPrice) {

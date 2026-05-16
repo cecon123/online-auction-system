@@ -5,8 +5,12 @@ import com.auction.server.dao.SchemaInitializer;
 import com.auction.server.dao.sqlite.SQLiteAuctionDao;
 import com.auction.server.service.AuctionManagerService;
 import com.auction.server.socket.SocketServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ServerMain {
+  private static final Logger logger = LoggerFactory.getLogger(ServerMain.class);
+
   public static void main(String[] args) {
     // Set default timezone to Vietnam
     java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
@@ -14,8 +18,7 @@ public class ServerMain {
     // Register Global Exception Handler
     Thread.setDefaultUncaughtExceptionHandler(
         (t, e) -> {
-          System.err.println("CRITICAL: Uncaught exception in thread " + t.getName());
-          e.printStackTrace();
+          logger.error("Critical uncaught exception in thread {}", t.getName(), e);
           // In a real app, we might want to restart the service or send an alert
         });
 

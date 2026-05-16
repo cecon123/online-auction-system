@@ -6,8 +6,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +39,8 @@ public final class SchemaInitializer {
         }
       }
 
+      ensureSettlementColumns(connection);
+
       logger.info("Database schema initialized.");
 
       // Check if we should seed the database
@@ -52,6 +57,29 @@ public final class SchemaInitializer {
       }
     } catch (SQLException e) {
       throw new IllegalStateException("Could not initialize database schema", e);
+    }
+  }
+
+  private static void ensureSettlementColumns(Connection connection) throws SQLException {
+    Set<String> columns = new HashSet<>();
+    try (Statement statement = connection.createStatement();
+        ResultSet resultSet = statement.executeQuery("PRAGMA table_info(auctions)")) {
+      while (resultSet.next()) {
+        columns.add(resultSet.getString("name"));
+      }
+    }
+
+    try (Statement statement = connection.createStatement()) {
+      if (!columns.contains("settlement_attempts")) {
+        statement.execute(
+            "ALTER TABLE auctions ADD COLUMN settlement_attempts INTEGER NOT NULL DEFAULT 0");
+      }
+      if (!columns.contains("settlement_last_error")) {
+        statement.execute("ALTER TABLE auctions ADD COLUMN settlement_last_error TEXT");
+      }
+      if (!columns.contains("settlement_next_retry_at")) {
+        statement.execute("ALTER TABLE auctions ADD COLUMN settlement_next_retry_at TEXT");
+      }
     }
   }
 

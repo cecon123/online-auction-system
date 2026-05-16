@@ -306,7 +306,7 @@ public class EditAuctionController {
                   () -> {
                     if (response.isSuccess()) {
                       showSuccess("Auction updated successfully!");
-                      // SceneManager.showSellerCenter(); // Stay on current screen
+                      SceneManager.showSellerCenter();
                     } else {
                       showError("Failed to update auction: " + response.getMessage());
                     }

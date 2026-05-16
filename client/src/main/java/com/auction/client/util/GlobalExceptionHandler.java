@@ -1,7 +1,5 @@
 package com.auction.client.util;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
@@ -34,10 +32,7 @@ public class GlobalExceptionHandler implements Thread.UncaughtExceptionHandler {
     alert.setContentText(e.getMessage() != null ? e.getMessage() : e.toString());
 
     // Create expandable Exception.
-    StringWriter sw = new StringWriter();
-    PrintWriter pw = new PrintWriter(sw);
-    e.printStackTrace(pw);
-    String exceptionText = sw.toString();
+    String exceptionText = stackTraceText(e);
 
     Label label = new Label("The exception stacktrace was:");
 
@@ -59,5 +54,13 @@ public class GlobalExceptionHandler implements Thread.UncaughtExceptionHandler {
     alert.getDialogPane().setExpandableContent(expContent);
 
     alert.showAndWait();
+  }
+
+  private String stackTraceText(Throwable e) {
+    StringBuilder builder = new StringBuilder(e.toString()).append(System.lineSeparator());
+    for (StackTraceElement element : e.getStackTrace()) {
+      builder.append("\tat ").append(element).append(System.lineSeparator());
+    }
+    return builder.toString();
   }
 }

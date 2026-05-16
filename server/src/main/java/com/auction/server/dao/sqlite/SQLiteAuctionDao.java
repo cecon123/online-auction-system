@@ -250,6 +250,78 @@ public class SQLiteAuctionDao implements AuctionDao {
     }
   }
 
+  @Override
+  public SettlementState getSettlementState(long auctionId) {
+    String sql =
+        """
+            SELECT settlement_attempts, settlement_last_error, settlement_next_retry_at
+            FROM auctions
+            WHERE id = ?
+            """;
+
+    try (Connection connection = database.getConnection();
+        PreparedStatement statement = connection.prepareStatement(sql)) {
+      statement.setLong(1, auctionId);
+
+      try (ResultSet resultSet = statement.executeQuery()) {
+        if (!resultSet.next()) {
+          return new SettlementState(0, null, null);
+        }
+
+        String nextRetry = resultSet.getString("settlement_next_retry_at");
+        return new SettlementState(
+            resultSet.getInt("settlement_attempts"),
+            resultSet.getString("settlement_last_error"),
+            nextRetry == null ? null : LocalDateTime.parse(nextRetry));
+      }
+    } catch (SQLException e) {
+      logger.error("Database error during getSettlementState: {}", auctionId, e);
+      throw new IllegalStateException("Could not read settlement state: " + auctionId, e);
+    }
+  }
+
+  @Override
+  public void markSettlementFailed(
+      long auctionId, int attempts, String lastError, LocalDateTime nextRetryAt) {
+    String sql =
+        """
+            UPDATE auctions
+            SET settlement_attempts = ?, settlement_last_error = ?, settlement_next_retry_at = ?
+            WHERE id = ?
+            """;
+
+    try (Connection connection = database.getConnection();
+        PreparedStatement statement = connection.prepareStatement(sql)) {
+      statement.setInt(1, attempts);
+      statement.setString(2, lastError);
+      statement.setString(3, nextRetryAt == null ? null : nextRetryAt.toString());
+      statement.setLong(4, auctionId);
+      statement.executeUpdate();
+    } catch (SQLException e) {
+      logger.error("Database error during markSettlementFailed: {}", auctionId, e);
+      throw new IllegalStateException("Could not mark settlement failure: " + auctionId, e);
+    }
+  }
+
+  @Override
+  public void clearSettlementFailure(long auctionId) {
+    String sql =
+        """
+            UPDATE auctions
+            SET settlement_attempts = 0, settlement_last_error = NULL, settlement_next_retry_at = NULL
+            WHERE id = ?
+            """;
+
+    try (Connection connection = database.getConnection();
+        PreparedStatement statement = connection.prepareStatement(sql)) {
+      statement.setLong(1, auctionId);
+      statement.executeUpdate();
+    } catch (SQLException e) {
+      logger.error("Database error during clearSettlementFailure: {}", auctionId, e);
+      throw new IllegalStateException("Could not clear settlement failure: " + auctionId, e);
+    }
+  }
+
   private Auction mapRow(ResultSet rs) throws SQLException {
     long bidderId = rs.getLong("highest_bidder_id");
     Long highestBidderId = rs.wasNull() ? null : bidderId;

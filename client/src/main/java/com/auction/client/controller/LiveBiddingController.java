@@ -9,6 +9,7 @@ import com.auction.client.util.SceneManager;
 import com.auction.common.dto.auction.AuctionDetailDto;
 import com.auction.common.dto.bid.BidUpdateEvent;
 import com.auction.common.dto.bid.PlaceBidResponse;
+import com.auction.common.dto.bid.SetAutoBidRequest;
 import com.auction.common.dto.dashboard.DashboardDto;
 import com.auction.common.protocol.MessageType;
 import com.auction.common.protocol.Response;
@@ -52,6 +53,8 @@ public class LiveBiddingController {
   private static final Logger logger = LoggerFactory.getLogger(LiveBiddingController.class);
   private static final NumberFormat USD_FORMAT = NumberFormat.getCurrencyInstance(Locale.US);
   private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
+  private static final Duration BID_UPDATE_RENDER_DELAY = Duration.millis(300);
+  private static final int BID_BURST_HISTORY_LIMIT = 3;
 
   // ── Empty State / Content Toggle ──
   @FXML private VBox emptyStatePane;
@@ -101,9 +104,11 @@ public class LiveBiddingController {
   @FXML private Button disableAutoBidButton;
 
   private final AuctionClientService auctionService = new AuctionClientService();
+  private final List<BidUpdateEvent> pendingBidUpdates = new java.util.ArrayList<>();
   private final Consumer<Response<?>> bidUpdateListener = this::handleBidUpdate;
   private final Consumer<Response<?>> auctionClosedListener = this::handleAuctionClosed;
   private final Consumer<Response<?>> timeExtendedListener = this::handleTimeExtended;
+  private final Consumer<Response<?>> auctionListUpdatedListener = this::handleAuctionListUpdated;
 
   private Long auctionId;
   private BigDecimal minimumIncrement = new BigDecimal("1.00");
@@ -117,6 +122,11 @@ public class LiveBiddingController {
   private Timeline countdownTimeline;
   private PriceChartManager chartManager;
   private Timeline flashTimeline;
+  private Timeline bidUpdateCoalesceTimeline;
+  private boolean subscribedToUpdates = false;
+  private long lastAuctionRefreshAt = 0;
+  private long lastBidFlashAt = 0;
+  private long lastBidUpdateAt = 0;
 
   public void setAuctionId(Long auctionId) {
     this.auctionId = auctionId;
@@ -143,6 +153,15 @@ public class LiveBiddingController {
     showEmptyState();
     setupCountdownTimeline();
     setupFlashTimeline();
+    setupBidUpdateCoalescer();
+    biddingContentPane
+        .sceneProperty()
+        .addListener(
+            (obs, oldScene, newScene) -> {
+              if (oldScene != null && newScene == null) {
+                unsubscribeFromUpdates();
+              }
+            });
   }
 
   // ── Empty State Toggle ───────────────────────────────
@@ -305,12 +324,29 @@ public class LiveBiddingController {
 
   private void subscribeToUpdates() {
     if (auctionId == null) return;
+    if (subscribedToUpdates) return;
     auctionService.subscribeAuction(auctionId);
     SocketClient socket = SocketClient.getInstance();
     socket.addEventListener(MessageType.BID_UPDATE, bidUpdateListener);
     socket.addEventListener(MessageType.AUCTION_CLOSED, auctionClosedListener);
     socket.addEventListener(MessageType.AUCTION_CANCELED, auctionClosedListener);
     socket.addEventListener(MessageType.TIME_EXTENDED, timeExtendedListener);
+    socket.addEventListener(MessageType.AUCTION_LIST_UPDATED, auctionListUpdatedListener);
+    subscribedToUpdates = true;
+  }
+
+  private void unsubscribeFromUpdates() {
+    if (!subscribedToUpdates) return;
+    SocketClient socket = SocketClient.getInstance();
+    socket.removeEventListener(MessageType.BID_UPDATE, bidUpdateListener);
+    socket.removeEventListener(MessageType.AUCTION_CLOSED, auctionClosedListener);
+    socket.removeEventListener(MessageType.AUCTION_CANCELED, auctionClosedListener);
+    socket.removeEventListener(MessageType.TIME_EXTENDED, timeExtendedListener);
+    socket.removeEventListener(MessageType.AUCTION_LIST_UPDATED, auctionListUpdatedListener);
+    if (auctionId != null && socket.isConnected()) {
+      auctionService.unsubscribeAuction(auctionId);
+    }
+    subscribedToUpdates = false;
   }
 
   private String lastCountdownText = "";
@@ -394,6 +430,7 @@ public class LiveBiddingController {
                               : "None");
                       refreshCurrentPrice();
                       refreshAutoBidPanel();
+                      loadAutoBidData();
                       autoBidMessageLabel.setText("Realtime updates active.");
                       autoLastActionLabel.setText("Watching: " + detail.title());
                       updateCountdown();
@@ -464,39 +501,65 @@ public class LiveBiddingController {
     BidUpdateEvent event =
         JsonMapper.getInstance().convertData(response.getData(), BidUpdateEvent.class);
     if (event.auctionId().equals(auctionId)) {
-      Platform.runLater(
-          () -> {
-            this.currentPrice = event.amount();
-            this.highestBidderLabel.setText(event.bidderUsername());
-            this.endTime = event.newEndTime();
-
-            // 1. Remove "No bids yet" label if it exists
-            bidHistoryContainer
-                .getChildren()
-                .removeIf(
-                    node ->
-                        node instanceof Label && ((Label) node).getText().contains("No bids yet"));
-            bidHistoryContainer.setAlignment(Pos.TOP_LEFT);
-
-            // 2. Demote current latest card
-            demoteLatestCard();
-
-            // 3. Add new latest card
-            String time = LocalDateTime.now().format(TIME_FMT);
-            addBidHistoryCard(time, event.bidderUsername(), this.currentPrice, true);
-
-            chartManager.addPricePoint(this.currentPrice);
-            refreshCurrentPrice();
-            triggerColorFlash();
-            refreshAutoBidPanel();
-            updateCountdown();
-
-            if (autoBidEnabled
-                && !event.bidderUsername().equals(SceneManager.getCurrentUsername())) {
-              triggerAutoBidIfPossible();
-            }
-          });
+      Platform.runLater(() -> queueBidUpdate(event));
     }
+  }
+
+  private void setupBidUpdateCoalescer() {
+    bidUpdateCoalesceTimeline =
+        new Timeline(new KeyFrame(BID_UPDATE_RENDER_DELAY, e -> flushPendingBidUpdates()));
+  }
+
+  private void queueBidUpdate(BidUpdateEvent event) {
+    pendingBidUpdates.add(event);
+    lastBidUpdateAt = System.currentTimeMillis();
+    bidUpdateCoalesceTimeline.playFromStart();
+  }
+
+  private void flushPendingBidUpdates() {
+    if (pendingBidUpdates.isEmpty()) {
+      return;
+    }
+    java.util.List<BidUpdateEvent> batch = new java.util.ArrayList<>(pendingBidUpdates);
+    pendingBidUpdates.clear();
+    applyBidUpdateBatch(batch);
+  }
+
+  private void applyBidUpdateBatch(java.util.List<BidUpdateEvent> batch) {
+    BidUpdateEvent latest = batch.get(batch.size() - 1);
+    this.currentPrice = latest.amount();
+    this.highestBidderLabel.setText(latest.bidderUsername());
+    this.endTime = latest.newEndTime();
+
+    bidHistoryContainer
+        .getChildren()
+        .removeIf(node -> node instanceof Label && ((Label) node).getText().contains("No bids yet"));
+    bidHistoryContainer.setAlignment(Pos.TOP_LEFT);
+
+    demoteLatestCard();
+
+    int start = Math.max(0, batch.size() - BID_BURST_HISTORY_LIMIT);
+    for (int i = start; i < batch.size(); i++) {
+      BidUpdateEvent event = batch.get(i);
+      String time =
+          event.timestamp() != null ? event.timestamp().format(TIME_FMT) : LocalDateTime.now().format(TIME_FMT);
+      addBidHistoryCard(time, event.bidderUsername(), event.amount(), i == batch.size() - 1);
+    }
+
+    if (batch.size() > BID_BURST_HISTORY_LIMIT) {
+      autoLastActionLabel.setText(
+          "Auto-bid settled " + batch.size() + " rapid updates. Showing latest bids.");
+    }
+
+    chartManager.addPricePoint(
+        latest.timestamp() != null ? latest.timestamp().format(TIME_FMT) : LocalDateTime.now().format(TIME_FMT),
+        this.currentPrice);
+    refreshCurrentPrice();
+    if (batch.size() == 1) {
+      triggerColorFlashThrottled();
+    }
+    refreshAutoBidPanel();
+    updateCountdown();
   }
 
   @FXML
@@ -571,13 +634,7 @@ public class LiveBiddingController {
     }
     autoMaxBudget = parsedMaxBudget;
     autoStep = parsedStep;
-    autoBidEnabled = true;
-    NotificationManager.showToast("Success", "Auto bidding is active.", "SUCCESS");
-    autoLastActionLabel.setText("Watching this auction.");
-    refreshAutoBidPanel();
-    if (!SceneManager.getCurrentUsername().equals(highestBidderLabel.getText())) {
-      triggerAutoBidIfPossible();
-    }
+    saveAutoBidRule(true, "Auto bidding is active.");
   }
 
   @FXML
@@ -593,18 +650,12 @@ public class LiveBiddingController {
     }
     autoMaxBudget = parsedMaxBudget;
     autoStep = parsedStep;
-    autoBidEnabled = true;
-    NotificationManager.showToast("Success", "Auto bidding budget was updated.", "SUCCESS");
-    autoLastActionLabel.setText("Max budget: " + formatMoney(autoMaxBudget) + ".");
-    refreshAutoBidPanel();
+    saveAutoBidRule(true, "Auto bidding budget was updated.");
   }
 
   @FXML
   private void handleDisableAutoBid() {
-    autoBidEnabled = false;
-    NotificationManager.showToast("Info", "Auto bidding disabled. You can enable it again anytime.");
-    autoLastActionLabel.setText("Auto bidding is off.");
-    refreshAutoBidPanel();
+    saveAutoBidRule(false, "Auto bidding disabled. You can enable it again anytime.");
   }
 
   private boolean validateAutoBidInput(BigDecimal parsedMaxBudget, BigDecimal parsedStep) {
@@ -635,37 +686,56 @@ public class LiveBiddingController {
     return true;
   }
 
-  private void triggerAutoBidIfPossible() {
-    if (!isAuctionAcceptingBids()) {
-      autoBidEnabled = false;
-      autoLastActionLabel.setText(getInactiveAuctionMessage());
-      refreshAutoBidPanel();
+  private void saveAutoBidRule(boolean active, String successMessage) {
+    if (auctionId == null) {
       return;
     }
-    BigDecimal nextAutoBid = currentPrice.add(autoStep);
-    if (nextAutoBid.compareTo(autoMaxBudget) > 0) {
-      autoBidEnabled = false;
-      autoLastActionLabel.setText("Maximum budget reached.");
-      NotificationManager.showToast("Info", "Auto bidding stopped because your maximum budget was reached.");
-      refreshAutoBidPanel();
-      return;
-    }
-    logger.info("Auto-bidding placing bid of {} for auction {}", nextAutoBid, auctionId);
+
     auctionService
-        .placeBid(auctionId, nextAutoBid)
+        .setAutoBid(new SetAutoBidRequest(auctionId, autoMaxBudget, autoStep, active))
         .thenAccept(
             response -> {
               Platform.runLater(
                   () -> {
                     if (response.isSuccess()) {
+                      autoBidEnabled = active;
                       autoLastActionLabel.setText(
-                          "Auto bid placed: " + formatMoney(nextAutoBid) + ".");
-                      NotificationManager.showToast("Success", "Auto bidding responded successfully.", "SUCCESS");
+                          active ? "Max budget: " + formatMoney(autoMaxBudget) + "." : "Auto bidding is off.");
+                      NotificationManager.showToast(
+                          active ? "Success" : "Info",
+                          successMessage,
+                          active ? "SUCCESS" : "INFO");
                     } else {
-                      autoLastActionLabel.setText("Auto bid failed.");
-                      autoBidEnabled = false;
-                      NotificationManager.showToast("Error", "Auto bid failed.", "ERROR");
+                      NotificationManager.showToast(
+                          "Error", "Auto bid update failed: " + response.getMessage(), "ERROR");
                     }
+                    refreshAutoBidPanel();
+                  });
+            });
+  }
+
+  private void loadAutoBidData() {
+    if (auctionId == null) {
+      return;
+    }
+
+    auctionService
+        .getAutoBid(auctionId)
+        .thenAccept(
+            response -> {
+              if (!response.isSuccess() || response.getData() == null) {
+                return;
+              }
+
+              Platform.runLater(
+                  () -> {
+                    autoMaxBudget = response.getData().maxBid();
+                    autoStep = response.getData().increment();
+                    autoBidEnabled = response.getData().active();
+                    autoMaxBudgetField.setText(autoMaxBudget.toPlainString());
+                    autoStepComboBox.setValue(autoStep.toPlainString());
+                    autoLastActionLabel.setText(
+                        autoBidEnabled ? "Server auto bidding is active." : "Auto bidding is off.");
                     refreshAutoBidPanel();
                   });
             });
@@ -686,8 +756,18 @@ public class LiveBiddingController {
 
   private void triggerColorFlash() {
     if (flashTimeline != null) {
+      flashTimeline.stop();
       flashTimeline.playFromStart();
     }
+  }
+
+  private void triggerColorFlashThrottled() {
+    long now = System.currentTimeMillis();
+    if (now - lastBidFlashAt < 600) {
+      return;
+    }
+    lastBidFlashAt = now;
+    triggerColorFlash();
   }
 
   // ── UI Helpers ───────────────────────────────────────
@@ -918,5 +998,17 @@ public class LiveBiddingController {
             updateCountdown();
           });
     }
+  }
+
+  private void handleAuctionListUpdated(Response<?> response) {
+    long now = System.currentTimeMillis();
+    if (now - lastAuctionRefreshAt < 500) {
+      return;
+    }
+    if (now - lastBidUpdateAt < 1500) {
+      return;
+    }
+    lastAuctionRefreshAt = now;
+    loadAuctionData();
   }
 }

@@ -10,6 +10,7 @@ import com.auction.common.model.Auction;
 import com.auction.common.model.Item;
 import com.auction.common.protocol.MessageType;
 import com.auction.server.dao.AuctionDao;
+import com.auction.server.dao.Database;
 import com.auction.server.dao.ItemDao;
 import com.auction.server.factory.ItemFactory;
 import java.time.LocalDateTime;
@@ -120,24 +121,31 @@ public class AuctionService {
    * @throws IllegalStateException if user is not the seller or status is invalid.
    */
   public void cancelAuction(long userId, long auctionId) {
-    Auction auction =
-        auctionDao
-            .findById(auctionId)
-            .orElseThrow(() -> new IllegalArgumentException("Auction not found: " + auctionId));
+    Database.getInstance()
+        .runInTransaction(
+            () -> {
+              Auction auction =
+                  auctionDao
+                      .findById(auctionId)
+                      .orElseThrow(
+                          () -> new IllegalArgumentException("Auction not found: " + auctionId));
 
-    if (auction.getSellerId() != userId) {
-      throw new IllegalStateException("You can only cancel your own auctions.");
-    }
+              if (auction.getSellerId() != userId) {
+                throw new IllegalStateException("You can only cancel your own auctions.");
+              }
 
-    if (auction.getStatus() != AuctionStatus.OPEN && auction.getStatus() != AuctionStatus.RUNNING) {
-      throw new IllegalStateException(
-          "Auction cannot be canceled in its current status: " + auction.getStatus());
-    }
+              if (auction.getStatus() != AuctionStatus.OPEN
+                  && auction.getStatus() != AuctionStatus.RUNNING) {
+                throw new IllegalStateException(
+                    "Auction cannot be canceled in its current status: " + auction.getStatus());
+              }
 
-    auction.setStatus(AuctionStatus.CANCELED);
-    auctionDao.update(auction);
+              auction.setStatus(AuctionStatus.CANCELED);
+              auctionDao.update(auction);
 
-    performCancellationCleanup(auction, "Seller canceled the auction.");
+              performCancellationCleanup(auction, "Seller canceled the auction.");
+              return null;
+            });
 
     logger.info("User {} canceled Auction {}", userId, auctionId);
   }
@@ -151,21 +159,28 @@ public class AuctionService {
    * @throws IllegalStateException if status is invalid for cancellation.
    */
   public void adminCancelAuction(long adminId, long auctionId) {
-    Auction auction =
-        auctionDao
-            .findById(auctionId)
-            .orElseThrow(() -> new IllegalArgumentException("Auction not found: " + auctionId));
+    Database.getInstance()
+        .runInTransaction(
+            () -> {
+              Auction auction =
+                  auctionDao
+                      .findById(auctionId)
+                      .orElseThrow(
+                          () -> new IllegalArgumentException("Auction not found: " + auctionId));
 
-    if (auction.getStatus() != AuctionStatus.OPEN && auction.getStatus() != AuctionStatus.RUNNING) {
-      throw new IllegalStateException(
-          "Auction cannot be canceled in its current status: " + auction.getStatus());
-    }
+              if (auction.getStatus() != AuctionStatus.OPEN
+                  && auction.getStatus() != AuctionStatus.RUNNING) {
+                throw new IllegalStateException(
+                    "Auction cannot be canceled in its current status: " + auction.getStatus());
+              }
 
-    auction.setStatus(AuctionStatus.CANCELED);
-    auctionDao.update(auction);
+              auction.setStatus(AuctionStatus.CANCELED);
+              auctionDao.update(auction);
 
-    performCancellationCleanup(
-        auction, "Administrator canceled the auction due to policy violation.");
+              performCancellationCleanup(
+                  auction, "Administrator canceled the auction due to policy violation.");
+              return null;
+            });
 
     logger.info("Admin {} canceled Auction {}", adminId, auctionId);
   }

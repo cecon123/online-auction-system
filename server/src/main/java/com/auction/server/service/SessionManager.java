@@ -1,5 +1,7 @@
 package com.auction.server.service;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -8,8 +10,10 @@ public class SessionManager {
 
   private static final SessionManager INSTANCE = new SessionManager();
 
-  // Map: Token -> UserID
-  private final ConcurrentHashMap<String, Long> activeSessions = new ConcurrentHashMap<>();
+  private static final Duration SESSION_TTL = Duration.ofHours(2);
+
+  // Map: Token -> Session
+  private final ConcurrentHashMap<String, Session> activeSessions = new ConcurrentHashMap<>();
 
   private SessionManager() {}
 
@@ -25,7 +29,7 @@ public class SessionManager {
    */
   public String createSession(long userId) {
     String token = UUID.randomUUID().toString();
-    activeSessions.put(token, userId);
+    activeSessions.put(token, new Session(userId, Instant.now().plus(SESSION_TTL)));
     return token;
   }
 
@@ -37,7 +41,15 @@ public class SessionManager {
    */
   public Long getUserId(String token) {
     if (token == null) return null;
-    return activeSessions.get(token);
+    Session session = activeSessions.get(token);
+    if (session == null) {
+      return null;
+    }
+    if (Instant.now().isAfter(session.expiresAt())) {
+      activeSessions.remove(token, session);
+      return null;
+    }
+    return session.userId();
   }
 
   /**
@@ -50,4 +62,6 @@ public class SessionManager {
       activeSessions.remove(token);
     }
   }
+
+  private record Session(long userId, Instant expiresAt) {}
 }
