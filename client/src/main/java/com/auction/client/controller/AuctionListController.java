@@ -63,7 +63,9 @@ public class AuctionListController {
     }
     if (statusFilter != null) {
       statusFilter.getItems().clear();
-      statusFilter.getItems().addAll("Any Status", "OPEN", "RUNNING", "FINISHED");
+      statusFilter
+          .getItems()
+          .addAll("Any Status", "OPEN", "RUNNING", "FINISHED", "PAID", "CANCELED");
       statusFilter.setValue("Any Status");
       statusFilter.setOnAction(e -> applyFilters());
     }
@@ -193,6 +195,7 @@ public class AuctionListController {
       case RUNNING -> statusBadge.getStyleClass().add("status-running");
       case OPEN -> statusBadge.getStyleClass().add("status-open");
       case FINISHED -> statusBadge.getStyleClass().add("status-finished");
+      case PAID -> statusBadge.getStyleClass().add("status-paid");
       default -> statusBadge.getStyleClass().add("status-cancelled");
     }
 

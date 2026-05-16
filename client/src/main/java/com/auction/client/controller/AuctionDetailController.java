@@ -187,6 +187,10 @@ public class AuctionDetailController {
         statusLabel.setText("FINISHED");
         statusLabel.getStyleClass().add("status-finished");
       }
+      case "PAID" -> {
+        statusLabel.setText("PAID");
+        statusLabel.getStyleClass().add("status-paid");
+      }
       default -> {
         statusLabel.setText(statusName);
         statusLabel.getStyleClass().add("status-cancelled");

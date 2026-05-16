@@ -120,7 +120,7 @@ public class MyBidsController {
       Label resultLabel = new Label(entry.result());
       String resultStyle =
           switch (entry.result()) {
-            case "WINNING", "WON" -> "success-text";
+            case "WINNING", "WON", "WON_PENDING_PAYMENT" -> "success-text";
             case "OUTBID", "LOST" -> "error-text";
             default -> "admin-table-cell";
           };
@@ -169,7 +169,10 @@ public class MyBidsController {
     // Count won auctions
     long wonCount =
         auctions.stream()
-            .filter(a -> a.status() == com.auction.common.enums.AuctionStatus.FINISHED)
+            .filter(
+                a ->
+                    a.status() == com.auction.common.enums.AuctionStatus.FINISHED
+                        || a.status() == com.auction.common.enums.AuctionStatus.PAID)
             .filter(a -> a.highestBidderId() != null && a.highestBidderId() == currentUserId)
             .count();
     if (wonAuctionsLabel != null) {
@@ -216,9 +219,15 @@ public class MyBidsController {
     String statusText;
     String statusStyle;
 
-    if (auction.status() == com.auction.common.enums.AuctionStatus.FINISHED) {
+    if (auction.status() == com.auction.common.enums.AuctionStatus.PAID) {
       statusText = userIsLeading ? "WON" : "ENDED";
       statusStyle = userIsLeading ? "status-won" : "status-ended";
+    } else if (auction.status() == com.auction.common.enums.AuctionStatus.FINISHED) {
+      statusText = userIsLeading ? "PENDING PAYMENT" : "ENDED";
+      statusStyle = userIsLeading ? "status-paid" : "status-ended";
+    } else if (auction.status() == com.auction.common.enums.AuctionStatus.CANCELED) {
+      statusText = "CANCELED";
+      statusStyle = "status-canceled";
     } else {
       statusText = userIsLeading ? "WINNING" : "OUTBID";
       statusStyle = userIsLeading ? "status-winning" : "status-outbid";

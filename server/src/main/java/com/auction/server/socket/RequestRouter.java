@@ -180,7 +180,7 @@ public class RequestRouter {
         }
         case ADMIN_GET_AUCTIONS -> {
           requireAdmin(request);
-          yield handleGetAuctions(request); // Admin uses same summary for now
+          yield handleAdminGetAuctions(request);
         }
         case ADMIN_CANCEL_AUCTION -> {
           requireAdmin(request);
@@ -321,7 +321,7 @@ public class RequestRouter {
     java.math.BigDecimal expectedRevenue = java.math.BigDecimal.ZERO;
     java.math.BigDecimal totalRevenue = java.math.BigDecimal.ZERO;
     int activeAuctionsCount = 0;
-    int finishedAuctionsCount = 0;
+    int closedAuctionsCount = 0;
     int successfulAuctionsCount = 0;
     int totalAuctionsCount = sellerAuctions.size();
 
@@ -332,25 +332,23 @@ public class RequestRouter {
         if (a.getCurrentPrice() != null) {
           expectedRevenue = expectedRevenue.add(a.getCurrentPrice());
         }
-      } else if (a.getStatus() == AuctionStatus.FINISHED) {
-        finishedAuctionsCount++;
-        // If there's a highest bidder and price >= reserve price (handled elsewhere usually, but
-        // let's assume if it has a highest bidder it's successful for now, or check reserve price)
-        if (a.getHighestBidderId() != null
-            && (a.getReservePrice() == null
-                || a.getCurrentPrice().compareTo(a.getReservePrice()) >= 0)) {
+      } else if (a.getStatus() == AuctionStatus.PAID || a.getStatus() == AuctionStatus.CANCELED) {
+        closedAuctionsCount++;
+        if (a.getStatus() == AuctionStatus.PAID) {
           successfulAuctionsCount++;
           if (a.getCurrentPrice() != null) {
             totalRevenue = totalRevenue.add(a.getCurrentPrice());
           }
         }
+      } else if (a.getStatus() == AuctionStatus.FINISHED) {
+        closedAuctionsCount++;
       }
     }
 
     int successRate = 0;
-    if (finishedAuctionsCount > 0) {
+    if (closedAuctionsCount > 0) {
       successRate =
-          (int) Math.round((double) successfulAuctionsCount / finishedAuctionsCount * 100);
+          (int) Math.round((double) successfulAuctionsCount / closedAuctionsCount * 100);
     }
 
     int totalBidsReceived = 0;
@@ -472,6 +470,51 @@ public class RequestRouter {
 
     return Response.ok(
         MessageType.GET_AUCTION_DETAIL, request.getRequestId(), "Auction detail loaded", detail);
+  }
+
+  private Response<List<AuctionDetailDto>> handleAdminGetAuctions(Request<?> request) {
+    List<AuctionDetailDto> auctions =
+        auctionDao.findAll().stream()
+            .map(this::toAuctionDetailDto)
+            .toList();
+
+    return Response.ok(
+        MessageType.ADMIN_GET_AUCTIONS, request.getRequestId(), "Auctions loaded", auctions);
+  }
+
+  private AuctionDetailDto toAuctionDetailDto(Auction auction) {
+    Item item = itemDao.findById(auction.getItemId()).orElse(null);
+    String sellerName =
+        userDao
+            .findById(auction.getSellerId())
+            .map(UserDao.UserRecord::username)
+            .orElse("Unknown Seller");
+    String highestBidder = null;
+    if (auction.getHighestBidderId() != null) {
+      highestBidder =
+          userDao
+              .findById(auction.getHighestBidderId())
+              .map(UserDao.UserRecord::username)
+              .orElse("Unknown");
+    }
+
+    return new AuctionDetailDto(
+        auction.getId(),
+        auction.getItemId(),
+        auction.getSellerId(),
+        sellerName,
+        item != null ? item.getName() : "Unknown Item",
+        item != null ? item.getItemType() : ItemType.ELECTRONICS,
+        item != null ? item.getCondition() : "",
+        item != null ? item.getDescription() : "",
+        item != null ? item.getStartingPrice() : auction.getCurrentPrice(),
+        auction.getCurrentPrice(),
+        auction.getReservePrice(),
+        highestBidder,
+        auction.getStartTime(),
+        auction.getEndTime(),
+        auction.getStatus(),
+        item != null ? item.getImagePath() : null);
   }
 
   private Response<BigDecimal> handleDeposit(Request<?> request) {

@@ -73,22 +73,9 @@ public class AuctionManagerService {
     if (currentStatus == AuctionStatus.OPEN && !now.isBefore(auction.getStartTime())) {
       newStatus = AuctionStatus.RUNNING;
     } else if (currentStatus == AuctionStatus.RUNNING && now.isAfter(auction.getEndTime())) {
-      // Check reserve price when finished
-      if (auction.getHighestBidderId() != null) {
-        // Determine if reserve met (if null reserve, it's always met)
-        boolean reserveMet =
-            auction.getReservePrice() == null
-                || auction.getCurrentPrice().compareTo(auction.getReservePrice()) >= 0;
-
-        if (reserveMet) {
-          newStatus = AuctionStatus.FINISHED;
-        } else {
-          newStatus = AuctionStatus.CANCELED;
-        }
-      } else {
-        // No bids at all
-        newStatus = AuctionStatus.CANCELED;
-      }
+      newStatus = AuctionStatus.FINISHED;
+    } else if (currentStatus == AuctionStatus.FINISHED) {
+      newStatus = finalizeFinishedAuction(auction);
     }
 
     if (newStatus != currentStatus) {
@@ -96,40 +83,40 @@ public class AuctionManagerService {
         logger.info(
             "Transitioning Auction {} from {} to {}.", auction.getId(), currentStatus, newStatus);
 
-        // ESCROW SETTLEMENT LOGIC
-        if (newStatus == AuctionStatus.FINISHED) {
-          Long winnerId = auction.getHighestBidderId();
-          java.math.BigDecimal finalPrice = auction.getCurrentPrice();
-          java.math.BigDecimal maxLocked = auction.getHighestMaxBid();
+        AuctionStatus finalStatus = newStatus;
 
-          logger.info(
-              "Settling Auction {}: Winner={}, Price={}, MaxLocked={}",
-              auction.getId(),
-              winnerId,
-              finalPrice,
-              maxLocked);
-
-          // Success: Transfer funds from winner to seller
-          walletService.settleAuction(winnerId, auction.getSellerId(), finalPrice);
-
-          // Release the leftover max bid if any (Model 1: Full Max Lock)
-          java.math.BigDecimal leftover = maxLocked.subtract(finalPrice);
-          if (leftover.compareTo(java.math.BigDecimal.ZERO) > 0) {
-            logger.info("Releasing leftover Proxy funds: {}", leftover);
-            walletService.releaseFunds(winnerId, leftover);
-          }
-        } else if (newStatus == AuctionStatus.CANCELED && auction.getHighestBidderId() != null) {
-          // Failure (reserve not met): Refund highest bidder their full locked max bid
-          logger.info(
-              "Auction {} canceled. Refunding {} to User {}",
-              auction.getId(),
-              auction.getHighestMaxBid(),
-              auction.getHighestBidderId());
-          walletService.releaseFunds(auction.getHighestBidderId(), auction.getHighestMaxBid());
+        if (newStatus == AuctionStatus.RUNNING || newStatus == AuctionStatus.FINISHED) {
+          auction.setStatus(newStatus);
+          auctionDao.update(auction);
         }
 
-        auction.setStatus(newStatus);
-        auctionDao.update(auction);
+        if (newStatus == AuctionStatus.FINISHED) {
+          finalStatus = finalizeFinishedAuction(auction);
+          if (finalStatus != AuctionStatus.FINISHED) {
+            if (finalStatus == AuctionStatus.PAID) {
+              settleFinishedAuction(auction);
+            } else if (finalStatus == AuctionStatus.CANCELED) {
+              refundHighestBidderIfNecessary(auction);
+            }
+            logger.info(
+                "Transitioning Auction {} from {} to {}.",
+                auction.getId(),
+                AuctionStatus.FINISHED,
+                finalStatus);
+            auction.setStatus(finalStatus);
+            auctionDao.update(auction);
+          }
+        } else if (newStatus == AuctionStatus.PAID) {
+          settleFinishedAuction(auction);
+          auction.setStatus(AuctionStatus.PAID);
+          auctionDao.update(auction);
+          finalStatus = AuctionStatus.PAID;
+        } else if (newStatus == AuctionStatus.CANCELED) {
+          refundHighestBidderIfNecessary(auction);
+          auction.setStatus(AuctionStatus.CANCELED);
+          auctionDao.update(auction);
+          finalStatus = AuctionStatus.CANCELED;
+        }
 
         // Broadcast status change
         String winnerUsername = null;
@@ -141,18 +128,22 @@ public class AuctionManagerService {
                   .orElse("Unknown");
         }
 
-        if (newStatus == AuctionStatus.FINISHED || newStatus == AuctionStatus.CANCELED) {
+        if (finalStatus == AuctionStatus.PAID
+            || finalStatus == AuctionStatus.FINISHED
+            || finalStatus == AuctionStatus.CANCELED) {
           String message =
               "Auction "
-                  + (newStatus == AuctionStatus.FINISHED
-                      ? "sold successfully!"
-                      : "ended without sale.");
+                  + (finalStatus == AuctionStatus.PAID
+                      ? "sold and paid successfully!"
+                      : finalStatus == AuctionStatus.FINISHED
+                          ? "finished and is pending payment."
+                          : "ended without sale.");
           notificationService.broadcast(
               auction.getId(),
               com.auction.common.protocol.MessageType.AUCTION_CLOSED,
               new com.auction.common.dto.auction.AuctionEventDto(
                   auction.getId(),
-                  newStatus,
+                  finalStatus,
                   message,
                   winnerUsername,
                   auction.getCurrentPrice(),
@@ -160,7 +151,7 @@ public class AuctionManagerService {
         }
 
         // --- Global Seller & Winner Notification ---
-        if (newStatus == AuctionStatus.FINISHED) {
+        if (finalStatus == AuctionStatus.PAID) {
           com.auction.common.dto.notification.SystemNotificationDto successNotice =
               new com.auction.common.dto.notification.SystemNotificationDto(
                   "Auction Sold! \uD83D\uDCB0", // 💰
@@ -195,7 +186,7 @@ public class AuctionManagerService {
                 com.auction.common.protocol.MessageType.SYSTEM_NOTIFICATION,
                 winNotice);
           }
-        } else if (newStatus == AuctionStatus.CANCELED) {
+        } else if (finalStatus == AuctionStatus.CANCELED) {
           String reason =
               (auction.getHighestBidderId() != null)
                   ? "reserve price not met."
@@ -221,5 +212,51 @@ public class AuctionManagerService {
         logger.error("Error updating status for Auction {}", auction.getId(), e);
       }
     }
+  }
+
+  private AuctionStatus finalizeFinishedAuction(Auction auction) {
+    if (auction.getHighestBidderId() == null) {
+      return AuctionStatus.CANCELED;
+    }
+
+    boolean reserveMet =
+        auction.getReservePrice() == null
+            || auction.getCurrentPrice().compareTo(auction.getReservePrice()) >= 0;
+
+    return reserveMet ? AuctionStatus.PAID : AuctionStatus.CANCELED;
+  }
+
+  private void settleFinishedAuction(Auction auction) {
+    Long winnerId = auction.getHighestBidderId();
+    java.math.BigDecimal finalPrice = auction.getCurrentPrice();
+    java.math.BigDecimal maxLocked = auction.getHighestMaxBid();
+
+    logger.info(
+        "Settling Auction {}: Winner={}, Price={}, MaxLocked={}",
+        auction.getId(),
+        winnerId,
+        finalPrice,
+        maxLocked);
+
+    walletService.settleAuction(winnerId, auction.getSellerId(), finalPrice);
+
+    java.math.BigDecimal leftover = maxLocked.subtract(finalPrice);
+    if (leftover.compareTo(java.math.BigDecimal.ZERO) > 0) {
+      logger.info("Releasing leftover Proxy funds: {}", leftover);
+      walletService.releaseFunds(winnerId, leftover);
+    }
+  }
+
+  private void refundHighestBidderIfNecessary(Auction auction) {
+    if (auction.getHighestBidderId() == null) {
+      return;
+    }
+
+    logger.info(
+        "Auction {} canceled. Refunding {} to User {}",
+        auction.getId(),
+        auction.getHighestMaxBid(),
+        auction.getHighestBidderId());
+    walletService.releaseFunds(auction.getHighestBidderId(), auction.getHighestMaxBid());
   }
 }

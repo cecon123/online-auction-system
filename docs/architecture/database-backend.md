@@ -38,4 +38,4 @@ Hệ thống áp dụng các kỹ thuật để xử lý hàng ngàn lượt bid
 Backend chạy các luồng ngầm (`ScheduledExecutorService`) để:
 - Kiểm tra các phiên đấu giá đã đến giờ bắt đầu (`OPEN` -> `RUNNING`).
 - Kiểm tra và đóng các phiên đấu giá đã hết giờ (`RUNNING` -> `FINISHED`).
-- Xử lý việc chuyển giao tài sản và thanh toán cuối cùng khi phiên thầu kết thúc thành công.
+- Chốt kết quả sau khi đã `FINISHED`: chuyển sang `PAID` nếu thanh toán ví thành công, hoặc `CANCELED` nếu không có bid/không đạt reserve.

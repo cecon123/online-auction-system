@@ -298,8 +298,9 @@ public class AdminPanelController {
     return switch (status) {
       case "RUNNING" -> "status-running";
       case "FINISHED" -> "status-finished";
+      case "PAID" -> "status-paid";
       case "OPEN" -> "status-open";
-      case "CANCELLED" -> "status-cancelled";
+      case "CANCELED", "CANCELLED" -> "status-cancelled";
       default -> "status-ended";
     };
   }

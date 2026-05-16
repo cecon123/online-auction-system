@@ -32,7 +32,7 @@ INSERT INTO auctions (item_id, seller_id, current_price, highest_max_bid, reserv
 
 -- Auction 4: Sculpture Replica - Finished
 INSERT INTO auctions (item_id, seller_id, current_price, highest_max_bid, reserve_price, start_time, end_time, status, created_at) VALUES
-(4, 3, '5500.00', '5500.00', '5500.00', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '-5 hours'), STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '-1 hour'), 'FINISHED', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours'));
+(4, 3, '5500.00', '5500.00', '5500.00', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '-5 hours'), STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours', '-1 hour'), 'PAID', STRFTIME('%Y-%m-%dT%H:%M:%f', 'now', '+7 hours'));
 
 -- Auction 5: Quick Test Phone - Reserve $1000 (Current $350) - Ends in 2 mins
 INSERT INTO auctions (item_id, seller_id, current_price, highest_max_bid, reserve_price, start_time, end_time, status, created_at) VALUES

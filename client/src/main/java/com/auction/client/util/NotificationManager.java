@@ -77,27 +77,29 @@ public final class NotificationManager {
             String type = "INFO";
             Duration duration = DISPLAY_TIME;
 
-            if (event.status() == com.auction.common.enums.AuctionStatus.FINISHED) {
-              if (isWinner) {
-                title = "Congratulations!";
-                message =
-                    String.format(
-                        "You won Auction #%d with a bid of %s!",
-                        event.auctionId(), CURRENCY_FORMAT.format(event.finalPrice()));
-                type = "SUCCESS";
-                duration = Duration.seconds(5); // 5 seconds for winner as requested
-              } else if (event.winnerUsername() != null) {
-                message =
-                    String.format(
-                        "Auction #%d finished. Winner: %s with %s",
-                        event.auctionId(),
-                        event.winnerUsername(),
-                        CURRENCY_FORMAT.format(event.finalPrice()));
-              } else {
-                message = String.format("Auction #%d closed with no winner.", event.auctionId());
-              }
+            if (!isWinner) {
+              return;
+            }
+
+            if (event.status() == com.auction.common.enums.AuctionStatus.PAID
+                || event.status() == com.auction.common.enums.AuctionStatus.FINISHED) {
+              title =
+                  event.status() == com.auction.common.enums.AuctionStatus.PAID
+                      ? "Payment Complete!"
+                      : "Auction Won!";
+              message =
+                  String.format(
+                      event.status() == com.auction.common.enums.AuctionStatus.PAID
+                          ? "You won and paid for Auction #%d with a bid of %s."
+                          : "You won Auction #%d with a bid of %s. Payment is being settled.",
+                      event.auctionId(), CURRENCY_FORMAT.format(event.finalPrice()));
+              type = "SUCCESS";
+              duration = Duration.seconds(5); // 5 seconds for winner as requested
             } else {
-              message = String.format("Auction #%d was canceled.", event.auctionId());
+              message =
+                  String.format(
+                      "Auction #%d was canceled. Any locked funds will be released.",
+                      event.auctionId());
               type = "WARNING";
             }
 

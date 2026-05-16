@@ -218,6 +218,7 @@ public class SellerCenterController {
       case "RUNNING" -> "status-running";
       case "OPEN" -> "status-open";
       case "FINISHED" -> "status-finished";
+      case "PAID" -> "status-paid";
       case "CANCELED" -> "status-canceled";
       default -> "status-finished";
     };

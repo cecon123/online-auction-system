@@ -70,6 +70,11 @@ public class LiveBiddingController {
   @FXML private Label reservePriceLabel;
   @FXML private TextField bidAmountField;
   @FXML private Label manualBidMessageLabel;
+  @FXML private Button confirmBidButton;
+  @FXML private Button quickBid10Button;
+  @FXML private Button quickBid50Button;
+  @FXML private Button quickBid100Button;
+  @FXML private Button quickBid500Button;
 
   // ── Bid History ──
   @FXML private ScrollPane bidHistoryScrollPane;
@@ -181,6 +186,9 @@ public class LiveBiddingController {
   private void placeQuickBid(BigDecimal increment) {
     if (auctionId == null) {
       showManualMessage("No auction selected.");
+      return;
+    }
+    if (!guardBiddingAllowed()) {
       return;
     }
     BigDecimal quickBid = currentPrice.add(increment);
@@ -301,6 +309,7 @@ public class LiveBiddingController {
     SocketClient socket = SocketClient.getInstance();
     socket.addEventListener(MessageType.BID_UPDATE, bidUpdateListener);
     socket.addEventListener(MessageType.AUCTION_CLOSED, auctionClosedListener);
+    socket.addEventListener(MessageType.AUCTION_CANCELED, auctionClosedListener);
     socket.addEventListener(MessageType.TIME_EXTENDED, timeExtendedListener);
   }
 
@@ -318,7 +327,7 @@ public class LiveBiddingController {
       return;
     }
     String status = statusLabel.getText();
-    if ("FINISHED".equals(status) || "CANCELED".equals(status)) {
+    if ("FINISHED".equals(status) || "PAID".equals(status) || "CANCELED".equals(status)) {
       countdownHeaderLabel.setText("ENDED");
       updateCountdownUI("--:--:--");
       return;
@@ -337,6 +346,7 @@ public class LiveBiddingController {
     java.time.Duration duration = java.time.Duration.between(LocalDateTime.now(), targetTime);
     if (duration.isNegative() || duration.isZero()) {
       updateCountdownUI("OPEN".equals(status) ? "Starting..." : "00:00:00");
+      updateBiddingControlsState();
       return;
     }
     long s = duration.toSeconds();
@@ -387,19 +397,9 @@ public class LiveBiddingController {
                       autoBidMessageLabel.setText("Realtime updates active.");
                       autoLastActionLabel.setText("Watching: " + detail.title());
                       updateCountdown();
-
-                      // Disable bidding UI when auction is not active
-                      String statusStr = detail.status().toString();
-                      if ("CANCELED".equals(statusStr) || "FINISHED".equals(statusStr)) {
-                        bidAmountField.setDisable(true);
-                        enableAutoBidButton.setDisable(true);
-                        updateAutoBidButton.setDisable(true);
-                        disableAutoBidButton.setDisable(true);
-                        String reason =
-                            "CANCELED".equals(statusStr)
-                                ? "This auction has been canceled."
-                                : "This auction has ended.";
-                        showManualMessage(reason, false);
+                      updateBiddingControlsState();
+                      if (!isAuctionAcceptingBids()) {
+                        showManualMessage(getInactiveAuctionMessage(), false);
                       }
                     });
               }
@@ -505,6 +505,9 @@ public class LiveBiddingController {
       showManualMessage("No auction selected.");
       return;
     }
+    if (!guardBiddingAllowed()) {
+      return;
+    }
     BigDecimal manualBid = parsePositiveMoney(bidAmountField.getText());
     if (manualBid == null) {
       showManualMessage("Please enter a valid bid amount.");
@@ -557,6 +560,9 @@ public class LiveBiddingController {
       NotificationManager.showToast("Warning", "No auction selected.", "WARNING");
       return;
     }
+    if (!guardBiddingAllowed()) {
+      return;
+    }
     BigDecimal parsedMaxBudget = parsePositiveMoney(autoMaxBudgetField.getText());
     BigDecimal parsedStep = parsePositiveMoney(autoStepComboBox.getValue());
     if (!validateAutoBidInput(parsedMaxBudget, parsedStep)) {
@@ -576,6 +582,9 @@ public class LiveBiddingController {
 
   @FXML
   private void handleUpdateAutoBid() {
+    if (!guardBiddingAllowed()) {
+      return;
+    }
     BigDecimal parsedMaxBudget = parsePositiveMoney(autoMaxBudgetField.getText());
     BigDecimal parsedStep = parsePositiveMoney(autoStepComboBox.getValue());
     if (!validateAutoBidInput(parsedMaxBudget, parsedStep)) {
@@ -627,6 +636,12 @@ public class LiveBiddingController {
   }
 
   private void triggerAutoBidIfPossible() {
+    if (!isAuctionAcceptingBids()) {
+      autoBidEnabled = false;
+      autoLastActionLabel.setText(getInactiveAuctionMessage());
+      refreshAutoBidPanel();
+      return;
+    }
     BigDecimal nextAutoBid = currentPrice.add(autoStep);
     if (nextAutoBid.compareTo(autoMaxBudget) > 0) {
       autoBidEnabled = false;
@@ -681,12 +696,19 @@ public class LiveBiddingController {
     statusLabel
         .getStyleClass()
         .removeAll(
-            "status-badge", "status-running", "status-open", "status-finished", "status-cancelled");
+            "status-badge",
+            "status-running",
+            "status-open",
+            "status-finished",
+            "status-paid",
+            "status-cancelled",
+            "status-canceled");
     statusLabel.getStyleClass().add("status-badge");
     switch (status) {
       case "RUNNING" -> statusLabel.getStyleClass().add("status-running");
       case "OPEN" -> statusLabel.getStyleClass().add("status-open");
-      case "CANCELLED" -> statusLabel.getStyleClass().add("status-cancelled");
+      case "PAID" -> statusLabel.getStyleClass().add("status-paid");
+      case "CANCELED", "CANCELLED" -> statusLabel.getStyleClass().add("status-cancelled");
       default -> statusLabel.getStyleClass().add("status-finished");
     }
   }
@@ -733,8 +755,66 @@ public class LiveBiddingController {
       disableAutoBidButton.setVisible(false);
       disableAutoBidButton.setManaged(false);
     }
-    autoMaxBudgetField.setDisable(false);
-    autoStepComboBox.setDisable(false);
+    updateBiddingControlsState();
+  }
+
+  private boolean guardBiddingAllowed() {
+    updateBiddingControlsState();
+    if (isAuctionAcceptingBids()) {
+      return true;
+    }
+    String message = getInactiveAuctionMessage();
+    showManualMessage(message, false);
+    showAutoMessage(message, false);
+    return false;
+  }
+
+  private boolean isAuctionAcceptingBids() {
+    return "RUNNING".equals(statusLabel.getText())
+        && endTime != null
+        && LocalDateTime.now().isBefore(endTime);
+  }
+
+  private String getInactiveAuctionMessage() {
+    String status = statusLabel.getText();
+    if ("OPEN".equals(status)) {
+      return "This auction has not started yet.";
+    }
+    if ("RUNNING".equals(status)) {
+      return "This auction has ended. Waiting for settlement.";
+    }
+    if ("FINISHED".equals(status)) {
+      return "This auction has ended and payment is being settled.";
+    }
+    if ("PAID".equals(status)) {
+      return "This auction has been paid.";
+    }
+    if ("CANCELED".equals(status) || "CANCELLED".equals(status)) {
+      return "This auction has been canceled.";
+    }
+    return "Bidding is not available for this auction.";
+  }
+
+  private void updateBiddingControlsState() {
+    boolean disabled = !isAuctionAcceptingBids();
+    bidAmountField.setDisable(disabled);
+    confirmBidButton.setDisable(disabled);
+    quickBid10Button.setDisable(disabled);
+    quickBid50Button.setDisable(disabled);
+    quickBid100Button.setDisable(disabled);
+    quickBid500Button.setDisable(disabled);
+    enableAutoBidButton.setDisable(disabled);
+    updateAutoBidButton.setDisable(disabled);
+    disableAutoBidButton.setDisable(disabled);
+    autoMaxBudgetField.setDisable(disabled);
+    autoStepComboBox.setDisable(disabled);
+    if (disabled) {
+      autoBidEnabled = false;
+      setAutoStatus("OFF", "auto-status-off");
+      autoNextBidLabel.setText("-");
+      autoRemainingBudgetLabel.setText("-");
+      autoLastActionLabel.setText(getInactiveAuctionMessage());
+    }
   }
 
   private void setAutoStatus(String text, String styleClass) {
@@ -795,27 +875,29 @@ public class LiveBiddingController {
             this.statusLabel.setText(finalStatus);
             updateStatusStyle(finalStatus);
 
-            bidAmountField.setDisable(true);
-            enableAutoBidButton.setDisable(true);
-            updateAutoBidButton.setDisable(true);
-            disableAutoBidButton.setDisable(true);
+            updateBiddingControlsState();
 
+            boolean isPaid = "PAID".equals(finalStatus);
             boolean isFinished = "FINISHED".equals(finalStatus);
+            boolean isSuccessful = isPaid || isFinished;
 
-            if (!isFinished) {
+            if (!isSuccessful) {
               showManualMessage("This auction was canceled (e.g. reserve not met).", false);
+            } else if (isPaid) {
+              showManualMessage("This auction has ended and payment is complete.", true);
             } else {
-              showManualMessage("This auction has ended successfully.", true);
+              showManualMessage("This auction has ended and payment is being settled.", true);
             }
 
             if (event.winnerUsername() != null) {
               highestBidderLabel.setText(event.winnerUsername());
-              // Only show "You won" if the status is FINISHED
-              if (isFinished && event.winnerUsername().equals(SceneManager.getCurrentUsername())) {
-                showManualMessage("Congratulations! You won this auction!", true);
-                // Notification handled globally by AppShellController to avoid duplicate toasts
-              } else if (!isFinished
-                  && event.winnerUsername().equals(SceneManager.getCurrentUsername())) {
+              boolean currentUserWon =
+                  event.winnerUsername().equals(SceneManager.getCurrentUsername());
+              if (isPaid && currentUserWon) {
+                showManualMessage("Congratulations! You won and paid for this auction.", true);
+              } else if (isFinished && currentUserWon) {
+                showManualMessage("Congratulations! You won. Payment is being settled.", true);
+              } else if (!isSuccessful && currentUserWon) {
                 showManualMessage(
                     "Auction ended. Reserve price wasn't met. You will be refunded.", false);
               }

@@ -112,7 +112,7 @@ class AuctionSettlementTest {
 
     // 4. Verify Settlement
     Auction finishedAuction = auctionDao.findById(auctionId).get();
-    assertEquals(AuctionStatus.FINISHED, finishedAuction.getStatus());
+    assertEquals(AuctionStatus.PAID, finishedAuction.getStatus());
 
     // Bidder: 5000 - 200 = 4800. Locked should be 0.
     UserDao.UserRecord finalBidder = userDao.findById(bidderId).get();

@@ -474,7 +474,7 @@ public class BidService {
               if (auction != null) {
                 title = "Auction #" + auction.getId();
 
-                if (auction.getStatus() == com.auction.common.enums.AuctionStatus.FINISHED) {
+                if (auction.getStatus() == com.auction.common.enums.AuctionStatus.PAID) {
                   result =
                       userId
                               == (auction.getHighestBidderId() != null
@@ -482,6 +482,17 @@ public class BidService {
                                   : -1)
                           ? "WON"
                           : "LOST";
+                } else if (auction.getStatus() == com.auction.common.enums.AuctionStatus.FINISHED) {
+                  result =
+                      userId
+                              == (auction.getHighestBidderId() != null
+                                  ? auction.getHighestBidderId()
+                                  : -1)
+                          ? "WON_PENDING_PAYMENT"
+                          : "LOST";
+                } else if (auction.getStatus()
+                    == com.auction.common.enums.AuctionStatus.CANCELED) {
+                  result = "CANCELED";
                 } else {
                   result =
                       userId

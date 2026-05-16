@@ -140,6 +140,7 @@
                                 />
 
                                 <Button
+                                    fx:id="confirmBidButton"
                                     onAction="#handlePlaceBid"
                                     minWidth="130"
                                     styleClass="live-primary-button"
@@ -156,16 +157,16 @@
 
                             <!-- Quick Bid Buttons -->
                             <HBox spacing="8" alignment="CENTER_LEFT">
-                                <Button text="+$10" onAction="#handleQuickBid10" styleClass="quick-bid-button">
+                                <Button fx:id="quickBid10Button" text="+$10" onAction="#handleQuickBid10" styleClass="quick-bid-button">
                                     <tooltip><Tooltip text="Quickly increase bid by $10" /></tooltip>
                                 </Button>
-                                <Button text="+$50" onAction="#handleQuickBid50" styleClass="quick-bid-button">
+                                <Button fx:id="quickBid50Button" text="+$50" onAction="#handleQuickBid50" styleClass="quick-bid-button">
                                     <tooltip><Tooltip text="Quickly increase bid by $50" /></tooltip>
                                 </Button>
-                                <Button text="+$100" onAction="#handleQuickBid100" styleClass="quick-bid-button">
+                                <Button fx:id="quickBid100Button" text="+$100" onAction="#handleQuickBid100" styleClass="quick-bid-button">
                                     <tooltip><Tooltip text="Quickly increase bid by $100" /></tooltip>
                                 </Button>
-                                <Button text="+$500" onAction="#handleQuickBid500" styleClass="quick-bid-button">
+                                <Button fx:id="quickBid500Button" text="+$500" onAction="#handleQuickBid500" styleClass="quick-bid-button">
                                     <tooltip><Tooltip text="Quickly increase bid by $500" /></tooltip>
                                 </Button>
                             </HBox>
