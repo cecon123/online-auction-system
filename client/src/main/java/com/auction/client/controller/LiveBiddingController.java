@@ -2,6 +2,7 @@ package com.auction.client.controller;
 
 import com.auction.client.service.AuctionClientService;
 import com.auction.client.socket.SocketClient;
+import com.auction.client.util.AuctionStatusUi;
 import com.auction.client.util.BidTimeline;
 import com.auction.client.util.JsonMapper;
 import com.auction.client.util.NotificationManager;
@@ -12,6 +13,7 @@ import com.auction.common.dto.bid.BidUpdateEvent;
 import com.auction.common.dto.bid.PlaceBidResponse;
 import com.auction.common.dto.bid.SetAutoBidRequest;
 import com.auction.common.dto.dashboard.DashboardDto;
+import com.auction.common.enums.AuctionStatus;
 import com.auction.common.protocol.MessageType;
 import com.auction.common.protocol.Response;
 import java.math.BigDecimal;
@@ -839,24 +841,7 @@ public class LiveBiddingController {
   // ── UI Helpers ───────────────────────────────────────
 
   private void updateStatusStyle(String status) {
-    statusLabel
-        .getStyleClass()
-        .removeAll(
-            "status-badge",
-            "status-running",
-            "status-open",
-            "status-finished",
-            "status-paid",
-            "status-cancelled",
-            "status-canceled");
-    statusLabel.getStyleClass().add("status-badge");
-    switch (status) {
-      case "RUNNING" -> statusLabel.getStyleClass().add("status-running");
-      case "OPEN" -> statusLabel.getStyleClass().add("status-open");
-      case "PAID" -> statusLabel.getStyleClass().add("status-paid");
-      case "CANCELED", "CANCELLED" -> statusLabel.getStyleClass().add("status-cancelled");
-      default -> statusLabel.getStyleClass().add("status-finished");
-    }
+    AuctionStatusUi.applyBadge(statusLabel, AuctionStatusUi.parse(status));
   }
 
   private void refreshCurrentPrice() {
@@ -916,29 +901,12 @@ public class LiveBiddingController {
   }
 
   private boolean isAuctionAcceptingBids() {
-    return "RUNNING".equals(statusLabel.getText())
-        && endTime != null
-        && LocalDateTime.now().isBefore(endTime);
+    AuctionStatus status = AuctionStatusUi.parse(statusLabel.getText());
+    return AuctionStatusUi.acceptsBids(status, endTime);
   }
 
   private String getInactiveAuctionMessage() {
-    String status = statusLabel.getText();
-    if ("OPEN".equals(status)) {
-      return "This auction has not started yet.";
-    }
-    if ("RUNNING".equals(status)) {
-      return "This auction has ended. Waiting for settlement.";
-    }
-    if ("FINISHED".equals(status)) {
-      return "This auction has ended and payment is being settled.";
-    }
-    if ("PAID".equals(status)) {
-      return "This auction has been paid.";
-    }
-    if ("CANCELED".equals(status) || "CANCELLED".equals(status)) {
-      return "This auction has been canceled.";
-    }
-    return "Bidding is not available for this auction.";
+    return AuctionStatusUi.inactiveBidMessage(AuctionStatusUi.parse(statusLabel.getText()));
   }
 
   private void updateBiddingControlsState() {

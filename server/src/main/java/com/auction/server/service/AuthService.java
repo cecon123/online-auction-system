@@ -6,6 +6,8 @@ import com.auction.common.dto.auth.RegisterRequest;
 import com.auction.common.dto.auth.RegisterResponse;
 import com.auction.common.enums.Role;
 import com.auction.server.dao.UserDao;
+import com.auction.server.exception.AuthenticationException;
+import com.auction.server.exception.ValidationException;
 import java.math.BigDecimal;
 import java.util.Optional;
 import org.mindrot.jbcrypt.BCrypt;
@@ -30,16 +32,16 @@ public class AuthService {
    *
    * @param request The registration request details.
    * @return A response containing the newly created user's info.
-   * @throws IllegalArgumentException if the username already exists.
+   * @throws ValidationException if the username already exists or role is invalid.
    */
   public RegisterResponse register(RegisterRequest request) {
     if (request.role() == Role.ADMIN) {
-      throw new IllegalArgumentException("Admin accounts cannot be created from public register.");
+      throw new ValidationException("Admin accounts cannot be created from public register.");
     }
 
     // 1. Check if username exists
     if (userDao.findByUsername(request.username()).isPresent()) {
-      throw new IllegalArgumentException("Username already exists.");
+      throw new ValidationException("Username already exists.");
     }
 
     // 2. Hash password
@@ -69,27 +71,26 @@ public class AuthService {
    *
    * @param request The login credentials.
    * @return A response containing user details and a session token.
-   * @throws IllegalArgumentException if username or password is invalid.
-   * @throws IllegalStateException if the account is suspended.
+   * @throws AuthenticationException if credentials are invalid or account is suspended.
    */
   public LoginResponse login(LoginRequest request) {
     // 1. Find user
     Optional<UserDao.UserRecord> userOpt = userDao.findByUsername(request.username());
 
     if (userOpt.isEmpty()) {
-      throw new IllegalArgumentException("Invalid username or password.");
+      throw new AuthenticationException("Invalid username or password.");
     }
 
     UserDao.UserRecord user = userOpt.get();
 
     // 2. Check active status
     if (!user.active()) {
-      throw new IllegalStateException("Your account has been suspended.");
+      throw new AuthenticationException("Your account has been suspended.");
     }
 
     // 3. Verify password
     if (!BCrypt.checkpw(request.password(), user.passwordHash())) {
-      throw new IllegalArgumentException("Invalid username or password.");
+      throw new AuthenticationException("Invalid username or password.");
     }
 
     // 4. Issue token

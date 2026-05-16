@@ -1,6 +1,10 @@
 package com.auction.server.service;
 
 import com.auction.server.dao.UserDao;
+import com.auction.server.exception.BusinessRuleException;
+import com.auction.server.exception.InsufficientFundsException;
+import com.auction.server.exception.ResourceNotFoundException;
+import com.auction.server.exception.ValidationException;
 import java.math.BigDecimal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,11 +20,11 @@ public class WalletService {
 
   public BigDecimal deposit(long userId, BigDecimal amount) {
     if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-      throw new IllegalArgumentException("Deposit amount must be positive.");
+      throw new ValidationException("Deposit amount must be positive.");
     }
 
     UserDao.UserRecord user =
-        userDao.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found."));
+        userDao.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found."));
 
     BigDecimal newBalance = user.balance().add(amount);
     userDao.updateBalance(userId, newBalance);
@@ -31,14 +35,14 @@ public class WalletService {
 
   public BigDecimal withdraw(long userId, BigDecimal amount) {
     if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-      throw new IllegalArgumentException("Withdraw amount must be positive.");
+      throw new ValidationException("Withdraw amount must be positive.");
     }
 
     UserDao.UserRecord user =
-        userDao.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found."));
+        userDao.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found."));
 
     if (user.balance().subtract(user.lockedBalance()).compareTo(amount) < 0) {
-      throw new IllegalStateException("Insufficient available balance.");
+      throw new InsufficientFundsException("Insufficient available balance.");
     }
 
     BigDecimal newBalance = user.balance().subtract(amount);
@@ -50,14 +54,14 @@ public class WalletService {
 
   public void lockFunds(long userId, BigDecimal amount) {
     if (amount.compareTo(BigDecimal.ZERO) < 0) {
-      throw new IllegalArgumentException("Lock amount must be non-negative.");
+      throw new ValidationException("Lock amount must be non-negative.");
     }
 
     UserDao.UserRecord user =
-        userDao.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found."));
+        userDao.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found."));
 
     if (user.balance().subtract(user.lockedBalance()).compareTo(amount) < 0) {
-      throw new IllegalStateException("Insufficient available balance to lock funds.");
+      throw new InsufficientFundsException("Insufficient available balance to lock funds.");
     }
 
     BigDecimal newLockedBalance = user.lockedBalance().add(amount);
@@ -67,15 +71,15 @@ public class WalletService {
 
   public void releaseFunds(long userId, BigDecimal amount) {
     if (amount.compareTo(BigDecimal.ZERO) < 0) {
-      throw new IllegalArgumentException("Release amount must be non-negative.");
+      throw new ValidationException("Release amount must be non-negative.");
     }
 
     UserDao.UserRecord user =
-        userDao.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found."));
+        userDao.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found."));
 
     BigDecimal newLockedBalance = user.lockedBalance().subtract(amount);
     if (newLockedBalance.compareTo(BigDecimal.ZERO) < 0) {
-      throw new IllegalStateException("Cannot release more funds than currently locked.");
+      throw new BusinessRuleException("Cannot release more funds than currently locked.");
     }
     userDao.updateLockedBalance(userId, newLockedBalance);
     logger.info(
@@ -84,23 +88,23 @@ public class WalletService {
 
   public void settleAuction(long winnerId, long sellerId, BigDecimal amount) {
     if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-      throw new IllegalArgumentException("Settlement amount must be positive.");
+      throw new ValidationException("Settlement amount must be positive.");
     }
 
     UserDao.UserRecord winner =
         userDao
             .findById(winnerId)
-            .orElseThrow(() -> new IllegalArgumentException("Winner not found."));
+            .orElseThrow(() -> new ResourceNotFoundException("Winner not found."));
     UserDao.UserRecord seller =
         userDao
             .findById(sellerId)
-            .orElseThrow(() -> new IllegalArgumentException("Seller not found."));
+            .orElseThrow(() -> new ResourceNotFoundException("Seller not found."));
 
     if (winner.lockedBalance().compareTo(amount) < 0) {
-      throw new IllegalStateException("Insufficient locked balance for auction settlement.");
+      throw new InsufficientFundsException("Insufficient locked balance for auction settlement.");
     }
     if (winner.balance().compareTo(amount) < 0) {
-      throw new IllegalStateException("Insufficient winner balance for auction settlement.");
+      throw new InsufficientFundsException("Insufficient winner balance for auction settlement.");
     }
 
     // Winner: subtract from both balance and locked_balance (because it was locked)

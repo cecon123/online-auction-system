@@ -12,6 +12,9 @@ import com.auction.common.protocol.MessageType;
 import com.auction.server.dao.AuctionDao;
 import com.auction.server.dao.Database;
 import com.auction.server.dao.ItemDao;
+import com.auction.server.exception.AuthorizationException;
+import com.auction.server.exception.BusinessRuleException;
+import com.auction.server.exception.ResourceNotFoundException;
 import com.auction.server.factory.ItemFactory;
 import java.time.LocalDateTime;
 import org.slf4j.Logger;
@@ -121,8 +124,7 @@ public class AuctionService {
    *
    * @param userId The ID of the seller.
    * @param auctionId The ID of the auction to cancel.
-   * @throws IllegalArgumentException if auction is not found.
-   * @throws IllegalStateException if user is not the seller or status is invalid.
+   * @throws com.auction.server.exception.BusinessException if cancellation is not allowed.
    */
   public void cancelAuction(long userId, long auctionId) {
     Database.getInstance()
@@ -132,15 +134,15 @@ public class AuctionService {
                   auctionDao
                       .findById(auctionId)
                       .orElseThrow(
-                          () -> new IllegalArgumentException("Auction not found: " + auctionId));
+                          () -> new ResourceNotFoundException("Auction not found: " + auctionId));
 
               if (auction.getSellerId() != userId) {
-                throw new IllegalStateException("You can only cancel your own auctions.");
+                throw new AuthorizationException("You can only cancel your own auctions.");
               }
 
               if (auction.getStatus() != AuctionStatus.OPEN
                   && auction.getStatus() != AuctionStatus.RUNNING) {
-                throw new IllegalStateException(
+                throw new BusinessRuleException(
                     "Auction cannot be canceled in its current status: " + auction.getStatus());
               }
 
@@ -159,8 +161,7 @@ public class AuctionService {
    *
    * @param adminId The ID of the administrator.
    * @param auctionId The ID of the auction to cancel.
-   * @throws IllegalArgumentException if auction is not found.
-   * @throws IllegalStateException if status is invalid for cancellation.
+   * @throws com.auction.server.exception.BusinessException if cancellation is not allowed.
    */
   public void adminCancelAuction(long adminId, long auctionId) {
     Database.getInstance()
@@ -170,11 +171,11 @@ public class AuctionService {
                   auctionDao
                       .findById(auctionId)
                       .orElseThrow(
-                          () -> new IllegalArgumentException("Auction not found: " + auctionId));
+                          () -> new ResourceNotFoundException("Auction not found: " + auctionId));
 
               if (auction.getStatus() != AuctionStatus.OPEN
                   && auction.getStatus() != AuctionStatus.RUNNING) {
-                throw new IllegalStateException(
+                throw new BusinessRuleException(
                     "Auction cannot be canceled in its current status: " + auction.getStatus());
               }
 
@@ -248,8 +249,7 @@ public class AuctionService {
    *
    * @param sellerId The ID of the seller.
    * @param request The update request containing new details.
-   * @throws IllegalArgumentException if auction or item is not found.
-   * @throws IllegalStateException if bids exist or status/ownership is invalid.
+   * @throws com.auction.server.exception.BusinessException if update is not allowed.
    */
   public void updateAuction(long sellerId, UpdateAuctionRequest request) {
     Database.getInstance()
@@ -260,19 +260,19 @@ public class AuctionService {
                       .findById(request.auctionId())
                       .orElseThrow(
                           () ->
-                              new IllegalArgumentException(
+                              new ResourceNotFoundException(
                                   "Auction not found: " + request.auctionId()));
 
               if (auction.getSellerId() != sellerId) {
-                throw new IllegalStateException("You can only edit your own auctions.");
+                throw new AuthorizationException("You can only edit your own auctions.");
               }
 
               if (auction.getHighestBidderId() != null) {
-                throw new IllegalStateException("Cannot edit auction. Bids have already been placed.");
+                throw new BusinessRuleException("Cannot edit auction. Bids have already been placed.");
               }
 
               if (auction.getStatus() != AuctionStatus.OPEN) {
-                throw new IllegalStateException(
+                throw new BusinessRuleException(
                     "Auction cannot be edited in its current status: " + auction.getStatus());
               }
 
@@ -282,7 +282,7 @@ public class AuctionService {
                       .findById(auction.getItemId())
                       .orElseThrow(
                           () ->
-                              new IllegalArgumentException(
+                              new ResourceNotFoundException(
                                   "Item not found for auction: " + request.auctionId()));
 
               item.setName(request.itemName());

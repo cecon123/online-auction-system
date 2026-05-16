@@ -8,6 +8,8 @@ import com.auction.common.dto.auth.LoginRequest;
 import com.auction.common.dto.auth.RegisterRequest;
 import com.auction.common.enums.Role;
 import com.auction.server.dao.UserDao;
+import com.auction.server.exception.AuthenticationException;
+import com.auction.server.exception.ValidationException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -60,7 +62,7 @@ class AuthServiceTest {
     when(userDao.findByUsername("testuser")).thenReturn(Optional.of(existingUser));
 
     // Act & Assert
-    assertThrows(IllegalArgumentException.class, () -> authService.register(request));
+    assertThrows(ValidationException.class, () -> authService.register(request));
   }
 
   @Test
@@ -68,8 +70,8 @@ class AuthServiceTest {
     RegisterRequest request =
         new RegisterRequest("Admin User", "admin_user", "password123", Role.ADMIN);
 
-    IllegalArgumentException exception =
-        assertThrows(IllegalArgumentException.class, () -> authService.register(request));
+    ValidationException exception =
+        assertThrows(ValidationException.class, () -> authService.register(request));
 
     assertTrue(exception.getMessage().contains("Admin accounts cannot be created"));
     verify(userDao, never()).create(anyString(), anyString(), anyString(), any(), any(), any());
@@ -129,7 +131,7 @@ class AuthServiceTest {
     LoginRequest request = new LoginRequest("testuser", "wrong_password");
 
     // Act & Assert
-    assertThrows(IllegalArgumentException.class, () -> authService.login(request));
+    assertThrows(AuthenticationException.class, () -> authService.login(request));
   }
 
   private UserDao.UserRecord createMockUser(long id, String username, BigDecimal balance) {

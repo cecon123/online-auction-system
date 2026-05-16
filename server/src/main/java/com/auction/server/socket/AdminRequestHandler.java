@@ -7,6 +7,8 @@ import com.auction.common.protocol.MessageType;
 import com.auction.common.protocol.Request;
 import com.auction.common.protocol.Response;
 import com.auction.server.dao.UserDao;
+import com.auction.server.exception.BusinessRuleException;
+import com.auction.server.exception.ResourceNotFoundException;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,10 +55,10 @@ final class AdminRequestHandler {
     UserDao.UserRecord targetUser =
         context.userDao
             .findById(data.userId())
-            .orElseThrow(() -> new IllegalArgumentException("User not found: " + data.userId()));
+            .orElseThrow(() -> new ResourceNotFoundException("User not found: " + data.userId()));
 
     if (targetUser.role() == Role.ADMIN && !data.active()) {
-      throw new IllegalStateException("Administrative accounts cannot be deactivated.");
+      throw new BusinessRuleException("Administrative accounts cannot be deactivated.");
     }
 
     context.userDao.updateActiveStatus(data.userId(), data.active());

@@ -24,14 +24,14 @@ Chứa các thành phần mà cả Client và Server đều cần sử dụng đ
 ### 2.2 Module `server` (Backend)
 - `dao/`: Lớp truy cập dữ liệu (Data Access Object) thực hiện các câu lệnh SQL tới SQLite.
 - `service/`: Chứa toàn bộ logic nghiệp vụ (Xử lý đặt thầu, kết thúc đấu giá, ví tiền).
-- `socket/`: Quản lý kết nối TCP. `RequestRouter` đóng vai trò là "Controller" điều phối các yêu cầu.
+- `socket/`: Quản lý kết nối TCP. `RequestRouter` làm lớp điều phối mỏng và chuyển tiếp tới các handler theo nhóm nghiệp vụ (`AuthRequestHandler`, `AuctionRequestHandler`, `BidRequestHandler`, `WalletRequestHandler`, `AdminRequestHandler`, `SubscriptionRequestHandler`).
 - `concurrency/`: Xử lý khóa (Locking) và an toàn đa luồng cho các phiên đấu giá cao điểm.
 
 ### 2.3 Module `client` (Frontend)
 - `controller/`: Các lớp Java điều khiển hành vi của giao diện (FXML).
 - `service/`: Các lớp proxy gửi yêu cầu tới server và nhận kết quả bất đồng bộ.
 - `socket/`: `SocketClient` quản lý kết nối lâu dài và lắng nghe sự kiện từ server.
-- `util/`: Các tiện ích như `SceneManager` (điều hướng màn hình) và `NotificationManager`.
+- `util/`: Các tiện ích như `SceneManager` (điều hướng màn hình), `NotificationManager`, và `AuctionStatusUi` để chuẩn hóa badge/status CSS.
 - `resources/`: 
     - `fxml/`: Định nghĩa giao diện người dùng bằng XML.
     - `css/`: Các file stylesheet hiện đại cho JavaFX.

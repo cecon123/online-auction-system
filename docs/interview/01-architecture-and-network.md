@@ -20,9 +20,9 @@ Khi nhấn nút "Bid":
 4. **Mạng:** Chuỗi JSON đi qua port 8080.
 5. **Server Socket:** `ServerSocket.accept()` trả về `Socket`. Một `ClientHandler` được sinh ra.
 6. **Server Parsing:** `ClientHandler.run()` gọi `reader.readLine()`.
-7. **Routing:** `RequestRouter.handle(request)` thực hiện `switch-case`.
+7. **Routing:** `RequestRouter.route(request)` kiểm tra request chung, replay protection, rồi `switch-case` theo `MessageType` để chuyển tiếp sang handler phù hợp.
 8. **Service:** `BidService.placeBid()` xử lý logic.
-9. **DAO:** `BidDao.save()` thực hiện `PreparedStatement.executeUpdate()`.
+9. **DAO:** `BidDao.create()` thực hiện `PreparedStatement.executeUpdate()`.
 
 ---
 
@@ -47,9 +47,11 @@ graph TD
         CH1[ClientHandler 1]
         CH2[ClientHandler 2]
         RR[RequestRouter]
+        H[Auth/Auction/Bid/Wallet/Admin Handlers]
         
         SS -->|accept| CH1 & CH2
         CH1 -->|parse| RR
+        RR -->|delegate| H
     end
 
     subgraph "Client Process"
@@ -77,7 +79,7 @@ graph TD
 3. **Q: Nếu Server nhận được 1 gói tin JSON bị lỗi cú pháp (ví dụ thiếu dấu ngoặc), hệ thống có bị sập không?**
    - **A:** Không. Trong `ClientHandler.run()`, em bọc lệnh parse JSON trong khối `try-catch`. Nếu lỗi, em bắt `JsonSyntaxException`, gửi trả `Response(success=false)` và tiếp tục vòng lặp chờ tin nhắn tiếp theo.
 4. **Q: Cơ chế `requestId` của em có chống được tấn công Replay (gửi lại gói tin cũ) không?**
-   - **A:** Một phần. Để chống triệt để, Server cần lưu danh sách `requestId` đã xử lý trong một khoảng thời gian (Idempotency). Hiện tại dự án dùng nó chủ yếu để map phản hồi.
+   - **A:** Có ở mức trong tiến trình server hiện tại. `RequestRouter` dùng `IdempotencyManager` để từ chối requestId đã xử lý, đồng thời client dùng `requestId` để map phản hồi về đúng `CompletableFuture`.
 5. **Q: Tại sao `common` module lại không chứa bất kỳ logic nào liên quan đến Database?**
    - **A:** Để đảm bảo tính **POJO (Plain Old Java Object)**. Nó chỉ là vật chứa dữ liệu, giúp nó có thể được sử dụng ở mọi môi trường mà không kéo theo các dependency nặng nề.
 6. **Q: Ý nghĩa của trường `token` trong gói tin AUTH?**
@@ -85,7 +87,7 @@ graph TD
 7. **Q: Em hãy giải thích về mô hình MVC ở phía Client? Controller liên kết với View như thế nào?**
    - **A:** View (FXML) khai báo `fx:controller="com.auction.client.controller.LoginController"`. JavaFX FXMLLoader sẽ tự động instantiate Controller và map các ID `@FXML` với các biến trong code.
 8. **Q: Làm sao để đảm bảo Server không bị tràn bộ nhớ khi có hàng ngàn Client kết nối nhưng không gửi gì?**
-   - **A:** Cần thiết lập **Read Timeout** (`socket.setSoTimeout`). Nếu quá lâu không gửi dữ liệu, Server sẽ tự động đóng kết nối để giải phóng Thread.
+   - **A:** `SocketServer` đã thiết lập **Read Timeout** bằng `clientSocket.setSoTimeout(600_000)`. Nếu 10 phút không gửi dữ liệu, `ClientHandler` sẽ timeout và đóng kết nối để giải phóng Thread.
 9. **Q: Tại sao em lại dùng Enum cho `MessageType` thay vì String thuần?**
    - **A:** Enum cung cấp **Type-safety**. Giúp tránh lỗi gõ sai tên hành động và tận dụng được tính năng `switch-case` tối ưu của Java.
 10. **Q: Em hãy mô tả cấu trúc của file `pom.xml` cha (Parent POM)?**

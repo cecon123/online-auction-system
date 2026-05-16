@@ -2,6 +2,7 @@ package com.auction.client.controller;
 
 import com.auction.client.service.AuctionClientService;
 import com.auction.client.socket.SocketClient;
+import com.auction.client.util.AuctionStatusUi;
 import com.auction.client.util.SceneManager;
 import com.auction.common.dto.auction.AuctionSummaryDto;
 import com.auction.common.protocol.MessageType;
@@ -160,7 +161,7 @@ public class SellerCenterController {
       currentPrice.setMinWidth(100);
 
       Label status = new Label(auction.status().name());
-      status.getStyleClass().addAll("status-badge", getStatusStyleClass(auction.status().name()));
+      AuctionStatusUi.applyBadge(status, auction.status());
       status.setPrefWidth(80);
       status.setMinWidth(80);
 
@@ -223,18 +224,4 @@ public class SellerCenterController {
     SceneManager.showCreateAuction();
   }
 
-  /**
-   * Maps AuctionStatus enum name to the corresponding CSS class. Handles the mismatch between
-   * CANCELED (enum) and status-cancelled (legacy CSS).
-   */
-  private String getStatusStyleClass(String statusName) {
-    return switch (statusName) {
-      case "RUNNING" -> "status-running";
-      case "OPEN" -> "status-open";
-      case "FINISHED" -> "status-finished";
-      case "PAID" -> "status-paid";
-      case "CANCELED" -> "status-canceled";
-      default -> "status-finished";
-    };
-  }
 }

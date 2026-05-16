@@ -13,6 +13,7 @@ import com.auction.common.model.Item;
 import com.auction.common.protocol.MessageType;
 import com.auction.common.protocol.Request;
 import com.auction.common.protocol.Response;
+import com.auction.server.exception.ValidationException;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -38,7 +39,7 @@ final class BidRequestHandler {
   Response<List<PlaceBidResponse>> handleGetBidHistory(Request<?> request) {
     Long auctionId = context.jsonMapper.convertData(request.getData(), Long.class);
     if (auctionId == null) {
-      throw new IllegalArgumentException("Missing auction ID");
+      throw new ValidationException("Missing auction ID");
     }
 
     return Response.ok(
@@ -111,7 +112,7 @@ final class BidRequestHandler {
     Long userId = context.requireActiveUser(request);
     Long auctionId = context.jsonMapper.convertData(request.getData(), Long.class);
     if (auctionId == null) {
-      throw new IllegalArgumentException("Missing auction ID");
+      throw new ValidationException("Missing auction ID");
     }
 
     return Response.ok(

@@ -3,6 +3,7 @@ package com.auction.server.socket;
 import com.auction.common.protocol.MessageType;
 import com.auction.common.protocol.Request;
 import com.auction.common.protocol.Response;
+import com.auction.server.exception.ValidationException;
 
 final class SubscriptionRequestHandler {
 
@@ -15,7 +16,7 @@ final class SubscriptionRequestHandler {
   Response<Void> handleSubscribeAuction(Request<?> request) {
     Long auctionId = context.jsonMapper.convertData(request.getData(), Long.class);
     if (auctionId == null) {
-      throw new IllegalArgumentException("Missing auction ID");
+      throw new ValidationException("Missing auction ID");
     }
 
     context.notificationService.subscribe(auctionId, context.clientWriter);
@@ -29,7 +30,7 @@ final class SubscriptionRequestHandler {
   Response<Void> handleUnsubscribeAuction(Request<?> request) {
     Long auctionId = context.jsonMapper.convertData(request.getData(), Long.class);
     if (auctionId == null) {
-      throw new IllegalArgumentException("Missing auction ID");
+      throw new ValidationException("Missing auction ID");
     }
 
     context.notificationService.unsubscribe(auctionId, context.clientWriter);

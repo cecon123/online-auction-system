@@ -95,4 +95,31 @@ class RequestRouterAuthorizationTest {
     assertFalse(response.isSuccess());
     assertTrue(response.getMessage().contains("SELLER role required"));
   }
+
+  @Test
+  void unsupportedItemMessageRemainsUnsupported() {
+    Request<Void> request = new Request<>(MessageType.CREATE_ITEM, "legacy-item-create", null, null);
+
+    Response<?> response = router.route(request);
+
+    assertFalse(response.isSuccess());
+    assertTrue(response.getMessage().contains("Unsupported message type in router: CREATE_ITEM"));
+  }
+
+  @Test
+  void logoutInvalidatesTokenForFutureRequests() {
+    String bidderToken = SessionManager.getInstance().createSession(4L);
+    Request<Void> logoutRequest =
+        new Request<>(MessageType.LOGOUT, "logout-invalidates-token", bidderToken, null);
+
+    Response<?> logoutResponse = router.route(logoutRequest);
+    Response<?> dashboardResponse =
+        router.route(
+            new Request<>(
+                MessageType.GET_DASHBOARD, "after-logout-dashboard", bidderToken, null));
+
+    assertTrue(logoutResponse.isSuccess());
+    assertFalse(dashboardResponse.isSuccess());
+    assertTrue(dashboardResponse.getMessage().contains("Unauthorized"));
+  }
 }

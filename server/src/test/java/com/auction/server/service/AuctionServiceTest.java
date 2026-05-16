@@ -14,6 +14,8 @@ import com.auction.common.model.Item;
 import com.auction.server.dao.AuctionDao;
 import com.auction.server.dao.BidDao;
 import com.auction.server.dao.ItemDao;
+import com.auction.server.exception.AuthorizationException;
+import com.auction.server.exception.BusinessRuleException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -96,7 +98,7 @@ class AuctionServiceTest {
 
     // Act & Assert
     assertThrows(
-        IllegalStateException.class,
+        AuthorizationException.class,
         () -> {
           auctionService.cancelAuction(999L, AUCTION_ID);
         });
@@ -160,7 +162,7 @@ class AuctionServiceTest {
 
     // Act & Assert
     assertThrows(
-        IllegalStateException.class,
+        BusinessRuleException.class,
         () -> {
           auctionService.updateAuction(SELLER_ID, request);
         });

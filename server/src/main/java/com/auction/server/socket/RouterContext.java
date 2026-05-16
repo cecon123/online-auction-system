@@ -13,6 +13,9 @@ import com.auction.server.dao.sqlite.SQLiteAutoBidDao;
 import com.auction.server.dao.sqlite.SQLiteBidDao;
 import com.auction.server.dao.sqlite.SQLiteItemDao;
 import com.auction.server.dao.sqlite.SQLiteUserDao;
+import com.auction.server.exception.AuthenticationException;
+import com.auction.server.exception.AuthorizationException;
+import com.auction.server.exception.ValidationException;
 import com.auction.server.service.AuctionService;
 import com.auction.server.service.AuthService;
 import com.auction.server.service.BidService;
@@ -59,14 +62,14 @@ final class RouterContext {
   Long requireActiveUser(Request<?> request) {
     Long userId = sessionManager.getUserId(request.getToken());
     if (userId == null) {
-      throw new IllegalStateException("Unauthorized. Please login.");
+      throw new AuthenticationException("Unauthorized. Please login.");
     }
 
     UserDao.UserRecord user =
-        userDao.findById(userId).orElseThrow(() -> new IllegalStateException("User not found."));
+        userDao.findById(userId).orElseThrow(() -> new AuthenticationException("User not found."));
 
     if (!user.active()) {
-      throw new IllegalStateException("Your account has been suspended.");
+      throw new AuthenticationException("Your account has been suspended.");
     }
 
     return userId;
@@ -77,7 +80,7 @@ final class RouterContext {
     UserDao.UserRecord user = userDao.findById(userId).get();
 
     if (user.role() != Role.ADMIN) {
-      throw new IllegalStateException("Access denied. Admin role required.");
+      throw new AuthorizationException("Access denied. Admin role required.");
     }
 
     return userId;
@@ -88,7 +91,7 @@ final class RouterContext {
     UserDao.UserRecord user = userDao.findById(userId).get();
 
     if (user.role() != expectedRole) {
-      throw new IllegalStateException("Access denied. " + expectedRole + " role required.");
+      throw new AuthorizationException("Access denied. " + expectedRole + " role required.");
     }
 
     return userId;
@@ -98,7 +101,7 @@ final class RouterContext {
     T data = jsonMapper.convertData(request.getData(), clazz);
 
     if (data == null) {
-      throw new IllegalArgumentException(errorMessage);
+      throw new ValidationException(errorMessage);
     }
 
     return data;

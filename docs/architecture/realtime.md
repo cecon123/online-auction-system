@@ -32,12 +32,17 @@ Tất cả các hoạt động socket diễn ra trên các luồng nền:
 - **Nhận dữ liệu:** Luồng `SocketListener` đọc dữ liệu từ luồng vào (input stream).
 - **Cập nhật giao diện:** Để cập nhật UI, tất cả các trình lắng nghe sự kiện (event listeners) trong `SocketClient` được bao bọc trong `Platform.runLater()` để đảm bảo chúng thực thi trên **JavaFX Application Thread**.
 
-## 4. Cơ chế kết nối lại
+## 4. Trạng thái mất kết nối hiện tại
 
-`SocketClient` triển khai chiến lược kết nối lại âm thầm:
-1. Nếu mất kết nối, hệ thống cố gắng kết nối lại tối đa 5 lần với độ trễ 3 giây mỗi lần.
-2. Khi kết nối lại thành công, nó kích hoạt một callback `onReconnect`.
-3. `AuthClientService` sử dụng callback này để thực hiện **Tự động đăng nhập lại (Silent Re-authentication)** bằng thông tin đăng nhập đã lưu, đảm bảo phiên làm việc của người dùng không bị gián đoạn.
+Code hiện tại chưa triển khai retry reconnect hoặc silent re-authentication.
+
+Khi server đóng kết nối hoặc socket bị lỗi, `SocketClient`:
+1. Dừng listener socket.
+2. Chuyển `ConnectionState` về `DISCONNECTED`.
+3. Fail các request đang chờ trong `pendingRequests`.
+4. Xóa token phiên ở client.
+
+Enum `ConnectionState.RECONNECTING` vẫn tồn tại để dành cho mở rộng sau, nhưng luồng hiện tại không set trạng thái này.
 
 ## 5. Các loại thông điệp sự kiện
 

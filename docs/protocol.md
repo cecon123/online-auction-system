@@ -81,9 +81,6 @@ Các sự kiện do server chủ động đẩy xuống (push) sẽ có `request
 | | `CANCEL_AUCTION` | Người bán/Quản trị viên: Dừng phiên đấu giá |
 | | `GET_SELLER_AUCTIONS` | Người bán: Xem danh sách phiên sở hữu |
 | | `GET_SELLER_STATS` | Người bán: Xem thống kê doanh thu và lượt thầu |
-| **MẶT HÀNG** | `CREATE_ITEM` | Người bán: Đăng ký mặt hàng mới |
-| | `UPDATE_ITEM` | Người bán: Chỉnh sửa thông tin mặt hàng |
-| | `DELETE_ITEM` | Người bán: Xóa mặt hàng |
 | **ĐẶT GIÁ** | `PLACE_BID` | Người đấu giá: Đặt một mức giá thầu mới |
 | | `GET_BID_HISTORY` | Xem lịch sử thầu của một phiên đấu giá |
 | | `GET_MY_BIDS` | Liệt kê các phiên đấu giá người dùng đã tham gia |
@@ -92,6 +89,7 @@ Các sự kiện do server chủ động đẩy xuống (push) sẽ có `request
 | | `UNSUBSCRIBE_AUCTION` | Ngừng lắng nghe cập nhật |
 | | `BID_UPDATE` | Sự kiện Server: Phát sóng lượt thầu mới |
 | | `AUCTION_CLOSED` | Sự kiện Server: Phát sóng kết thúc phiên |
+| | `AUCTION_CANCELED` | Sự kiện Server: Phát sóng phiên bị hủy |
 | | `TIME_EXTENDED` | Sự kiện Server: Phát sóng gia hạn thời gian (Anti-sniping) |
 | | `AUCTION_LIST_UPDATED`| Sự kiện Server: Danh sách chung thay đổi |
 | | `USER_LIST_UPDATED`   | Sự kiện Server: Danh sách người dùng thay đổi (Admin) |
@@ -104,3 +102,9 @@ Các sự kiện do server chủ động đẩy xuống (push) sẽ có `request
 | | `ADMIN_GET_AUCTIONS` | Quản lý toàn bộ phiên đấu giá hệ thống |
 | | `ADMIN_CANCEL_AUCTION` | Dừng phiên đấu giá cưỡng bức bởi Admin |
 | | `SYSTEM_NOTIFICATION` | Tin nhắn trực tiếp từ server tới người dùng |
+
+### Ghi chú về message type mặt hàng
+
+`MessageType` vẫn còn các enum `CREATE_ITEM`, `UPDATE_ITEM`, `DELETE_ITEM` để tương thích/đặt chỗ cho thiết kế cũ, nhưng `RequestRouter` hiện không route các message này. Nếu client gửi các type này, server trả về `Response.fail` với thông báo unsupported message.
+
+Ở implementation hiện tại, item được tạo cùng payload của `CREATE_AUCTION` và được chỉnh sửa cùng payload của `UPDATE_AUCTION`; không có API CRUD item độc lập qua socket.

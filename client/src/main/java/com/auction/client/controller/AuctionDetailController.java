@@ -1,6 +1,7 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.AuctionClientService;
+import com.auction.client.util.AuctionStatusUi;
 import com.auction.client.util.SceneManager;
 import com.auction.common.dto.auction.AuctionDetailDto;
 import com.auction.common.dto.bid.PlaceBidResponse;
@@ -171,31 +172,7 @@ public class AuctionDetailController {
   private void updateUI(AuctionDetailDto detail) {
     if (detail == null) return;
 
-    // Update status badge with unified system
-    String statusName = detail.status().name();
-    statusLabel.getStyleClass().setAll("status-badge");
-    switch (statusName) {
-      case "RUNNING" -> {
-        statusLabel.setText("LIVE AUCTION");
-        statusLabel.getStyleClass().add("status-running");
-      }
-      case "OPEN" -> {
-        statusLabel.setText("OPEN");
-        statusLabel.getStyleClass().add("status-open");
-      }
-      case "FINISHED" -> {
-        statusLabel.setText("FINISHED");
-        statusLabel.getStyleClass().add("status-finished");
-      }
-      case "PAID" -> {
-        statusLabel.setText("PAID");
-        statusLabel.getStyleClass().add("status-paid");
-      }
-      default -> {
-        statusLabel.setText(statusName);
-        statusLabel.getStyleClass().add("status-cancelled");
-      }
-    }
+    AuctionStatusUi.applyDetailBadge(statusLabel, detail.status());
 
     titleLabel.setText(detail.title());
     currentPriceLabel.setText(CURRENCY_FORMAT.format(detail.currentPrice()));

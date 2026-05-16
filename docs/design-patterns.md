@@ -12,7 +12,7 @@ Tài liệu này giải thích các mẫu thiết kế (design patterns) đượ
 - **`Database.getInstance()`**: Cấu hình kết nối SQLite tập trung. Đảm bảo chế độ WAL (Write-Ahead Logging) được bật và các ràng buộc khóa ngoại được thực thi nhất quán.
 - **`JsonMapper.getInstance()`**: Chia sẻ một đối tượng `Gson` duy nhất được cấu hình với các bộ chuyển đổi `LocalDateTime` tùy chỉnh trong toàn bộ ứng dụng (cả Client và Server).
 - **`NotificationService.getInstance()`**: Quản lý việc đăng ký của khách hàng và phát sóng (broadcasting) tin nhắn thời gian thực từ một điểm duy nhất.
-- **`SessionManager.getInstance()`**: Danh mục trung tâm cho các token hoạt động của người dùng.
+- **`SessionManager.getInstance()`**: Danh mục trung tâm cho các token hoạt động của người dùng, bao gồm TTL 2 giờ và invalidation khi logout.
 - **`AuctionLockManager.getInstance()`**: Cung cấp quyền truy cập vào danh mục khóa (lock registry) toàn cục để kiểm soát đồng thời.
 
 ---

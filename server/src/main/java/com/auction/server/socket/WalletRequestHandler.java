@@ -8,6 +8,8 @@ import com.auction.common.protocol.MessageType;
 import com.auction.common.protocol.Request;
 import com.auction.common.protocol.Response;
 import com.auction.server.dao.UserDao;
+import com.auction.server.exception.ResourceNotFoundException;
+import com.auction.server.exception.ValidationException;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -25,7 +27,7 @@ final class WalletRequestHandler {
     UserDao.UserRecord user =
         context.userDao
             .findById(userId)
-            .orElseThrow(() -> new IllegalStateException("User not found."));
+            .orElseThrow(() -> new ResourceNotFoundException("User not found."));
 
     BigDecimal balance = user.balance();
     int participatingAuctionsCount = 0;
@@ -97,7 +99,7 @@ final class WalletRequestHandler {
     Long userId = context.requireActiveUser(request);
     BigDecimal amount = context.jsonMapper.convertData(request.getData(), BigDecimal.class);
     if (amount == null) {
-      throw new IllegalArgumentException("Missing deposit amount");
+      throw new ValidationException("Missing deposit amount");
     }
 
     BigDecimal newBalance = context.walletService.deposit(userId, amount);
@@ -109,7 +111,7 @@ final class WalletRequestHandler {
     Long userId = context.requireActiveUser(request);
     BigDecimal amount = context.jsonMapper.convertData(request.getData(), BigDecimal.class);
     if (amount == null) {
-      throw new IllegalArgumentException("Missing withdraw amount");
+      throw new ValidationException("Missing withdraw amount");
     }
 
     BigDecimal newBalance = context.walletService.withdraw(userId, amount);

@@ -96,8 +96,8 @@
     -fx-text-fill: #0f766e;
 }
 
-.status-cancelled,
-.status-canceled {
+.status-canceled,
+.status-cancelled {
     -fx-background-color: #fef3c7;
     -fx-text-fill: -color-warning;
 }

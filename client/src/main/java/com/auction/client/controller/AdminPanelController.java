@@ -2,6 +2,7 @@ package com.auction.client.controller;
 
 import com.auction.client.service.AdminClientService;
 import com.auction.client.service.AuctionClientService;
+import com.auction.client.util.AuctionStatusUi;
 import com.auction.common.dto.auction.AuctionDetailDto;
 import com.auction.common.dto.auth.UserDto;
 import com.auction.common.dto.dashboard.DashboardDto;
@@ -260,7 +261,7 @@ public class AdminPanelController {
     row.add(createCell(formatMoney(auction.currentPrice()), "admin-money-cell"), 4, 0);
 
     String status = auction.status().toString();
-    Label statusLbl = createStatusBadge(status, getStatusStyleClass(status));
+    Label statusLbl = createStatusBadge(status, AuctionStatusUi.cssClass(auction.status()));
     row.add(statusLbl, 5, 0);
 
     String endTimeFormatted =
@@ -292,17 +293,6 @@ public class AdminPanelController {
     Label label = new Label(text);
     label.getStyleClass().addAll("status-badge", statusClass);
     return label;
-  }
-
-  private String getStatusStyleClass(String status) {
-    return switch (status) {
-      case "RUNNING" -> "status-running";
-      case "FINISHED" -> "status-finished";
-      case "PAID" -> "status-paid";
-      case "OPEN" -> "status-open";
-      case "CANCELED", "CANCELLED" -> "status-cancelled";
-      default -> "status-ended";
-    };
   }
 
   private String formatMoney(BigDecimal amount) {

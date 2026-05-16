@@ -10,6 +10,11 @@ import com.auction.server.dao.AuctionDao;
 import com.auction.server.dao.AutoBidDao;
 import com.auction.server.dao.BidDao;
 import com.auction.server.dao.Database;
+import com.auction.server.exception.AuctionClosedException;
+import com.auction.server.exception.BusinessRuleException;
+import com.auction.server.exception.InsufficientFundsException;
+import com.auction.server.exception.InvalidBidException;
+import com.auction.server.exception.ResourceNotFoundException;
 import java.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,27 +87,27 @@ public class BidService {
               long currentTime = System.currentTimeMillis();
               Long lastTime = lastBidTimes.get(rateKey);
               if (lastTime != null && (currentTime - lastTime) < MIN_BID_INTERVAL_MS) {
-                throw new IllegalStateException("You are bidding too fast. Please wait a moment.");
+                throw new BusinessRuleException("You are bidding too fast. Please wait a moment.");
               }
 
               // 1. Fetch auction and bidder
               Auction auction =
                   auctionDao
                       .findById(request.auctionId())
-                      .orElseThrow(() -> new IllegalArgumentException("Auction not found."));
+                      .orElseThrow(() -> new ResourceNotFoundException("Auction not found."));
 
               com.auction.server.dao.UserDao.UserRecord bidder =
                   userDao
                       .findById(bidderId)
-                      .orElseThrow(() -> new IllegalArgumentException("Bidder not found."));
+                      .orElseThrow(() -> new ResourceNotFoundException("Bidder not found."));
 
               // 2. Preliminary Validations
               if (auction.getSellerId() == bidderId) {
-                throw new IllegalArgumentException("You cannot bid on your own auction.");
+                throw new InvalidBidException("You cannot bid on your own auction.");
               }
               if (auction.getStatus() != AuctionStatus.RUNNING
                   || now.isAfter(auction.getEndTime())) {
-                throw new IllegalArgumentException("Auction is not active.");
+                throw new AuctionClosedException("Auction is not active.");
               }
 
               // 3. Traditional Bidding Validation (Must be higher than current + increment)
@@ -112,7 +117,7 @@ public class BidService {
               }
 
               if (bidAmount.compareTo(minRequired) < 0) {
-                throw new IllegalArgumentException("Your bid must be at least " + minRequired);
+                throw new InvalidBidException("Your bid must be at least " + minRequired);
               }
 
               // 4. Update Auction State (Traditional: Price = bidAmount)
@@ -134,7 +139,7 @@ public class BidService {
                 java.math.BigDecimal available =
                     currentBidder.balance().subtract(currentBidder.lockedBalance());
                 if (available.compareTo(amountToLock) < 0) {
-                  throw new IllegalArgumentException(
+                  throw new InsufficientFundsException(
                       String.format(
                           "Insufficient balance. You need %s but only have %s available (check your active bids).",
                           formatMoney(amountToLock), formatMoney(available)));
@@ -239,7 +244,7 @@ public class BidService {
    *
    * @param userId The ID of the user.
    * @param request The auto-bid request containing max bid and auction ID.
-   * @throws IllegalArgumentException if user or auction is not found, or max bid is too low.
+   * @throws com.auction.server.exception.BusinessException if the request violates bid rules.
    */
   public void setAutoBid(long userId, com.auction.common.dto.bid.SetAutoBidRequest request) {
     lockManager.executeLocked(
@@ -248,17 +253,17 @@ public class BidService {
           com.auction.server.dao.UserDao.UserRecord user =
               userDao
                   .findById(userId)
-                  .orElseThrow(() -> new IllegalArgumentException("User not found."));
+                  .orElseThrow(() -> new ResourceNotFoundException("User not found."));
 
           // Validation: Max bid must be higher than current price + increment
           Auction auction =
               auctionDao
                   .findById(request.auctionId())
-                  .orElseThrow(() -> new IllegalArgumentException("Auction not found."));
+                  .orElseThrow(() -> new ResourceNotFoundException("Auction not found."));
 
           java.math.BigDecimal minRequired = auction.getCurrentPrice().add(request.increment());
           if (request.active() && request.maxBid().compareTo(minRequired) < 0) {
-            throw new IllegalArgumentException("Max bid must be at least " + minRequired);
+            throw new InvalidBidException("Max bid must be at least " + minRequired);
           }
 
           // Wallet check: Must be able to lock the full max bid
@@ -272,7 +277,7 @@ public class BidService {
           java.math.BigDecimal available =
               user.balance().subtract(user.lockedBalance()).add(currentLockedForThis);
           if (request.active() && available.compareTo(request.maxBid()) < 0) {
-            throw new IllegalArgumentException(
+            throw new InsufficientFundsException(
                 "Insufficient balance to set auto-bid limit of " + request.maxBid());
           }
 

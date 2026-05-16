@@ -15,6 +15,8 @@ import com.auction.server.dao.AuctionDao;
 import com.auction.server.dao.AutoBidDao;
 import com.auction.server.dao.BidDao;
 import com.auction.server.dao.UserDao;
+import com.auction.server.exception.InsufficientFundsException;
+import com.auction.server.exception.InvalidBidException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -88,9 +90,9 @@ class BidServiceTest {
     PlaceBidRequest request = new PlaceBidRequest(AUCTION_ID, bidAmount);
 
     // Act & Assert
-    IllegalArgumentException exception =
+    InvalidBidException exception =
         assertThrows(
-            IllegalArgumentException.class,
+            InvalidBidException.class,
             () -> {
               bidService.placeBid(BIDDER_ID, request);
             });
@@ -113,9 +115,9 @@ class BidServiceTest {
     PlaceBidRequest request = new PlaceBidRequest(AUCTION_ID, bidAmount);
 
     // Act & Assert
-    IllegalArgumentException exception =
+    InsufficientFundsException exception =
         assertThrows(
-            IllegalArgumentException.class,
+            InsufficientFundsException.class,
             () -> {
               bidService.placeBid(BIDDER_ID, request);
             });

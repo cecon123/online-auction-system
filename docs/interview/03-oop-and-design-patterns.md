@@ -16,7 +16,7 @@ Mở file: `common/.../model/Item.java`
 ### 1.2 Tính Đóng gói (Encapsulation) & Data Integrity
 Mở file: `common/.../model/Auction.java`
 - Tại sao `currentPrice` là `private`?
-- *Đáp:* Để bảo vệ tính nhất quán. Nếu để `public`, bất kỳ ai cũng có thể gán `auction.currentPrice = -100`. Thông qua Setter, em có thể ném ra `IllegalArgumentException`.
+- *Đáp:* Để bảo vệ tính nhất quán. Nếu để `public`, bất kỳ ai cũng có thể gán `auction.currentPrice = -100`. Ở model/common, setter vẫn có thể dùng guard exception như `IllegalArgumentException`; còn lỗi nghiệp vụ ở service layer dùng custom exceptions như `InvalidBidException`, `AuctionClosedException`, `InsufficientFundsException`.
 
 ---
 

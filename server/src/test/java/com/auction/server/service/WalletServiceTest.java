@@ -6,6 +6,8 @@ import static org.mockito.Mockito.*;
 
 import com.auction.common.enums.Role;
 import com.auction.server.dao.UserDao;
+import com.auction.server.exception.BusinessRuleException;
+import com.auction.server.exception.InsufficientFundsException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -66,7 +68,7 @@ class WalletServiceTest {
 
     // Act & Assert
     assertThrows(
-        IllegalStateException.class,
+        InsufficientFundsException.class,
         () -> {
           walletService.withdraw(USER_ID, new BigDecimal("50.00")); // Available is 20
         });
@@ -92,7 +94,7 @@ class WalletServiceTest {
     when(userDao.findById(USER_ID)).thenReturn(Optional.of(user));
 
     assertThrows(
-        IllegalStateException.class,
+        BusinessRuleException.class,
         () -> walletService.releaseFunds(USER_ID, new BigDecimal("40.00")));
 
     verify(userDao, never()).updateLockedBalance(anyLong(), any());
@@ -139,7 +141,8 @@ class WalletServiceTest {
     when(userDao.findById(sellerId)).thenReturn(Optional.of(seller));
 
     assertThrows(
-        IllegalStateException.class, () -> walletService.settleAuction(winnerId, sellerId, amount));
+        InsufficientFundsException.class,
+        () -> walletService.settleAuction(winnerId, sellerId, amount));
 
     verify(userDao, never()).updateBalances(anyLong(), any(), any());
     verify(userDao, never()).updateBalance(eq(sellerId), any());

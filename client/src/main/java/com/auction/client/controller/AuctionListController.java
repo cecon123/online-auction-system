@@ -2,6 +2,7 @@ package com.auction.client.controller;
 
 import com.auction.client.service.AuctionClientService;
 import com.auction.client.socket.SocketClient;
+import com.auction.client.util.AuctionStatusUi;
 import com.auction.client.util.SceneManager;
 import com.auction.common.dto.auction.AuctionSummaryDto;
 import com.auction.common.protocol.MessageType;
@@ -203,15 +204,8 @@ public class AuctionListController {
     }
 
     // Status Badge Overlay
-    Label statusBadge = new Label(auction.status().toString());
-    statusBadge.getStyleClass().add("status-badge");
-    switch (auction.status()) {
-      case RUNNING -> statusBadge.getStyleClass().add("status-running");
-      case OPEN -> statusBadge.getStyleClass().add("status-open");
-      case FINISHED -> statusBadge.getStyleClass().add("status-finished");
-      case PAID -> statusBadge.getStyleClass().add("status-paid");
-      default -> statusBadge.getStyleClass().add("status-cancelled");
-    }
+    Label statusBadge = new Label();
+    AuctionStatusUi.applyBadge(statusBadge, auction.status());
 
     javafx.scene.layout.StackPane.setAlignment(statusBadge, Pos.TOP_RIGHT);
     javafx.scene.layout.StackPane.setMargin(statusBadge, new Insets(10));

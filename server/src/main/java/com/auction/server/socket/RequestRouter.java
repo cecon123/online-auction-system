@@ -3,6 +3,7 @@ package com.auction.server.socket;
 import com.auction.common.protocol.MessageType;
 import com.auction.common.protocol.Request;
 import com.auction.common.protocol.Response;
+import com.auction.server.exception.BusinessException;
 import java.io.PrintWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,6 +82,8 @@ public class RequestRouter {
             Response.fail(
                 type, request.getRequestId(), "Unsupported message type in router: " + type);
       };
+    } catch (BusinessException e) {
+      return Response.fail(type, request.getRequestId(), e.getMessage());
     } catch (IllegalArgumentException | IllegalStateException e) {
       return Response.fail(type, request.getRequestId(), e.getMessage());
     } catch (RuntimeException e) {

@@ -15,6 +15,8 @@ import com.auction.common.protocol.Request;
 import com.auction.common.protocol.Response;
 import com.auction.server.config.AppProperties;
 import com.auction.server.dao.UserDao;
+import com.auction.server.exception.ResourceNotFoundException;
+import com.auction.server.exception.ValidationException;
 import com.auction.server.util.ImageUtil;
 import java.math.BigDecimal;
 import java.util.List;
@@ -102,20 +104,20 @@ final class AuctionRequestHandler {
   Response<AuctionDetailDto> handleGetAuctionDetail(Request<?> request) {
     Long auctionId = context.jsonMapper.convertData(request.getData(), Long.class);
     if (auctionId == null) {
-      throw new IllegalArgumentException("Missing auction ID");
+      throw new ValidationException("Missing auction ID");
     }
 
     Auction auction =
         context.auctionDao
             .findById(auctionId)
-            .orElseThrow(() -> new IllegalArgumentException("Auction not found: " + auctionId));
+            .orElseThrow(() -> new ResourceNotFoundException("Auction not found: " + auctionId));
 
     Item item =
         context.itemDao
             .findById(auction.getItemId())
             .orElseThrow(
                 () ->
-                    new IllegalStateException(
+                    new ResourceNotFoundException(
                         "Item not found for auction: " + auction.getItemId()));
 
     String sellerName =
@@ -232,7 +234,7 @@ final class AuctionRequestHandler {
     Long userId = context.requireRole(request, Role.SELLER);
     Long auctionId = context.jsonMapper.convertData(request.getData(), Long.class);
     if (auctionId == null) {
-      throw new IllegalArgumentException("Missing auction ID");
+      throw new ValidationException("Missing auction ID");
     }
 
     context.auctionService.cancelAuction(userId, auctionId);
@@ -254,7 +256,7 @@ final class AuctionRequestHandler {
     Long adminId = context.requireAdmin(request);
     Long auctionId = context.jsonMapper.convertData(request.getData(), Long.class);
     if (auctionId == null) {
-      throw new IllegalArgumentException("Missing auction ID");
+      throw new ValidationException("Missing auction ID");
     }
 
     context.auctionService.adminCancelAuction(adminId, auctionId);
@@ -343,58 +345,58 @@ final class AuctionRequestHandler {
 
   private void validateCreateAuctionRequest(CreateAuctionRequest data) {
     if (context.isBlank(data.itemName())) {
-      throw new IllegalArgumentException("Item name is required.");
+      throw new ValidationException("Item name is required.");
     }
     if (data.itemType() == null) {
-      throw new IllegalArgumentException("Item type is required.");
+      throw new ValidationException("Item type is required.");
     }
     if (context.isBlank(data.condition())) {
-      throw new IllegalArgumentException("Condition is required.");
+      throw new ValidationException("Condition is required.");
     }
     if (context.isBlank(data.description())) {
-      throw new IllegalArgumentException("Description is required.");
+      throw new ValidationException("Description is required.");
     }
     if (data.startingPrice() == null || data.startingPrice().compareTo(BigDecimal.ZERO) <= 0) {
-      throw new IllegalArgumentException("Starting price must be positive.");
+      throw new ValidationException("Starting price must be positive.");
     }
     if (data.startTime() == null) {
-      throw new IllegalArgumentException("Start time is required.");
+      throw new ValidationException("Start time is required.");
     }
     if (data.endTime() == null) {
-      throw new IllegalArgumentException("End time is required.");
+      throw new ValidationException("End time is required.");
     }
     if (!data.endTime().isAfter(data.startTime())) {
-      throw new IllegalArgumentException("End time must be after start time.");
+      throw new ValidationException("End time must be after start time.");
     }
   }
 
   private void validateUpdateAuctionRequest(UpdateAuctionRequest data) {
     if (data.auctionId() <= 0) {
-      throw new IllegalArgumentException("Invalid auction ID.");
+      throw new ValidationException("Invalid auction ID.");
     }
     if (context.isBlank(data.itemName())) {
-      throw new IllegalArgumentException("Item name is required.");
+      throw new ValidationException("Item name is required.");
     }
     if (data.itemType() == null) {
-      throw new IllegalArgumentException("Item type is required.");
+      throw new ValidationException("Item type is required.");
     }
     if (context.isBlank(data.condition())) {
-      throw new IllegalArgumentException("Condition is required.");
+      throw new ValidationException("Condition is required.");
     }
     if (context.isBlank(data.description())) {
-      throw new IllegalArgumentException("Description is required.");
+      throw new ValidationException("Description is required.");
     }
     if (data.startingPrice() == null || data.startingPrice().compareTo(BigDecimal.ZERO) <= 0) {
-      throw new IllegalArgumentException("Starting price must be positive.");
+      throw new ValidationException("Starting price must be positive.");
     }
     if (data.startTime() == null) {
-      throw new IllegalArgumentException("Start time is required.");
+      throw new ValidationException("Start time is required.");
     }
     if (data.endTime() == null) {
-      throw new IllegalArgumentException("End time is required.");
+      throw new ValidationException("End time is required.");
     }
     if (!data.endTime().isAfter(data.startTime())) {
-      throw new IllegalArgumentException("End time must be after start time.");
+      throw new ValidationException("End time must be after start time.");
     }
   }
 }

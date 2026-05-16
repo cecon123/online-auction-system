@@ -13,6 +13,7 @@ Dự án được tổ chức theo mô hình Maven Multi-module:
 - `server/`: Xử lý logic nghiệp vụ và lưu trữ dữ liệu.
     - `dao/`: Lớp truy cập dữ liệu sử dụng SQLite.
     - `service/`: Lớp xử lý nghiệp vụ chính.
+    - `exception/`: Custom exceptions cho lỗi nghiệp vụ/auth/wallet/bid.
     - `socket/`: Quản lý kết nối TCP và điều phối yêu cầu (`RequestRouter`).
 - `client/`: Giao diện người dùng JavaFX.
     - `controller/`: Điều khiển logic cho các màn hình FXML.
@@ -52,7 +53,9 @@ Dự án được tổ chức theo mô hình Maven Multi-module:
 ## 5. Xử lý Lỗi & Logging
 
 - **Logging:** Sử dụng SLF4J với Logback. File cấu hình tại `server/src/main/resources/logback.xml`.
-- **Exception:** Các lỗi nghiệp vụ được Server đóng gói vào `Response` với `success: false` và gửi về Client để hiển thị thông báo.
+- **Exception:** Lỗi nghiệp vụ trong service/socket layer dùng custom exceptions như `ValidationException`, `AuthenticationException`, `AuthorizationException`, `InvalidBidException`, `AuctionClosedException`, `InsufficientFundsException`, `ResourceNotFoundException`, `BusinessRuleException`.
+- **JSON contract:** `RequestRouter` catch `BusinessException` và trả về `Response.fail(type, requestId, e.getMessage())`. Giao thức JSON không đổi: client vẫn nhận `success`, `message`, `data`; không có `errorCode`.
+- **Fallback legacy:** `RequestRouter` vẫn catch `IllegalArgumentException | IllegalStateException` để tránh regression với guard clause/model/DAO hoặc code cũ chưa refactor.
 
 ## 6. Hướng dẫn Mở rộng
 
