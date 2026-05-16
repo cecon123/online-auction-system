@@ -79,7 +79,7 @@ public class NotificationService {
         Response.ok(type, "sys-notify-" + System.currentTimeMillis(), "System notification", data);
     String json = jsonMapper.toJson(response);
 
-    logger.info("Sending {} to User {}", type, userId);
+    logger.debug("Notify user={} type={} connections={}", userId, type, clients.size());
 
     clients.forEach(
         writer -> {
@@ -98,7 +98,7 @@ public class NotificationService {
         Response.ok(type, "sys-notify-" + System.currentTimeMillis(), "Global broadcast", data);
     String json = jsonMapper.toJson(response);
 
-    logger.info("Broadcasting {} to all connected users", type);
+    logger.debug("Broadcast all type={} userGroups={}", type, userConnections.size());
 
     userConnections.values().stream()
         .flatMap(Set::stream)
@@ -129,8 +129,7 @@ public class NotificationService {
         Response.ok(type, "event-" + System.currentTimeMillis(), "Realtime update", data);
     String json = jsonMapper.toJson(response);
 
-    logger.info(
-        "Broadcasting {} update for auction {} to {} clients", type, auctionId, clients.size());
+    logger.debug("Broadcast auction={} type={} subscribers={}", auctionId, type, clients.size());
 
     clients.forEach(
         writer -> {

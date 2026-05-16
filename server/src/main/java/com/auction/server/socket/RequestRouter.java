@@ -48,7 +48,7 @@ public class RequestRouter {
     }
 
     MessageType type = request.getType();
-    logger.info("[Request] Type: {}, ID: {}", type, request.getRequestId());
+    logger.info("Request type={} id={}", type, request.getRequestId());
 
     try {
       return switch (type) {

@@ -39,7 +39,7 @@ public class SQLiteBidDao implements BidDao {
       statement.setLong(1, bid.getAuctionId());
       statement.setLong(2, bid.getBidderId());
       statement.setString(3, bid.getAmount().toString());
-      statement.setString(4, LocalDateTime.now().toString());
+      statement.setString(4, bid.getCreatedAt().toString());
 
       statement.executeUpdate();
 
@@ -58,7 +58,7 @@ public class SQLiteBidDao implements BidDao {
 
   @Override
   public List<BidTransaction> findByAuctionId(long auctionId) {
-    String sql = "SELECT * FROM bids WHERE auction_id = ? ORDER BY created_at DESC";
+    String sql = "SELECT * FROM bids WHERE auction_id = ? ORDER BY created_at DESC, id DESC";
     List<BidTransaction> bids = new ArrayList<>();
 
     try (Connection connection = database.getConnection();
@@ -80,7 +80,7 @@ public class SQLiteBidDao implements BidDao {
 
   @Override
   public List<BidTransaction> findByBidderId(long bidderId) {
-    String sql = "SELECT * FROM bids WHERE bidder_id = ? ORDER BY created_at DESC";
+    String sql = "SELECT * FROM bids WHERE bidder_id = ? ORDER BY created_at DESC, id DESC";
     List<BidTransaction> bids = new ArrayList<>();
 
     try (Connection connection = database.getConnection();

@@ -75,7 +75,7 @@ public class WalletService {
 
     BigDecimal newLockedBalance = user.lockedBalance().subtract(amount);
     if (newLockedBalance.compareTo(BigDecimal.ZERO) < 0) {
-      newLockedBalance = BigDecimal.ZERO;
+      throw new IllegalStateException("Cannot release more funds than currently locked.");
     }
     userDao.updateLockedBalance(userId, newLockedBalance);
     logger.info(
@@ -83,6 +83,10 @@ public class WalletService {
   }
 
   public void settleAuction(long winnerId, long sellerId, BigDecimal amount) {
+    if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+      throw new IllegalArgumentException("Settlement amount must be positive.");
+    }
+
     UserDao.UserRecord winner =
         userDao
             .findById(winnerId)
@@ -92,10 +96,16 @@ public class WalletService {
             .findById(sellerId)
             .orElseThrow(() -> new IllegalArgumentException("Seller not found."));
 
+    if (winner.lockedBalance().compareTo(amount) < 0) {
+      throw new IllegalStateException("Insufficient locked balance for auction settlement.");
+    }
+    if (winner.balance().compareTo(amount) < 0) {
+      throw new IllegalStateException("Insufficient winner balance for auction settlement.");
+    }
+
     // Winner: subtract from both balance and locked_balance (because it was locked)
     BigDecimal winnerNewBalance = winner.balance().subtract(amount);
     BigDecimal winnerNewLocked = winner.lockedBalance().subtract(amount);
-    if (winnerNewLocked.compareTo(BigDecimal.ZERO) < 0) winnerNewLocked = BigDecimal.ZERO;
     userDao.updateBalances(winnerId, winnerNewBalance, winnerNewLocked);
 
     // Seller: add to balance

@@ -100,6 +100,32 @@ class SQLiteBidDaoTest {
   }
 
   @Test
+  void createBidShouldPreserveProvidedTimestamp() {
+    LocalDateTime createdAt = LocalDateTime.of(2026, 5, 16, 10, 30, 45);
+    bidDao.create(new BidTransaction(0, auctionId, bidderId, new BigDecimal("150"), createdAt));
+
+    List<BidTransaction> bids = bidDao.findByAuctionId(auctionId);
+
+    assertEquals(createdAt, bids.get(0).getCreatedAt());
+  }
+
+  @Test
+  void findByAuctionIdShouldUseIdAsTieBreakerForSameTimestamp() {
+    LocalDateTime sameTimestamp = LocalDateTime.of(2026, 5, 16, 11, 0, 0);
+    long firstId =
+        bidDao.create(
+            new BidTransaction(0, auctionId, bidderId, new BigDecimal("150"), sameTimestamp));
+    long secondId =
+        bidDao.create(
+            new BidTransaction(0, auctionId, bidderId, new BigDecimal("200"), sameTimestamp));
+
+    List<BidTransaction> bids = bidDao.findByAuctionId(auctionId);
+
+    assertEquals(secondId, bids.get(0).getId());
+    assertEquals(firstId, bids.get(1).getId());
+  }
+
+  @Test
   void findByBidderIdShouldReturnBids() {
     bidDao.create(
         new BidTransaction(0, auctionId, bidderId, new BigDecimal("150"), LocalDateTime.now()));
@@ -108,5 +134,21 @@ class SQLiteBidDaoTest {
 
     List<BidTransaction> bids = bidDao.findByBidderId(bidderId);
     assertEquals(2, bids.size());
+  }
+
+  @Test
+  void findByBidderIdShouldUseIdAsTieBreakerForSameTimestamp() {
+    LocalDateTime sameTimestamp = LocalDateTime.of(2026, 5, 16, 11, 30, 0);
+    long firstId =
+        bidDao.create(
+            new BidTransaction(0, auctionId, bidderId, new BigDecimal("150"), sameTimestamp));
+    long secondId =
+        bidDao.create(
+            new BidTransaction(0, auctionId, bidderId, new BigDecimal("200"), sameTimestamp));
+
+    List<BidTransaction> bids = bidDao.findByBidderId(bidderId);
+
+    assertEquals(secondId, bids.get(0).getId());
+    assertEquals(firstId, bids.get(1).getId());
   }
 }

@@ -86,6 +86,19 @@ class WalletServiceTest {
   }
 
   @Test
+  void shouldFailReleaseWhenAmountExceedsLockedBalance() {
+    UserDao.UserRecord user =
+        createMockUser(USER_ID, new BigDecimal("100.00"), new BigDecimal("30.00"));
+    when(userDao.findById(USER_ID)).thenReturn(Optional.of(user));
+
+    assertThrows(
+        IllegalStateException.class,
+        () -> walletService.releaseFunds(USER_ID, new BigDecimal("40.00")));
+
+    verify(userDao, never()).updateLockedBalance(anyLong(), any());
+  }
+
+  @Test
   void shouldSettleAuctionSuccessfully() {
     // Arrange
     long winnerId = 1L;
@@ -110,6 +123,26 @@ class WalletServiceTest {
             argThat(b -> b.compareTo(BigDecimal.ZERO) == 0));
     verify(userDao)
         .updateBalance(eq(sellerId), argThat(b -> b.compareTo(new BigDecimal("300.00")) == 0));
+  }
+
+  @Test
+  void shouldFailSettlementWhenLockedBalanceIsInsufficient() {
+    long winnerId = 1L;
+    long sellerId = 2L;
+    BigDecimal amount = new BigDecimal("200.00");
+
+    UserDao.UserRecord winner =
+        createMockUser(winnerId, new BigDecimal("500.00"), new BigDecimal("150.00"));
+    UserDao.UserRecord seller = createMockUser(sellerId, new BigDecimal("100.00"), BigDecimal.ZERO);
+
+    when(userDao.findById(winnerId)).thenReturn(Optional.of(winner));
+    when(userDao.findById(sellerId)).thenReturn(Optional.of(seller));
+
+    assertThrows(
+        IllegalStateException.class, () -> walletService.settleAuction(winnerId, sellerId, amount));
+
+    verify(userDao, never()).updateBalances(anyLong(), any(), any());
+    verify(userDao, never()).updateBalance(eq(sellerId), any());
   }
 
   private UserDao.UserRecord createMockUser(long id, BigDecimal balance, BigDecimal lockedBalance) {

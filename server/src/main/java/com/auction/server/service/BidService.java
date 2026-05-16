@@ -302,54 +302,59 @@ public class BidService {
    *     against themselves).
    */
   private void triggerAutoBids(long auctionId, long lastBidderId) {
-    com.auction.common.dto.bid.BidUpdateEvent finalAutoBidEvent =
+    java.util.List<com.auction.common.dto.bid.BidUpdateEvent> allEvents =
         lockManager.executeLocked(
             auctionId,
             () -> {
-          Auction auction = auctionDao.findById(auctionId).orElse(null);
-          if (auction == null || auction.getStatus() != AuctionStatus.RUNNING) return null;
+              Auction auction = auctionDao.findById(auctionId).orElse(null);
+              if (auction == null || auction.getStatus() != AuctionStatus.RUNNING) return null;
 
-          com.auction.common.dto.bid.BidUpdateEvent lastEvent = null;
-          for (int guard = 0; guard < 100; guard++) {
-            auction = auctionDao.findById(auctionId).orElse(null);
-            if (auction == null || auction.getStatus() != AuctionStatus.RUNNING) {
-              return lastEvent;
-            }
+              java.util.List<com.auction.common.dto.bid.BidUpdateEvent> events =
+                  new java.util.ArrayList<>();
+              for (int guard = 0; guard < 100; guard++) {
+                auction = auctionDao.findById(auctionId).orElse(null);
+                if (auction == null || auction.getStatus() != AuctionStatus.RUNNING) {
+                  return events;
+                }
 
-            boolean placed = false;
-            java.util.List<com.auction.common.model.AutoBidRule> rules =
-                autoBidDao.findActiveByAuction(auctionId);
+                boolean placed = false;
+                java.util.List<com.auction.common.model.AutoBidRule> rules =
+                    autoBidDao.findActiveByAuction(auctionId);
 
-            for (com.auction.common.model.AutoBidRule rule : rules) {
-              if (rule.getBidderId() == lastBidderId) continue;
-              if (auction.getHighestBidderId() != null
-                  && auction.getHighestBidderId() == rule.getBidderId()) {
-                continue;
+                for (com.auction.common.model.AutoBidRule rule : rules) {
+                  // Skip if user is already the leader
+                  if (auction.getHighestBidderId() != null
+                      && auction.getHighestBidderId() == rule.getBidderId()) {
+                    continue;
+                  }
+
+                  java.math.BigDecimal nextBid = auction.getCurrentPrice().add(rule.getIncrement());
+                  if (rule.canBidUpTo(nextBid)) {
+                    logger.info(
+                        "Triggering Auto-bid response for User {} on Auction {}",
+                        rule.getBidderId(),
+                        auctionId);
+                    com.auction.common.dto.bid.BidUpdateEvent event =
+                        placeAutoStep(rule.getBidderId(), auctionId, nextBid, rule.getMaxBid());
+                    events.add(event);
+                    placed = true;
+                    break;
+                  }
+                }
+
+                if (!placed) {
+                  return events;
+                }
               }
+              logger.warn("Auto-bid guard limit reached for auction {}", auctionId);
+              return events;
+            });
 
-              java.math.BigDecimal nextBid = auction.getCurrentPrice().add(rule.getIncrement());
-              if (rule.canBidUpTo(nextBid)) {
-                logger.info(
-                    "Triggering Auto-bid response for User {} on Auction {}",
-                    rule.getBidderId(),
-                    auctionId);
-                lastEvent = placeAutoStep(rule.getBidderId(), auctionId, nextBid, rule.getMaxBid());
-                placed = true;
-                break;
-              }
-            }
-
-            if (!placed) {
-              return lastEvent;
-            }
-          }
-          logger.warn("Auto-bid guard limit reached for auction {}", auctionId);
-          return lastEvent;
-        });
-
-    if (finalAutoBidEvent != null) {
-      notificationService.broadcast(
-          auctionId, com.auction.common.protocol.MessageType.BID_UPDATE, finalAutoBidEvent);
+    if (allEvents != null) {
+      for (com.auction.common.dto.bid.BidUpdateEvent event : allEvents) {
+        notificationService.broadcast(
+            auctionId, com.auction.common.protocol.MessageType.BID_UPDATE, event);
+      }
     }
   }
 

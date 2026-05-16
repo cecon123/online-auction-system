@@ -34,8 +34,6 @@ public final class SocketClient {
   private String host = "localhost";
   private int port = 8080;
   private String token;
-
-  // Credentials for silent re-authentication
   private String lastUsername;
   private String lastPassword;
   private Runnable onReconnect;
@@ -112,23 +110,6 @@ public final class SocketClient {
     }
   }
 
-  public void setCredentials(String username, String password) {
-    this.lastUsername = username;
-    this.lastPassword = password;
-  }
-
-  public void setOnReconnect(Runnable onReconnect) {
-    this.onReconnect = onReconnect;
-  }
-
-  public String getLastUsername() {
-    return lastUsername;
-  }
-
-  public String getLastPassword() {
-    return lastPassword;
-  }
-
   /** Connects to the server and starts the listener thread. */
   public synchronized void connect() throws IOException {
     if (getConnectionState() == ConnectionState.CONNECTED) return;
@@ -169,6 +150,8 @@ public final class SocketClient {
   public synchronized void disconnect() {
     boolean wasRunning = running;
     running = false;
+    token = null;
+    clearCredentials();
     try {
       if (socket != null) socket.close();
       if (listenerThread != null) listenerThread.interrupt();
@@ -196,7 +179,7 @@ public final class SocketClient {
     pendingRequests.put(requestId, future);
 
     String json = JsonMapper.getInstance().toJson(request);
-    logger.debug("Sending request: {}", json);
+    logger.debug("TX {}", summarizeRequest(request));
     out.println(json);
 
     // Cast to specific return type for the caller
@@ -213,7 +196,6 @@ public final class SocketClient {
     try {
       String line;
       while (running && (line = in.readLine()) != null) {
-        logger.debug("Received message: {}", line);
         handleMessage(line);
       }
     } catch (IOException e) {
@@ -272,6 +254,7 @@ public final class SocketClient {
   private void handleMessage(String json) {
     try {
       Response<?> response = JsonMapper.getInstance().fromJson(json, Response.class);
+      logger.debug("RX {}", summarizeResponse(response));
       String requestId = response.getRequestId();
 
       // Realtime events from server often have requestId starting with 'event-'
@@ -290,13 +273,17 @@ public final class SocketClient {
         handleEvent(response);
       }
     } catch (Exception e) {
-      logger.error("Failed to parse or handle message: {}", json, e);
+      logger.error("Failed to parse or handle message: {}", abbreviate(json, 240), e);
     }
   }
 
   private void handleEvent(Response<?> event) {
-    logger.debug("Dispatching realtime event: {}", event.getType());
     List<Consumer<Response<?>>> listeners = eventListeners.get(event.getType());
+    logger.debug(
+        "Event {} id={} listeners={}",
+        event.getType(),
+        shortId(event.getRequestId()),
+        listeners == null ? 0 : listeners.size());
     if (listeners != null) {
       for (Consumer<Response<?>> listener : listeners) {
         try {
@@ -314,5 +301,67 @@ public final class SocketClient {
 
   public String getToken() {
     return token;
+  }
+
+  public void setCredentials(String username, String password) {
+    this.lastUsername = username;
+    this.lastPassword = password;
+  }
+
+  public void clearCredentials() {
+    this.lastUsername = null;
+    this.lastPassword = null;
+  }
+
+  public String getLastUsername() {
+    return lastUsername;
+  }
+
+  public String getLastPassword() {
+    return lastPassword;
+  }
+
+  public void setOnReconnect(Runnable onReconnect) {
+    this.onReconnect = onReconnect;
+  }
+
+  private String summarizeRequest(Request<?> request) {
+    return String.format(
+        "%s id=%s token=%s data=%s",
+        request.getType(),
+        shortId(request.getRequestId()),
+        request.getToken() == null ? "none" : "set",
+        payloadName(request.getData()));
+  }
+
+  private String summarizeResponse(Response<?> response) {
+    return String.format(
+        "%s id=%s ok=%s msg=\"%s\" data=%s",
+        response.getType(),
+        shortId(response.getRequestId()),
+        response.isSuccess(),
+        abbreviate(response.getMessage(), 80),
+        payloadName(response.getData()));
+  }
+
+  private String payloadName(Object payload) {
+    if (payload == null) {
+      return "none";
+    }
+    return payload.getClass().getSimpleName();
+  }
+
+  private String shortId(String requestId) {
+    if (requestId == null || requestId.isBlank()) {
+      return "none";
+    }
+    return requestId.length() <= 12 ? requestId : requestId.substring(0, 8);
+  }
+
+  private String abbreviate(String value, int maxLength) {
+    if (value == null) {
+      return "";
+    }
+    return value.length() <= maxLength ? value : value.substring(0, maxLength - 3) + "...";
   }
 }

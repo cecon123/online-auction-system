@@ -1,9 +1,13 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.AuctionClientService;
+import com.auction.client.socket.SocketClient;
 import com.auction.client.util.SceneManager;
 import com.auction.common.dto.auction.AuctionSummaryDto;
+import com.auction.common.protocol.MessageType;
+import com.auction.common.protocol.Response;
 import java.util.List;
+import java.util.function.Consumer;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -30,6 +34,8 @@ public class AuctionListController {
   @FXML private VBox emptyState;
 
   private final AuctionClientService auctionService = new AuctionClientService();
+  private final Consumer<Response<?>> auctionListUpdatedListener =
+      response -> Platform.runLater(this::loadAuctions);
   private List<AuctionSummaryDto> allAuctions = List.of();
 
   @FXML
@@ -48,10 +54,18 @@ public class AuctionListController {
               auctionContainer.setPrefColumns(cols);
             });
 
-    com.auction.client.socket.SocketClient.getInstance()
-        .addEventListener(
-            com.auction.common.protocol.MessageType.AUCTION_LIST_UPDATED,
-            response -> javafx.application.Platform.runLater(this::loadAuctions));
+    SocketClient.getInstance()
+        .addEventListener(MessageType.AUCTION_LIST_UPDATED, auctionListUpdatedListener);
+    auctionContainer
+        .sceneProperty()
+        .addListener(
+            (obs, oldScene, newScene) -> {
+              if (newScene == null) {
+                SocketClient.getInstance()
+                    .removeEventListener(
+                        MessageType.AUCTION_LIST_UPDATED, auctionListUpdatedListener);
+              }
+            });
   }
 
   private void setupFilters() {

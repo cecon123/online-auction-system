@@ -11,9 +11,9 @@ import javafx.scene.chart.XYChart;
 public class PriceChartManager {
 
   private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
+  public static final int MAX_DATA_POINTS = 15;
   private final AreaChart<String, Number> chart;
   private final XYChart.Series<String, Number> series;
-  private static final int MAX_DATA_POINTS = 15;
 
   public PriceChartManager(AreaChart<String, Number> chart) {
     this.chart = chart;
@@ -34,7 +34,7 @@ public class PriceChartManager {
   }
 
   public void addPricePoint(String timeLabel, BigDecimal price) {
-    Platform.runLater(
+    runOnFx(
         () -> {
           series.getData().add(new XYChart.Data<>(timeLabel, price.doubleValue()));
           if (series.getData().size() > MAX_DATA_POINTS) {
@@ -44,11 +44,11 @@ public class PriceChartManager {
   }
 
   public void clear() {
-    Platform.runLater(() -> series.getData().clear());
+    runOnFx(() -> series.getData().clear());
   }
 
   public void setData(java.util.List<com.auction.common.dto.bid.PlaceBidResponse> history) {
-    Platform.runLater(
+    runOnFx(
         () -> {
           series.getData().clear();
           // Take the last N points for visibility
@@ -62,5 +62,23 @@ public class PriceChartManager {
                         bid.timestamp().format(TIME_FMT), bid.currentPrice().doubleValue()));
           }
         });
+  }
+
+  public void setPoints(java.util.List<BidTimeline.ChartPoint> points) {
+    runOnFx(
+        () -> {
+          series.getData().clear();
+          for (BidTimeline.ChartPoint point : points) {
+            series.getData().add(new XYChart.Data<>(point.label(), point.amount().doubleValue()));
+          }
+        });
+  }
+
+  private void runOnFx(Runnable action) {
+    if (Platform.isFxApplicationThread()) {
+      action.run();
+    } else {
+      Platform.runLater(action);
+    }
   }
 }

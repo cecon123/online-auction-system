@@ -8,8 +8,8 @@
         </encoder>
     </appender>
 
-    <logger name="com.auction.server.socket" level="${SOCKET_LOG_LEVEL}" />
-    <logger name="com.auction.server.service.NotificationService" level="${SOCKET_LOG_LEVEL}" />
+    <logger name="com.auction.client.socket" level="${SOCKET_LOG_LEVEL}" />
+    <logger name="com.auction.client.util.NotificationManager" level="${SOCKET_LOG_LEVEL}" />
 
     <root level="${LOG_LEVEL}">
         <appender-ref ref="STDOUT" />

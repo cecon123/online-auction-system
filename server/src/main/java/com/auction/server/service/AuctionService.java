@@ -52,64 +52,68 @@ public class AuctionService {
   public AuctionSummaryDto createAuction(long sellerId, CreateAuctionRequest request) {
     logger.info("Creating new auction for seller ID: {}, Item: {}", sellerId, request.itemName());
 
-    // 1. Create and persist Item
-    ItemFactory.CreateItemData itemData =
-        new ItemFactory.CreateItemData(
-            0L,
-            sellerId,
-            request.itemType(),
-            request.itemName(),
-            request.description(),
-            request.condition(),
-            request.startingPrice(),
-            request.imagePath(),
-            null, // brand
-            null, // model
-            null, // artist
-            null, // material
-            null, // manufacturer
-            0, // year
-            LocalDateTime.now());
+    return Database.getInstance()
+        .runInTransaction(
+            () -> {
+              // 1. Create and persist Item
+              ItemFactory.CreateItemData itemData =
+                  new ItemFactory.CreateItemData(
+                      0L,
+                      sellerId,
+                      request.itemType(),
+                      request.itemName(),
+                      request.description(),
+                      request.condition(),
+                      request.startingPrice(),
+                      request.imagePath(),
+                      null, // brand
+                      null, // model
+                      null, // artist
+                      null, // material
+                      null, // manufacturer
+                      0, // year
+                      LocalDateTime.now());
 
-    Item item = itemFactory.create(itemData);
+              Item item = itemFactory.create(itemData);
 
-    long itemId = itemDao.create(item);
-    logger.debug("Item created with ID: {}", itemId);
+              long itemId = itemDao.create(item);
+              logger.debug("Item created with ID: {}", itemId);
 
-    // 2. Create and persist Auction
-    LocalDateTime now = LocalDateTime.now();
-    AuctionStatus initialStatus =
-        request.startTime().isAfter(now) ? AuctionStatus.OPEN : AuctionStatus.RUNNING;
+              // 2. Create and persist Auction
+              LocalDateTime now = LocalDateTime.now();
+              AuctionStatus initialStatus =
+                  request.startTime().isAfter(now) ? AuctionStatus.OPEN : AuctionStatus.RUNNING;
 
-    Auction auction =
-        new Auction(
-            0L, // ID will be generated
-            itemId,
-            sellerId,
-            request.startingPrice(),
-            request.startingPrice(), // highestMaxBid = startingPrice
-            request.reservePrice(),
-            null, // No highest bidder yet
-            request.startTime(),
-            request.endTime(),
-            initialStatus,
-            0L, // Initial version
-            now);
+              Auction auction =
+                  new Auction(
+                      0L, // ID will be generated
+                      itemId,
+                      sellerId,
+                      request.startingPrice(),
+                      request.startingPrice(), // highestMaxBid = startingPrice
+                      request.reservePrice(),
+                      null, // No highest bidder yet
+                      request.startTime(),
+                      request.endTime(),
+                      initialStatus,
+                      0L, // Initial version
+                      now);
 
-    long auctionId = auctionDao.create(auction);
-    logger.info("Auction created with ID: {} for Item ID: {}", auctionId, itemId);
+              long auctionId = auctionDao.create(auction);
+              logger.info("Auction created with ID: {} for Item ID: {}", auctionId, itemId);
 
-    return new AuctionSummaryDto(
-        auctionId,
-        request.itemName(),
-        request.itemType(),
-        request.startingPrice(),
-        request.startingPrice(),
-        null, // No highest bidder yet
-        request.startTime(),
-        request.endTime(),
-        initialStatus,
-        request.imagePath());
+              return new AuctionSummaryDto(
+                  auctionId,
+                  request.itemName(),
+                  request.itemType(),
+                  request.startingPrice(),
+                  request.startingPrice(),
+                  null, // No highest bidder yet
+                  request.startTime(),
+                  request.endTime(),
+                  initialStatus,
+                  request.imagePath());
+            });
   }
 
   /**
@@ -248,55 +252,63 @@ public class AuctionService {
    * @throws IllegalStateException if bids exist or status/ownership is invalid.
    */
   public void updateAuction(long sellerId, UpdateAuctionRequest request) {
-    Auction auction =
-        auctionDao
-            .findById(request.auctionId())
-            .orElseThrow(
-                () -> new IllegalArgumentException("Auction not found: " + request.auctionId()));
+    Database.getInstance()
+        .runInTransaction(
+            () -> {
+              Auction auction =
+                  auctionDao
+                      .findById(request.auctionId())
+                      .orElseThrow(
+                          () ->
+                              new IllegalArgumentException(
+                                  "Auction not found: " + request.auctionId()));
 
-    if (auction.getSellerId() != sellerId) {
-      throw new IllegalStateException("You can only edit your own auctions.");
-    }
+              if (auction.getSellerId() != sellerId) {
+                throw new IllegalStateException("You can only edit your own auctions.");
+              }
 
-    if (auction.getHighestBidderId() != null) {
-      throw new IllegalStateException("Cannot edit auction. Bids have already been placed.");
-    }
+              if (auction.getHighestBidderId() != null) {
+                throw new IllegalStateException("Cannot edit auction. Bids have already been placed.");
+              }
 
-    if (auction.getStatus() != AuctionStatus.OPEN) {
-      throw new IllegalStateException(
-          "Auction cannot be edited in its current status: " + auction.getStatus());
-    }
+              if (auction.getStatus() != AuctionStatus.OPEN) {
+                throw new IllegalStateException(
+                    "Auction cannot be edited in its current status: " + auction.getStatus());
+              }
 
-    // Update Item fields
-    Item item =
-        itemDao
-            .findById(auction.getItemId())
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        "Item not found for auction: " + request.auctionId()));
+              // Update Item fields
+              Item item =
+                  itemDao
+                      .findById(auction.getItemId())
+                      .orElseThrow(
+                          () ->
+                              new IllegalArgumentException(
+                                  "Item not found for auction: " + request.auctionId()));
 
-    item.setName(request.itemName());
-    item.setDescription(request.description());
-    item.setCondition(request.condition());
-    item.setImagePath(request.imagePath());
-    item.setStartingPrice(request.startingPrice());
-    itemDao.update(item);
+              item.setName(request.itemName());
+              item.setDescription(request.description());
+              item.setCondition(request.condition());
+              item.setImagePath(request.imagePath());
+              item.setStartingPrice(request.startingPrice());
+              itemDao.update(item);
 
-    // Update Auction fields
-    auction.setStartTime(request.startTime());
-    auction.setEndTime(request.endTime());
-    auction.setReservePrice(request.reservePrice());
+              // Update Auction fields
+              auction.setStartTime(request.startTime());
+              auction.setEndTime(request.endTime());
+              auction.setReservePrice(request.reservePrice());
 
-    // Auto update status if start time has passed
-    LocalDateTime now = LocalDateTime.now();
-    if (!request.startTime().isAfter(now)) {
-      auction.setStatus(AuctionStatus.RUNNING);
-    }
+              // Auto update status if start time has passed
+              LocalDateTime now = LocalDateTime.now();
+              if (!request.startTime().isAfter(now)) {
+                auction.setStatus(AuctionStatus.RUNNING);
+              }
 
-    // Reset current price to new starting price (no bids yet, so this is safe)
-    auction.setCurrentPrice(request.startingPrice());
-    auctionDao.update(auction);
+              // Reset bid state to the new starting price. No bids exist yet.
+              auction.setCurrentPrice(request.startingPrice());
+              auction.setHighestMaxBid(request.startingPrice());
+              auctionDao.update(auction);
+              return null;
+            });
 
     logger.info("User {} updated Auction {}", sellerId, request.auctionId());
   }

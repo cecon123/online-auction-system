@@ -46,6 +46,17 @@ public class MyBidsController {
     // Listen for bid updates or auction closures to refresh the list
     SocketClient.getInstance().addEventListener(MessageType.BID_UPDATE, refreshListener);
     SocketClient.getInstance().addEventListener(MessageType.AUCTION_CLOSED, refreshListener);
+    participatingAuctionsContainer
+        .sceneProperty()
+        .addListener(
+            (obs, oldScene, newScene) -> {
+              if (newScene == null) {
+                SocketClient.getInstance()
+                    .removeEventListener(MessageType.BID_UPDATE, refreshListener);
+                SocketClient.getInstance()
+                    .removeEventListener(MessageType.AUCTION_CLOSED, refreshListener);
+              }
+            });
   }
 
   @FXML

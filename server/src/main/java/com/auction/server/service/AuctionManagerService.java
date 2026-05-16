@@ -104,7 +104,6 @@ public class AuctionManagerService {
               }
               try {
                 settleFinishedAuction(auction);
-                auctionDao.clearSettlementFailure(auction.getId());
               } catch (RuntimeException e) {
                 markSettlementFailure(auction, now, e);
                 return;
@@ -268,6 +267,9 @@ public class AuctionManagerService {
                 logger.info("Releasing leftover Proxy funds: {}", leftover);
                 walletService.releaseFunds(winnerId, leftover);
               }
+              auctionDao.clearSettlementFailure(auction.getId());
+              auction.setStatus(AuctionStatus.PAID);
+              auctionDao.update(auction);
               return null;
             });
   }
@@ -310,11 +312,12 @@ public class AuctionManagerService {
 
     auctionDao.markSettlementFailed(auction.getId(), attempts, e.getMessage(), nextRetryAt);
     logger.warn(
-        "Settlement failed for Auction {} on attempt {}/{}. Next retry: {}",
+        "Settlement failed for Auction {} on attempt {}/{}. Next retry: {}. Error: {}",
         auction.getId(),
         attempts,
         MAX_SETTLEMENT_ATTEMPTS,
         nextRetryAt,
-        e);
+        e.getMessage());
+    logger.debug("Settlement failure stack trace for Auction {}", auction.getId(), e);
   }
 }

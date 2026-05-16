@@ -131,6 +131,7 @@ class AuctionServiceTest {
     // Assert
     assertEquals("Updated Name", item.getName());
     assertEquals(new BigDecimal("200.00"), auction.getCurrentPrice());
+    assertEquals(new BigDecimal("200.00"), auction.getHighestMaxBid());
     verify(itemDao).update(item);
     verify(auctionDao).update(auction);
   }

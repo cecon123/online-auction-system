@@ -1,11 +1,15 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.AuctionClientService;
+import com.auction.client.socket.SocketClient;
 import com.auction.client.util.SceneManager;
 import com.auction.common.dto.auction.AuctionSummaryDto;
+import com.auction.common.protocol.MessageType;
+import com.auction.common.protocol.Response;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -26,6 +30,10 @@ public class SellerCenterController {
 
   private static com.auction.common.dto.dashboard.SellerStatsDto cachedStats = null;
   private final AuctionClientService auctionService = new AuctionClientService();
+  private final Consumer<Response<?>> auctionListUpdatedListener =
+      response -> Platform.runLater(this::handleRefresh);
+  private final Consumer<Response<?>> auctionClosedListener =
+      response -> Platform.runLater(this::handleRefresh);
 
   @FXML
   private void initialize() {
@@ -43,15 +51,21 @@ public class SellerCenterController {
     loadSellerStats();
 
     // Register for real-time updates to refresh seller dashboard
-    com.auction.client.socket.SocketClient.getInstance()
-        .addEventListener(
-            com.auction.common.protocol.MessageType.AUCTION_LIST_UPDATED,
-            response -> Platform.runLater(this::handleRefresh));
-
-    com.auction.client.socket.SocketClient.getInstance()
-        .addEventListener(
-            com.auction.common.protocol.MessageType.AUCTION_CLOSED,
-            response -> Platform.runLater(this::handleRefresh));
+    SocketClient.getInstance()
+        .addEventListener(MessageType.AUCTION_LIST_UPDATED, auctionListUpdatedListener);
+    SocketClient.getInstance().addEventListener(MessageType.AUCTION_CLOSED, auctionClosedListener);
+    auctionListContainer
+        .sceneProperty()
+        .addListener(
+            (obs, oldScene, newScene) -> {
+              if (newScene == null) {
+                SocketClient.getInstance()
+                    .removeEventListener(
+                        MessageType.AUCTION_LIST_UPDATED, auctionListUpdatedListener);
+                SocketClient.getInstance()
+                    .removeEventListener(MessageType.AUCTION_CLOSED, auctionClosedListener);
+              }
+            });
   }
 
   @FXML

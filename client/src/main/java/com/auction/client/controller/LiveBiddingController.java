@@ -2,6 +2,7 @@ package com.auction.client.controller;
 
 import com.auction.client.service.AuctionClientService;
 import com.auction.client.socket.SocketClient;
+import com.auction.client.util.BidTimeline;
 import com.auction.client.util.JsonMapper;
 import com.auction.client.util.NotificationManager;
 import com.auction.client.util.PriceChartManager;
@@ -105,6 +106,7 @@ public class LiveBiddingController {
 
   private final AuctionClientService auctionService = new AuctionClientService();
   private final List<BidUpdateEvent> pendingBidUpdates = new java.util.ArrayList<>();
+  private final BidTimeline bidTimeline = new BidTimeline();
   private final Consumer<Response<?>> bidUpdateListener = this::handleBidUpdate;
   private final Consumer<Response<?>> auctionClosedListener = this::handleAuctionClosed;
   private final Consumer<Response<?>> timeExtendedListener = this::handleTimeExtended;
@@ -127,13 +129,27 @@ public class LiveBiddingController {
   private long lastAuctionRefreshAt = 0;
   private long lastBidFlashAt = 0;
   private long lastBidUpdateAt = 0;
+  private long bidHistoryRequestVersion = 0;
 
   public void setAuctionId(Long auctionId) {
+    if (this.auctionId != null && !this.auctionId.equals(auctionId)) {
+      unsubscribeFromUpdates();
+    }
     this.auctionId = auctionId;
+    resetBidTimeline();
     showBiddingContent();
     loadAuctionData();
-    loadBidHistory();
-    subscribeToUpdates();
+    Long requestedAuctionId = auctionId;
+    subscribeToUpdates()
+        .whenComplete(
+            (response, error) -> {
+              if (error != null) {
+                logger.error("Failed to subscribe to auction {}", requestedAuctionId, error);
+              }
+              if (requestedAuctionId != null && requestedAuctionId.equals(this.auctionId)) {
+                loadBidHistory();
+              }
+            });
   }
 
   @FXML
@@ -178,6 +194,18 @@ public class LiveBiddingController {
     emptyStatePane.setManaged(false);
     biddingContentPane.setVisible(true);
     biddingContentPane.setManaged(true);
+  }
+
+  private void resetBidTimeline() {
+    bidHistoryRequestVersion++;
+    pendingBidUpdates.clear();
+    if (bidUpdateCoalesceTimeline != null) {
+      bidUpdateCoalesceTimeline.stop();
+    }
+    bidTimeline.clear();
+    if (chartManager != null) {
+      chartManager.clear();
+    }
   }
 
   // ── Quick Bid Handlers ───────────────────────────────
@@ -322,10 +350,10 @@ public class LiveBiddingController {
 
   // ── Existing Logic (adapted) ─────────────────────────
 
-  private void subscribeToUpdates() {
-    if (auctionId == null) return;
-    if (subscribedToUpdates) return;
-    auctionService.subscribeAuction(auctionId);
+  private java.util.concurrent.CompletableFuture<Response<Void>> subscribeToUpdates() {
+    if (auctionId == null) return java.util.concurrent.CompletableFuture.completedFuture(null);
+    if (subscribedToUpdates) return java.util.concurrent.CompletableFuture.completedFuture(null);
+    Long targetAuctionId = auctionId;
     SocketClient socket = SocketClient.getInstance();
     socket.addEventListener(MessageType.BID_UPDATE, bidUpdateListener);
     socket.addEventListener(MessageType.AUCTION_CLOSED, auctionClosedListener);
@@ -333,20 +361,33 @@ public class LiveBiddingController {
     socket.addEventListener(MessageType.TIME_EXTENDED, timeExtendedListener);
     socket.addEventListener(MessageType.AUCTION_LIST_UPDATED, auctionListUpdatedListener);
     subscribedToUpdates = true;
+    return auctionService
+        .subscribeAuction(targetAuctionId)
+        .whenComplete(
+            (response, error) -> {
+              if (error != null || response == null || !response.isSuccess()) {
+                removeRealtimeListeners(socket);
+                subscribedToUpdates = false;
+              }
+            });
   }
 
   private void unsubscribeFromUpdates() {
     if (!subscribedToUpdates) return;
     SocketClient socket = SocketClient.getInstance();
+    removeRealtimeListeners(socket);
+    if (auctionId != null && socket.isConnected()) {
+      auctionService.unsubscribeAuction(auctionId);
+    }
+    subscribedToUpdates = false;
+  }
+
+  private void removeRealtimeListeners(SocketClient socket) {
     socket.removeEventListener(MessageType.BID_UPDATE, bidUpdateListener);
     socket.removeEventListener(MessageType.AUCTION_CLOSED, auctionClosedListener);
     socket.removeEventListener(MessageType.AUCTION_CANCELED, auctionClosedListener);
     socket.removeEventListener(MessageType.TIME_EXTENDED, timeExtendedListener);
     socket.removeEventListener(MessageType.AUCTION_LIST_UPDATED, auctionListUpdatedListener);
-    if (auctionId != null && socket.isConnected()) {
-      auctionService.unsubscribeAuction(auctionId);
-    }
-    subscribedToUpdates = false;
   }
 
   private String lastCountdownText = "";
@@ -445,63 +486,85 @@ public class LiveBiddingController {
 
   private void loadBidHistory() {
     if (auctionId == null) return;
+    Long requestedAuctionId = auctionId;
+    long requestVersion = ++bidHistoryRequestVersion;
 
-    // Show loading state immediately to prevent layout shift and inform user
-    Platform.runLater(
-        () -> {
-          bidHistoryContainer.getChildren().clear();
-          Label loadingLabel = new Label("Loading history...");
-          loadingLabel.getStyleClass().add("bid-history-subtitle");
-          loadingLabel.setPadding(new Insets(20));
-          bidHistoryContainer.setAlignment(Pos.CENTER);
-          bidHistoryContainer.getChildren().add(loadingLabel);
-        });
+    if (bidTimeline.isEmpty()) {
+      Platform.runLater(
+          () -> {
+            if (bidTimeline.isEmpty()) {
+              showHistoryLoadingState();
+            }
+          });
+    }
 
     auctionService
-        .getBidHistory(auctionId)
+        .getBidHistory(requestedAuctionId)
         .thenAccept(
             response -> {
               if (response.isSuccess()) {
-                List<PlaceBidResponse> history = response.getData();
+                List<PlaceBidResponse> history =
+                    response.getData() == null ? java.util.List.of() : response.getData();
                 Platform.runLater(
                     () -> {
-                      bidHistoryContainer.getChildren().clear();
-
-                      if (history.isEmpty()) {
-                        Label emptyLabel = new Label("No bids yet.");
-                        emptyLabel.getStyleClass().add("bid-history-subtitle");
-                        emptyLabel.setPadding(new Insets(20));
-                        bidHistoryContainer.setAlignment(Pos.CENTER);
-                        bidHistoryContainer.getChildren().add(emptyLabel);
-                      } else {
-                        bidHistoryContainer.setAlignment(Pos.TOP_LEFT);
-                        // History comes newest-first; reverse for chronological chart
-                        java.util.List<PlaceBidResponse> chronological =
-                            new java.util.ArrayList<>(history);
-                        java.util.Collections.reverse(chronological);
-
-                        // Update chart using manager
-                        chartManager.setData(chronological);
-
-                        // Populate bid history cards (newest first)
-                        boolean first = true;
-                        for (PlaceBidResponse bid : history) {
-                          String time = bid.timestamp().format(TIME_FMT);
-                          addBidHistoryCard(
-                              time, bid.highestBidderUsername(), bid.currentPrice(), first);
-                          first = false;
-                        }
+                      if (!requestedAuctionId.equals(auctionId)
+                          || requestVersion != bidHistoryRequestVersion) {
+                        return;
                       }
+                      bidTimeline.mergeHistory(history);
+                      renderBidTimeline();
                     });
               }
+            })
+        .exceptionally(
+            ex -> {
+              logger.error("Failed to load bid history for auction {}", requestedAuctionId, ex);
+              return null;
             });
+  }
+
+  private void showHistoryLoadingState() {
+    bidHistoryContainer.getChildren().clear();
+    Label loadingLabel = new Label("Loading history...");
+    loadingLabel.getStyleClass().add("bid-history-subtitle");
+    loadingLabel.setPadding(new Insets(20));
+    bidHistoryContainer.setAlignment(Pos.CENTER);
+    bidHistoryContainer.getChildren().add(loadingLabel);
+  }
+
+  private void renderBidTimeline() {
+    bidHistoryContainer.getChildren().clear();
+    java.util.List<BidTimeline.Entry> newestFirst = bidTimeline.newestFirst();
+
+    if (newestFirst.isEmpty()) {
+      Label emptyLabel = new Label("No bids yet.");
+      emptyLabel.getStyleClass().add("bid-history-subtitle");
+      emptyLabel.setPadding(new Insets(20));
+      bidHistoryContainer.setAlignment(Pos.CENTER);
+      bidHistoryContainer.getChildren().add(emptyLabel);
+      chartManager.clear();
+      return;
+    }
+
+    bidHistoryContainer.setAlignment(Pos.TOP_LEFT);
+    int limit = Math.min(50, newestFirst.size());
+    for (int i = 0; i < limit; i++) {
+      BidTimeline.Entry bid = newestFirst.get(i);
+      addBidHistoryCard(
+          bid.timestamp().format(TIME_FMT), bid.bidderUsername(), bid.amount(), i == 0);
+    }
+    chartManager.setPoints(bidTimeline.chartPoints(PriceChartManager.MAX_DATA_POINTS));
   }
 
   private void handleBidUpdate(Response<?> response) {
     BidUpdateEvent event =
         JsonMapper.getInstance().convertData(response.getData(), BidUpdateEvent.class);
-    if (event.auctionId().equals(auctionId)) {
-      Platform.runLater(() -> queueBidUpdate(event));
+    if (event != null && event.auctionId() != null && event.auctionId().equals(auctionId)) {
+      if (Platform.isFxApplicationThread()) {
+        queueBidUpdate(event);
+      } else {
+        Platform.runLater(() -> queueBidUpdate(event));
+      }
     }
   }
 
@@ -526,36 +589,39 @@ public class LiveBiddingController {
   }
 
   private void applyBidUpdateBatch(java.util.List<BidUpdateEvent> batch) {
-    BidUpdateEvent latest = batch.get(batch.size() - 1);
+    java.util.List<BidUpdateEvent> currentBatch =
+        batch.stream()
+            .filter(
+                event ->
+                    event != null
+                        && event.auctionId() != null
+                        && event.auctionId().equals(auctionId))
+            .toList();
+    if (currentBatch.isEmpty()) {
+      return;
+    }
+
+    bidTimeline.mergeEvents(currentBatch);
+    java.util.List<BidTimeline.Entry> newestFirst = bidTimeline.newestFirst();
+    if (newestFirst.isEmpty()) {
+      return;
+    }
+
+    BidTimeline.Entry latest = newestFirst.get(0);
+    BidUpdateEvent latestEvent = currentBatch.get(currentBatch.size() - 1);
     this.currentPrice = latest.amount();
     this.highestBidderLabel.setText(latest.bidderUsername());
-    this.endTime = latest.newEndTime();
+    this.endTime = latestEvent.newEndTime();
 
-    bidHistoryContainer
-        .getChildren()
-        .removeIf(node -> node instanceof Label && ((Label) node).getText().contains("No bids yet"));
-    bidHistoryContainer.setAlignment(Pos.TOP_LEFT);
+    renderBidTimeline();
 
-    demoteLatestCard();
-
-    int start = Math.max(0, batch.size() - BID_BURST_HISTORY_LIMIT);
-    for (int i = start; i < batch.size(); i++) {
-      BidUpdateEvent event = batch.get(i);
-      String time =
-          event.timestamp() != null ? event.timestamp().format(TIME_FMT) : LocalDateTime.now().format(TIME_FMT);
-      addBidHistoryCard(time, event.bidderUsername(), event.amount(), i == batch.size() - 1);
-    }
-
-    if (batch.size() > BID_BURST_HISTORY_LIMIT) {
+    if (currentBatch.size() > BID_BURST_HISTORY_LIMIT) {
       autoLastActionLabel.setText(
-          "Auto-bid settled " + batch.size() + " rapid updates. Showing latest bids.");
+          "Auto-bid settled " + currentBatch.size() + " rapid updates. Showing latest bids.");
     }
 
-    chartManager.addPricePoint(
-        latest.timestamp() != null ? latest.timestamp().format(TIME_FMT) : LocalDateTime.now().format(TIME_FMT),
-        this.currentPrice);
     refreshCurrentPrice();
-    if (batch.size() == 1) {
+    if (currentBatch.size() == 1) {
       triggerColorFlashThrottled();
     }
     refreshAutoBidPanel();

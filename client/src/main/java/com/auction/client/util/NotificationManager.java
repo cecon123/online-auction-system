@@ -150,7 +150,7 @@ public final class NotificationManager {
           }
         });
 
-    logger.info("NotificationManager initialized with global listeners.");
+    logger.debug("NotificationManager initialized with global listeners.");
   }
 
   /**
@@ -249,6 +249,6 @@ public final class NotificationManager {
     fadeIn.play();
     fadeOut.play();
 
-    logger.info("Toast notification shown: {} - {}", title, message);
+    logger.debug("Toast shown: type={} title=\"{}\" message=\"{}\"", type, title, message);
   }
 }
