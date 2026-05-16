@@ -2,8 +2,8 @@ package com.auction.client.controller;
 
 import com.auction.client.socket.ConnectionState;
 import com.auction.client.socket.SocketClient;
-import com.auction.client.util.JsonMapper;
 import com.auction.client.util.NotificationManager;
+import com.auction.client.util.SceneManager;
 import com.auction.common.protocol.MessageType;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -33,9 +33,7 @@ public class AppShellController {
             (obs, oldState, newState) -> {
               Platform.runLater(
                   () -> {
-                    boolean isDisconnected =
-                        newState == ConnectionState.DISCONNECTED
-                            || newState == ConnectionState.RECONNECTING;
+                    boolean isDisconnected = newState == ConnectionState.DISCONNECTED;
                     disconnectedBanner.setVisible(isDisconnected);
                     disconnectedBanner.setManaged(isDisconnected);
                   });
@@ -89,11 +87,8 @@ public class AppShellController {
   }
 
   @FXML
-  private void handleRetryConnection() {
-    try {
-      SocketClient.getInstance().connect();
-    } catch (java.io.IOException e) {
-      logger.error("Failed to manual reconnect", e);
-    }
+  private void handleDisconnectedLogout() {
+    SocketClient.getInstance().disconnect();
+    Platform.runLater(SceneManager::showLogin);
   }
 }

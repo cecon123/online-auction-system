@@ -23,26 +23,6 @@ public class AuthClientService {
   public AuthClientService() {
     this.socketClient = SocketClient.getInstance();
     this.jsonMapper = JsonMapper.getInstance();
-
-    this.socketClient.setOnReconnect(
-        () -> {
-          String username = socketClient.getLastUsername();
-          String password = socketClient.getLastPassword();
-          if (username == null || password == null) {
-            return;
-          }
-
-          logger.info("Performing silent re-authentication for user: {}", username);
-          login(username, password)
-              .thenAccept(
-                  response -> {
-                    if (response.isSuccess()) {
-                      logger.info("Silent re-authentication successful.");
-                    } else {
-                      logger.warn("Silent re-authentication failed: {}", response.getMessage());
-                    }
-                  });
-        });
   }
 
   /** Authenticates a user. */
@@ -59,7 +39,6 @@ public class AuthClientService {
                     jsonMapper.convertData(response.getData(), LoginResponse.class);
                 response.setData(data);
                 socketClient.setToken(data.token());
-                socketClient.setCredentials(username, password);
                 logger.info("Login successful for user: {}", username);
               }
               return response;

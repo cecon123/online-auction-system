@@ -95,18 +95,20 @@ public class AuctionManagerService {
           auctionDao.update(auction);
         }
 
-        if (newStatus == AuctionStatus.FINISHED) {
-          finalStatus = finalizeFinishedAuction(auction);
-          if (finalStatus != AuctionStatus.FINISHED) {
-            if (finalStatus == AuctionStatus.PAID) {
-              if (!canAttemptSettlement(auction, now)) {
-                return;
-              }
-              try {
-                settleFinishedAuction(auction);
-              } catch (RuntimeException e) {
-                markSettlementFailure(auction, now, e);
-                return;
+	        if (newStatus == AuctionStatus.FINISHED) {
+	          finalStatus = finalizeFinishedAuction(auction);
+	          if (finalStatus != AuctionStatus.FINISHED) {
+	            boolean finalStatusPersisted = false;
+	            if (finalStatus == AuctionStatus.PAID) {
+	              if (!canAttemptSettlement(auction, now)) {
+	                return;
+	              }
+	              try {
+	                settleFinishedAuction(auction);
+	                finalStatusPersisted = true;
+	              } catch (RuntimeException e) {
+	                markSettlementFailure(auction, now, e);
+	                return;
               }
             } else if (finalStatus == AuctionStatus.CANCELED) {
               Database.getInstance()
@@ -118,12 +120,14 @@ public class AuctionManagerService {
             }
             logger.info(
                 "Transitioning Auction {} from {} to {}.",
-                auction.getId(),
-                AuctionStatus.FINISHED,
-                finalStatus);
-            auction.setStatus(finalStatus);
-            auctionDao.update(auction);
-          }
+	                auction.getId(),
+	                AuctionStatus.FINISHED,
+	                finalStatus);
+	            if (!finalStatusPersisted) {
+	              auction.setStatus(finalStatus);
+	              auctionDao.update(auction);
+	            }
+	          }
         } else if (newStatus == AuctionStatus.PAID) {
           settleFinishedAuction(auction);
           auctionDao.clearSettlementFailure(auction.getId());

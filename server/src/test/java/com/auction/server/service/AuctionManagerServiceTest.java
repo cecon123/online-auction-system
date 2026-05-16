@@ -59,6 +59,44 @@ class AuctionManagerServiceTest {
     org.junit.jupiter.api.Assertions.assertNotNull(auctionDao.settlementState.nextRetryAt());
   }
 
+  @Test
+  void shouldAvoidDuplicatePaidStatusUpdateWhenSettlementSucceeds() throws Exception {
+    Auction auction =
+        new Auction(
+            2L,
+            10L,
+            2L,
+            new BigDecimal("200.00"),
+            new BigDecimal("200.00"),
+            new BigDecimal("150.00"),
+            4L,
+            LocalDateTime.now().minusHours(2),
+            LocalDateTime.now().minusMinutes(1),
+            AuctionStatus.FINISHED,
+            0L,
+            LocalDateTime.now().minusHours(3));
+    UserDao.UserRecord winner =
+        new UserDao.UserRecord(
+            4L,
+            "winner",
+            "hash",
+            "Winner",
+            com.auction.common.enums.Role.BIDDER,
+            new BigDecimal("1000.00"),
+            new BigDecimal("200.00"),
+            true,
+            LocalDateTime.now());
+
+    org.mockito.Mockito.when(userDao.findById(4L)).thenReturn(Optional.of(winner));
+
+    invokeUpdateStatus(auction);
+
+    org.junit.jupiter.api.Assertions.assertEquals(AuctionStatus.PAID, auction.getStatus());
+    org.junit.jupiter.api.Assertions.assertEquals(2, auctionDao.updateCount);
+    org.mockito.Mockito.verify(walletService).settleAuction(4L, 2L, new BigDecimal("200.00"));
+  }
+
+
   private void invokeUpdateStatus(Auction auction) throws Exception {
     Method method =
         AuctionManagerService.class.getDeclaredMethod(
@@ -69,6 +107,7 @@ class AuctionManagerServiceTest {
 
   private static class FakeAuctionDao implements AuctionDao {
     private SettlementState settlementState = new SettlementState(0, null, null);
+    private int updateCount;
 
     @Override
     public long create(Auction auction) {
@@ -106,7 +145,9 @@ class AuctionManagerServiceTest {
     }
 
     @Override
-    public void update(Auction auction) {}
+    public void update(Auction auction) {
+      updateCount++;
+    }
 
     @Override
     public SettlementState getSettlementState(long auctionId) {

@@ -238,6 +238,92 @@ class BidServiceTest {
     assertEquals(bidAmount, retryResponse.currentPrice());
   }
 
+  @Test
+  void shouldKeepManualBidWhenAutoBidLockFails() {
+    BigDecimal bidAmount = new BigDecimal("120.00");
+    BigDecimal autoMax = new BigDecimal("500.00");
+    long autoBidderId = 4L;
+    Auction auction = createMockAuction(new BigDecimal("100.00"));
+    AutoBidRule autoRule =
+        new AutoBidRule(
+            1L,
+            AUCTION_ID,
+            autoBidderId,
+            autoMax,
+            new BigDecimal("10.00"),
+            true,
+            LocalDateTime.now().minusSeconds(1));
+    UserDao.UserRecord bidder = createMockUser(BIDDER_ID, "bidder01", new BigDecimal("1000.00"));
+
+    when(auctionDao.findById(AUCTION_ID)).thenReturn(Optional.of(auction));
+    when(userDao.findById(BIDDER_ID)).thenReturn(Optional.of(bidder));
+    when(autoBidDao.findActiveByAuction(AUCTION_ID)).thenReturn(java.util.List.of(autoRule));
+    doAnswer(
+            invocation -> {
+              long userId = invocation.getArgument(0);
+              if (userId == autoBidderId) {
+                throw new IllegalStateException("wallet unavailable");
+              }
+              return null;
+            })
+        .when(walletService)
+        .lockFunds(anyLong(), any(BigDecimal.class));
+
+    PlaceBidResponse response = bidService.placeBid(BIDDER_ID, new PlaceBidRequest(AUCTION_ID, bidAmount));
+
+    assertEquals(bidAmount, response.currentPrice());
+    assertEquals(BIDDER_ID, auction.getHighestBidderId());
+    assertEquals(bidAmount, auction.getHighestMaxBid());
+    verify(autoBidDao).delete(AUCTION_ID, autoBidderId);
+    verify(bidDao, times(1)).create(any(BidTransaction.class));
+  }
+
+  @Test
+  void shouldPreferEarlierAutoBidRuleWhenMaxBidIsEqual() {
+    BigDecimal bidAmount = new BigDecimal("120.00");
+    BigDecimal maxBid = new BigDecimal("500.00");
+    long firstAutoBidderId = 4L;
+    long secondAutoBidderId = 5L;
+    Auction auction = createMockAuction(new BigDecimal("100.00"));
+    AutoBidRule firstRule =
+        new AutoBidRule(
+            1L,
+            AUCTION_ID,
+            firstAutoBidderId,
+            maxBid,
+            new BigDecimal("10.00"),
+            true,
+            LocalDateTime.now().minusSeconds(2));
+    AutoBidRule secondRule =
+        new AutoBidRule(
+            2L,
+            AUCTION_ID,
+            secondAutoBidderId,
+            maxBid,
+            new BigDecimal("10.00"),
+            true,
+            LocalDateTime.now().minusSeconds(1));
+    UserDao.UserRecord bidder = createMockUser(BIDDER_ID, "bidder01", new BigDecimal("1000.00"));
+    UserDao.UserRecord autoBidder =
+        createMockUser(firstAutoBidderId, "firstAuto", new BigDecimal("1000.00"));
+
+    when(auctionDao.findById(AUCTION_ID)).thenReturn(Optional.of(auction));
+    when(userDao.findById(BIDDER_ID)).thenReturn(Optional.of(bidder));
+    when(userDao.findById(firstAutoBidderId)).thenReturn(Optional.of(autoBidder));
+    when(autoBidDao.findActiveByAuction(AUCTION_ID))
+        .thenReturn(java.util.List.of(firstRule, secondRule));
+
+    bidService.placeBid(BIDDER_ID, new PlaceBidRequest(AUCTION_ID, bidAmount));
+
+    assertEquals(firstAutoBidderId, auction.getHighestBidderId());
+    assertEquals(maxBid, auction.getCurrentPrice());
+    assertEquals(maxBid, auction.getHighestMaxBid());
+    verify(walletService).lockFunds(firstAutoBidderId, maxBid);
+    verify(walletService, never()).lockFunds(eq(secondAutoBidderId), any());
+    verify(walletService).releaseFunds(BIDDER_ID, bidAmount);
+    verify(bidDao, times(2)).create(any(BidTransaction.class));
+  }
+
   private Auction createMockAuction(BigDecimal startingPrice) {
     return new Auction(
         AUCTION_ID,
