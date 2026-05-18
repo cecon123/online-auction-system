@@ -19,7 +19,7 @@
         <Insets top="12" right="24" bottom="12" left="24" />
     </padding>
 
-    <TextField promptText="Search auctions..." prefWidth="360" />
+    <!-- <TextField promptText="Search auctions..." prefWidth="360" /> -->
 
     <Region HBox.hgrow="ALWAYS" />
 
