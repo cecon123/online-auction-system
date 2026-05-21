@@ -36,7 +36,7 @@ class AuthServiceTest {
   void shouldRegisterSuccessfully() {
     // Arrange
     RegisterRequest request =
-        new RegisterRequest("Test User", "testuser", "password123", Role.BIDDER);
+        new RegisterRequest("Test User", "testuser", "123456", Role.BIDDER);
 
     when(userDao.findByUsername("testuser")).thenReturn(Optional.empty());
     when(userDao.create(anyString(), anyString(), anyString(), any(Role.class), any(), any()))
@@ -56,7 +56,7 @@ class AuthServiceTest {
   void shouldFailRegisterWhenUsernameExists() {
     // Arrange
     RegisterRequest request =
-        new RegisterRequest("Test User", "testuser", "password123", Role.BIDDER);
+        new RegisterRequest("Test User", "testuser", "123456", Role.BIDDER);
     UserDao.UserRecord existingUser = createMockUser(1L, "testuser", BigDecimal.ZERO);
 
     when(userDao.findByUsername("testuser")).thenReturn(Optional.of(existingUser));
@@ -68,7 +68,7 @@ class AuthServiceTest {
   @Test
   void shouldRejectPublicAdminRegistration() {
     RegisterRequest request =
-        new RegisterRequest("Admin User", "admin_user", "password123", Role.ADMIN);
+        new RegisterRequest("Admin User", "admin_user", "123456", Role.ADMIN);
 
     ValidationException exception =
         assertThrows(ValidationException.class, () -> authService.register(request));
@@ -80,7 +80,7 @@ class AuthServiceTest {
   @Test
   void shouldLoginSuccessfully() {
     // Arrange
-    String password = "password123";
+    String password = "123456";
     String hashed = BCrypt.hashpw(password, BCrypt.gensalt());
     UserDao.UserRecord user = createMockUser(1L, "testuser", BigDecimal.ZERO);
     // Since we can't easily set the hashed password in mock without reflection if it's a record,
