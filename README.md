@@ -1,10 +1,23 @@
 # AuctionPro - Online Auction System
 
-AuctionPro là dự án bài tập lớn môn Lập trình nâng cao của nhóm 4 thành viên. Dự án mô phỏng một hệ thống đấu giá trực tuyến dạng desktop, sử dụng JavaFX cho client, Java socket cho server và SQLite cho lưu trữ dữ liệu.
+AuctionPro là dự án bài tập lớn môn Lập trình nâng cao của nhóm 4 thành viên. Hệ thống mô phỏng một nền tảng đấu giá trực tuyến dạng desktop, trong đó nhiều client JavaFX kết nối tới một server TCP để đăng nhập, quản lý phiên đấu giá, đặt giá theo thời gian thực và xử lý ví điện tử.
 
-Mục tiêu chính của dự án là triển khai trọn vẹn một ứng dụng client-server có đăng nhập theo vai trò, đấu giá thời gian thực, quản lý ví, xử lý đồng thời và kiểm thử tự động cho các luồng nghiệp vụ quan trọng.
+Repository: [https://github.com/cecon123/online-auction-system](https://github.com/cecon123/online-auction-system)
 
-## Thành viên
+## 1. Phạm vi hệ thống
+
+AuctionPro tập trung vào luồng đấu giá nội bộ chạy local/demo:
+
+- Người dùng đăng ký, đăng nhập và sử dụng hệ thống theo vai trò `BIDDER`, `SELLER`, `ADMIN`.
+- Seller tạo, chỉnh sửa và quản lý phiên đấu giá.
+- Bidder xem danh sách phiên đấu giá, tham gia phòng live bidding, đặt giá thủ công và cấu hình auto-bid.
+- Server cập nhật giá thầu realtime tới các client đang theo dõi phiên đấu giá.
+- Ví điện tử quản lý `balance` và `lockedBalance` để phong tỏa tiền khi người dùng đang dẫn đầu.
+- Admin theo dõi người dùng, phiên đấu giá và xử lý các trường hợp bất thường.
+
+Hệ thống được thiết kế để phục vụ demo học phần, chưa triển khai như một dịch vụ production internet-facing.
+
+## 2. Thành viên
 
 | Thành viên | Phụ trách chính |
 | --- | --- |
@@ -13,96 +26,60 @@ Mục tiêu chính của dự án là triển khai trọn vẹn một ứng dụ
 | Linh | Login/Register UI, dashboard, socket client foundation |
 | Hải Anh | Live bidding UI, seller screens, realtime chart, UI integration |
 
-## Tính năng chính
+## 3. Công nghệ và môi trường
 
-- Đăng ký, đăng nhập và phân quyền theo vai trò `BIDDER`, `SELLER`, `ADMIN`.
-- Người bán tạo, chỉnh sửa và quản lý phiên đấu giá.
-- Người thầu xem danh sách, tham gia phòng đấu giá trực tiếp, đặt giá thủ công và cấu hình auto-bid.
-- Cập nhật realtime qua TCP socket với newline-delimited JSON.
-- Ví điện tử có `balance` và `lockedBalance` để phong tỏa tiền khi người dùng đang dẫn đầu phiên đấu giá.
-- Admin theo dõi người dùng, phiên đấu giá và có thể vô hiệu hóa tài khoản hoặc hủy phiên bất thường.
-- Server xử lý đồng thời bằng lock theo từng phiên đấu giá, tránh ghi đè khi nhiều người đặt giá cùng lúc.
-- Bộ test gồm unit test, integration test SQLite, socket test và concurrency test.
+| Nhóm | Công nghệ |
+| --- | --- |
+| Ngôn ngữ | Java 21 |
+| Build | Maven multi-module |
+| Client | JavaFX 21, FXML, CSS, Ikonli |
+| Server | TCP Socket, newline-delimited JSON |
+| Database | SQLite JDBC |
+| Serialization | Gson |
+| Logging | SLF4J + Logback |
+| Security | BCrypt password hashing |
+| Testing | JUnit 5, Mockito |
+| CI/CD | GitHub Actions |
 
-## Kiến trúc
+Yêu cầu cài đặt:
+
+- JDK 21
+- Maven 3.8+
+- Hệ điều hành có môi trường đồ họa để chạy JavaFX client: Windows, macOS hoặc Linux desktop
+
+## 4. Cấu trúc module
 
 ```text
 online-auction-system/
-├── common/   Shared model, DTO, enum, request/response protocol
-├── server/   Socket server, routing, service layer, DAO, SQLite schema
-├── client/   JavaFX UI, controllers, client services, socket client
-├── docs/     Tài liệu kỹ thuật và hướng dẫn sử dụng
+├── common/   Model, DTO, enum và protocol dùng chung
+├── server/   Socket server, router, service layer, DAO, SQLite schema
+├── client/   JavaFX UI, controller, client service, socket client
+├── docs/     Tài liệu kỹ thuật, báo cáo và hướng dẫn demo
 └── .github/  GitHub Actions workflow
 ```
 
 | Module | Vai trò |
 | --- | --- |
-| `common` | Chứa domain model, DTO, enum và protocol dùng chung giữa client/server. |
-| `server` | Xử lý nghiệp vụ, xác thực, đấu giá, ví, thông báo realtime và SQLite. |
-| `client` | Ứng dụng JavaFX giao tiếp với server qua `SocketClient`. |
+| `common` | Chia sẻ domain model, DTO, enum và `Request`/`Response` protocol giữa client và server. |
+| `server` | Xử lý xác thực, đấu giá, ví, thông báo realtime, quản trị và lưu trữ SQLite. |
+| `client` | Ứng dụng desktop JavaFX giao tiếp với server qua `SocketClient`. |
 
-## Công nghệ
-
-- Java 21
-- Maven multi-module
-- JavaFX 21
-- TCP Socket + newline-delimited JSON
-- SQLite JDBC
-- Gson
-- SLF4J + Logback
-- BCrypt
-- JUnit 5, Mockito
-- GitHub Actions
-
-## Yêu cầu môi trường
-
-- JDK 21
-- Maven 3.8+
-- Hệ điều hành có môi trường đồ họa nếu chạy JavaFX client: Windows, macOS hoặc Linux desktop
-
-## Chạy dự án
+## 5. Build và vị trí file JAR
 
 Build toàn bộ project:
 
 ```bash
-mvn clean install
+mvn clean package
 ```
 
-Chạy server:
+Sau khi build thành công, các file executable JAR nằm tại:
 
-```bash
-mvn -pl server exec:java
-```
-
-Chạy client ở một terminal khác:
-
-```bash
-mvn -pl client javafx:run
-```
-
-Server mặc định lắng nghe socket tại port `8080` và asset server tại port `8081`.
-
-## Tài khoản demo
-
-Khi database trống, server tự tạo schema và nạp dữ liệu mẫu từ `server/src/main/resources/db/seed.sql`.
-
-| Username | Password | Vai trò |
+| Artifact | Vị trí | Lệnh chạy |
 | --- | --- | --- |
-| `admin` | `123456` | `ADMIN` |
-| `seller01` | `123456` | `SELLER` |
-| `seller02` | `123456` | `SELLER` |
-| `bidder01` | `123456` | `BIDDER` |
-| `bidder02` | `123456` | `BIDDER` |
+| Server fat JAR | `server/target/auction-server.jar` | `java -jar server/target/auction-server.jar` |
+| Client fat JAR | `client/target/auction-client.jar` | `java -jar client/target/auction-client.jar` |
 
-## Kiểm thử
-
-Chạy toàn bộ test:
-
-```bash
-mvn test
-```
-
-Chạy cùng bước verify như CI:
+Nếu muốn chạy cả verify/checkstyle như CI:
 
 ```bash
 mvn clean verify
@@ -114,29 +91,93 @@ Trên Linux headless, JavaFX test cần display ảo:
 xvfb-run -a mvn clean verify
 ```
 
-GitHub Actions đã được cấu hình chạy `mvn clean verify` dưới `xvfb-run` để tránh lỗi `Unable to open DISPLAY` khi test `SocketClientIntegrationTest`.
+## 6. Chạy Server và Client
 
-## Cấu hình server
+Chạy từ thư mục gốc repository.
 
-Các giá trị mặc định nằm trong `server/src/main/resources/application.properties`. Có thể ghi đè bằng Java system properties khi chạy Maven hoặc `java -jar`.
+1. Build JAR:
 
-| Property | Mặc định | Mô tả |
-| --- | --- | --- |
-| `server.port` | `8080` | TCP socket server port |
-| `server.asset.port` | `8081` | HTTP asset server port |
-| `server.asset.dir` | `uploads` | Thư mục lưu ảnh upload |
-| `database.url` | `jdbc:sqlite:auction.db` | SQLite database URL |
-| `database.enableWal` | `true` | Bật WAL mode cho SQLite |
-| `database.busyTimeoutMs` | `5000` | Timeout khi SQLite bận |
+   ```bash
+   mvn clean package
+   ```
 
-Ví dụ:
+2. Mở terminal 1 và chạy server:
+
+   ```bash
+   java -jar server/target/auction-server.jar
+   ```
+
+3. Mở terminal 2 và chạy client:
+
+   ```bash
+   java -jar client/target/auction-client.jar
+   ```
+
+4. Để demo nhiều người dùng, mở thêm terminal và chạy lại client:
+
+   ```bash
+   java -jar client/target/auction-client.jar
+   ```
+
+Server mặc định lắng nghe socket tại port `8080` và asset server tại port `8081`.
+
+Ghi đè cấu hình server bằng Java system properties:
 
 ```bash
-mvn -pl server exec:java -Dserver.port=9090 -Ddatabase.url=jdbc:sqlite:auction-demo.db
+java -Dserver.port=9090 -Ddatabase.url=jdbc:sqlite:auction-demo.db -jar server/target/auction-server.jar
 ```
 
-## Tài liệu
+Trong quá trình phát triển vẫn có thể chạy bằng Maven:
 
+```bash
+mvn -pl server exec:java
+mvn -pl client javafx:run
+```
+
+## 7. Tài khoản demo
+
+Khi database trống, server tự tạo schema và nạp dữ liệu mẫu từ `server/src/main/resources/db/seed.sql`.
+
+| Username | Password | Vai trò |
+| --- | --- | --- |
+| `admin` | `123456` | `ADMIN` |
+| `seller01` | `123456` | `SELLER` |
+| `seller02` | `123456` | `SELLER` |
+| `bidder01` | `123456` | `BIDDER` |
+| `bidder02` | `123456` | `BIDDER` |
+
+## 8. Chức năng đã hoàn thành
+
+- Đăng ký, đăng nhập và phân quyền theo vai trò.
+- Hash mật khẩu bằng BCrypt trước khi lưu vào SQLite.
+- Seller tạo, cập nhật và quản lý phiên đấu giá.
+- Bidder xem danh sách phiên, đặt giá thủ công và cấu hình auto-bid.
+- Live bidding room hiển thị lịch sử giá, biểu đồ và realtime update.
+- Ví điện tử với cơ chế phong tỏa/hoàn trả tiền khi có lượt bid mới.
+- Admin quản lý người dùng, trạng thái tài khoản và phiên đấu giá.
+- TCP socket protocol dùng newline-delimited JSON, request/response bất đồng bộ bằng `requestId`.
+- Broadcast realtime event cho bid update, danh sách phiên đấu giá, danh sách người dùng và thông báo hệ thống.
+- Xử lý concurrent bidding bằng lock theo từng `auctionId` và transaction SQLite.
+- Bộ test tự động cho service, DAO SQLite, socket, concurrency và util phía client.
+- GitHub Actions chạy `mvn clean verify` với display ảo cho JavaFX test.
+
+## 9. Báo cáo và video demo
+
+- Báo cáo PDF: [docs/pdf/auctionpro-report.pdf](docs/pdf/auctionpro-report.pdf)
+- Video demo: TODO - cập nhật link video demo tối đa 3 phút sau khi nhóm upload.
+
+Kịch bản video đề xuất:
+
+1. Chạy server bằng `java -jar server/target/auction-server.jar`.
+2. Chạy ít nhất hai client bằng `java -jar client/target/auction-client.jar`.
+3. Đăng nhập seller để tạo hoặc mở phiên đấu giá.
+4. Đăng nhập hai bidder, cùng tham gia một phiên và đặt giá cạnh tranh.
+5. Demo realtime update/concurrent bidding hoặc xử lý lỗi khi đặt giá không hợp lệ.
+
+## 10. Tài liệu tham khảo trong repo
+
+- [Deployment guide](docs/deployment.md)
+- [Release guide](docs/release-guide.md)
 - [Project overview](docs/overview.md)
 - [Setup guide](docs/setup.md)
 - [User manual](docs/user-manual.md)
@@ -146,14 +187,19 @@ mvn -pl server exec:java -Dserver.port=9090 -Ddatabase.url=jdbc:sqlite:auction-d
 - [Socket protocol](docs/protocol.md)
 - [Class diagram](docs/class-diagram.md)
 - [Database ERD](docs/database-erd.md)
-- [Folder structure](docs/architecture/folder-structure.md)
-- [Authentication architecture](docs/architecture/auth.md)
 - [Realtime architecture](docs/architecture/realtime.md)
 - [Database/backend flow](docs/architecture/database-backend.md)
-- [State management](docs/architecture/state-management.md)
-- [Development guide](docs/development.md)
-- [Git workflow](docs/git-workflow.md)
 
-## Trạng thái
+## 11. Trạng thái nộp bài
 
-Dự án đã hoàn thiện các luồng chính phục vụ demo và đánh giá bài tập lớp. Những thay đổi mới nên được thực hiện trên branch `feature/<tên-người-làm>/<tên-task>`, chạy test trước khi tạo Pull Request vào `dev`.
+- Nhánh nộp cuối cùng theo yêu cầu học phần: `main`.
+- Deadline commit cuối: 23:59, ngày 31/05/2026.
+- Trước khi nộp cần merge đầy đủ source code và tài liệu cuối cùng vào `main`.
+- Video demo cần được quay/upload và cập nhật link vào README trước khi nộp.
+
+## 15. Task Board
+
+- [x] Chuẩn hóa README theo checklist nộp bài.
+- [x] Bổ sung cấu hình build executable JAR cho server/client.
+- [x] Thêm báo cáo PDF trong repo.
+- [ ] Cập nhật link video demo cuối cùng.

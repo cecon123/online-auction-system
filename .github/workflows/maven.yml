@@ -1,13 +1,18 @@
-name: Java CI with Maven
+name: Build, Test, and Release
 
 on:
   push:
-    branches: [ "main", "dev" ]
+    branches: ["main", "dev"]
+    tags: ["v*"]
   pull_request:
-    branches: [ "main", "dev" ]
+    branches: ["main", "dev"]
+
+permissions:
+  contents: read
 
 jobs:
-  build:
+  verify:
+    name: Verify
     runs-on: ubuntu-latest
 
     steps:
@@ -26,3 +31,90 @@ jobs:
 
       - name: Build and test all modules
         run: xvfb-run -a mvn -B clean verify
+
+      - name: Upload CI JAR artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: auctionpro-ci-jars
+          path: |
+            server/target/auction-server.jar
+            client/target/auction-client.jar
+          if-no-files-found: error
+
+  package-release:
+    name: Package release artifacts (${{ matrix.platform }})
+    needs: verify
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: windows-latest
+            platform: windows
+          - os: macos-latest
+            platform: macos
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Package without rerunning tests
+        run: mvn -B clean package -DskipTests
+
+      - name: Prepare release files
+        shell: bash
+        run: |
+          mkdir -p dist
+          version="${GITHUB_REF_NAME#v}"
+          cp client/target/auction-client.jar "dist/auction-client-${matrix_platform}-${version}.jar"
+          if [ "$matrix_platform" = "linux" ]; then
+            cp server/target/auction-server.jar "dist/auction-server-${version}.jar"
+            if [ -f docs/pdf/auctionpro-report.pdf ]; then
+              cp docs/pdf/auctionpro-report.pdf "dist/auctionpro-report-${version}.pdf"
+            fi
+          fi
+        env:
+          matrix_platform: ${{ matrix.platform }}
+
+      - name: Upload release artifact bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.platform }}
+          path: dist/*
+          if-no-files-found: error
+
+  github-release:
+    name: Create GitHub Release
+    needs: package-release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: dist
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          version="${TAG_NAME#v}"
+          gh release create "$TAG_NAME" dist/* \
+            --title "AuctionPro ${version}" \
+            --notes "Automated release for AuctionPro ${version}. Includes server fat JAR, platform-specific client fat JARs, and the project report PDF when available."
