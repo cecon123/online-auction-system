@@ -1,0 +1,129 @@
+/* =========================================================
+   Global Variables & Root
+   =========================================================
+
+   Color Palette (Indigo/Navy Design System)
+   -----------------------------------------
+   Navy 950:    #1e1b4b   (Sidebar bg)
+   Indigo 800:  #312e81   (Sidebar hover)
+   Indigo 600:  #4f46e5   (Button hover)
+   Primary:     #3525cd   (Brand, CTA)
+   Accent:      #7c3aed   (Purple accent)
+   Surface:     #fcf8ff   (Page bg)
+   Card:        #ffffff
+   Border:      #c7c4d8
+   Text:        #111827
+   Muted:       #6b7280
+   Success:     #059669
+   Error:       #ba1a1a
+
+   Control Height: 42px (all interactive elements)
+   Radius: sm=6  md=8  lg=12  pill=999
+   ========================================================= */
+
+.root {
+    /* Brand Colors */
+    -brand-primary: #3525cd;
+    -brand-secondary: #4f46e5;
+    -brand-accent: #7c3aed;
+    
+    /* Semantic Colors */
+    -color-success: #059669;
+    -color-error: #ba1a1a;
+    -color-warning: #92400e;
+    
+    /* Neutral / Text Colors */
+    -text-main: #111827;
+    -text-muted: #6b7280;
+    -text-inverse: #ffffff;
+    
+    /* Backgrounds & Surfaces */
+    -bg-surface: #fcf8ff;
+    -bg-card: #ffffff;
+    -border-color: #c7c4d8;
+
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-background-color: -bg-surface;
+    -fx-text-fill: -text-main;
+}
+
+.label {
+    -fx-text-fill: -text-main;
+}
+
+.page {
+    -fx-background-color: -bg-surface;
+}
+
+.page-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.page-scroll > .viewport {
+    -fx-background-color: -bg-surface;
+}
+
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+/* =========================================================
+   Modern Scrollbar — Slim, Rounded, Auto-reveal
+   ========================================================= */
+
+.scroll-bar {
+    -fx-background-color: transparent;
+    -fx-pref-width: 8px;
+    -fx-min-width: 8px;
+    -fx-max-width: 8px;
+}
+
+.scroll-bar:horizontal {
+    -fx-pref-height: 8px;
+    -fx-min-height: 8px;
+    -fx-max-height: 8px;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: rgba(0, 0, 0, 0.12);
+    -fx-background-radius: 999;
+    -fx-min-width: 6px;
+    -fx-pref-width: 6px;
+    -fx-min-height: 30px;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: rgba(0, 0, 0, 0.28);
+}
+
+.scroll-bar .thumb:pressed {
+    -fx-background-color: rgba(0, 0, 0, 0.38);
+}
+
+.scroll-bar .track,
+.scroll-bar .track-background {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-pref-height: 0;
+    -fx-pref-width: 0;
+    -fx-min-height: 0;
+    -fx-min-width: 0;
+    -fx-max-height: 0;
+    -fx-max-width: 0;
+    -fx-padding: 0;
+}
+
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow {
+    -fx-shape: "";
+    -fx-padding: 0;
+}

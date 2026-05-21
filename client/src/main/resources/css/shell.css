@@ -1,0 +1,104 @@
+/* =========================================================
+   App Shell (Sidebar & TopBar)
+   ========================================================= */
+
+.app-shell {
+    -fx-background-color: #fcf8ff;
+}
+
+.sidebar {
+    -fx-background-color: #1e1b4b;
+    -fx-min-height: 760px;
+}
+
+.sidebar-title {
+    -fx-text-fill: white;
+    -fx-font-size: 22px;
+    -fx-font-weight: 800;
+}
+
+.sidebar-subtitle {
+    -fx-text-fill: #c7d2fe;
+    -fx-font-size: 12px;
+    -fx-font-weight: 500;
+}
+
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #e0e7ff;
+    -fx-font-size: 14px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 12 14 12 14;
+    -fx-background-radius: 8;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+}
+
+.nav-button .ikonli-font-icon {
+    -fx-icon-color: white;
+    -fx-fill: white;
+}
+
+.nav-button:hover {
+    -fx-background-color: #312e81;
+    -fx-text-fill: white;
+}
+
+.nav-button:hover .ikonli-font-icon {
+    -fx-icon-color: white;
+    -fx-fill: white;
+}
+
+.topbar {
+    -fx-background-color: white;
+    -fx-border-color: transparent transparent #e5e7eb transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-pref-height: 72px;
+}
+
+.user-menu {
+    -fx-background-color: #f8f7ff;
+    -fx-border-color: #d8d3ef;
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+    -fx-padding: 6 12 6 8;
+}
+
+.avatar-label {
+    -fx-background-color: #3525cd;
+    -fx-text-fill: white;
+    -fx-font-size: 15px;
+    -fx-font-weight: 800;
+    -fx-alignment: center;
+    -fx-min-width: 38px;
+    -fx-min-height: 38px;
+    -fx-pref-width: 38px;
+    -fx-pref-height: 38px;
+    -fx-background-radius: 999;
+}
+
+.topbar-username {
+    -fx-text-fill: #111827;
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+}
+
+.role-badge {
+    -fx-background-color: #ede9fe;
+    -fx-text-fill: #3525cd;
+    -fx-font-size: 10px;
+    -fx-font-weight: 800;
+    -fx-background-radius: 999;
+    -fx-padding: 2 8 2 8;
+}
+
+.topbar-muted {
+    -fx-text-fill: #6b7280;
+    -fx-font-size: 11px;
+}
+
+.topbar-balance {
+    -fx-text-fill: #059669;
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+}

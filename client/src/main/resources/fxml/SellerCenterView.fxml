@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+<VBox
+    xmlns="http://javafx.com/javafx"
+    xmlns:fx="http://javafx.com/fxml"
+    fx:controller="com.auction.client.controller.SellerCenterController"
+    spacing="24"
+    styleClass="page"
+>
+
+    <padding>
+        <Insets top="32" right="32" bottom="32" left="32" />
+    </padding>
+
+    <HBox spacing="16" alignment="CENTER_LEFT">
+        <VBox HBox.hgrow="ALWAYS">
+            <Label text="Seller Center" styleClass="page-title" />
+            <Label
+                text="Manage your active listings, track bids, and create new auctions."
+                styleClass="page-subtitle"
+            />
+        </VBox>
+
+        <HBox spacing="8" alignment="CENTER_RIGHT">
+            <Button onAction="#handleRefresh" styleClass="secondary-button">
+                <graphic>
+                    <FontIcon iconLiteral="mdi2r-refresh" iconSize="18" />
+                </graphic>
+            </Button>
+            <Button
+                text="+ Create New Auction"
+                onAction="#handleCreateAuction"
+                styleClass="primary-button"
+            />
+        </HBox>
+    </HBox>
+
+    <!-- Dashboard Metrics -->
+    <HBox spacing="16" fx:id="metricsContainer">
+        <!-- Card 1: Expected Revenue -->
+        <VBox styleClass="card, metric-card" HBox.hgrow="ALWAYS">
+            <Label text="Expected Revenue" styleClass="metric-title" />
+            <Label fx:id="expectedRevenueLabel" text="0.00" styleClass="metric-value, metric-highlight" />
+            <Label text="From active auctions" styleClass="metric-subtitle" />
+        </VBox>
+        
+        <!-- Card 2: Total Revenue -->
+        <VBox styleClass="card, metric-card" HBox.hgrow="ALWAYS">
+            <Label text="Total Revenue" styleClass="metric-title" />
+            <Label fx:id="totalRevenueLabel" text="0.00" styleClass="metric-value, metric-success" />
+            <Label text="From successful auctions" styleClass="metric-subtitle" />
+        </VBox>
+
+        <!-- Card 3: Total Bids -->
+        <VBox styleClass="card, metric-card" HBox.hgrow="ALWAYS">
+            <Label text="Total Bids" styleClass="metric-title" />
+            <Label fx:id="totalBidsLabel" text="0" styleClass="metric-value" />
+            <Label text="Across all items" styleClass="metric-subtitle" />
+        </VBox>
+
+        <!-- Card 4: Success Rate -->
+        <VBox styleClass="card, metric-card" HBox.hgrow="ALWAYS">
+            <Label text="Success Rate" styleClass="metric-title" />
+            <Label fx:id="successRateLabel" text="0%" styleClass="metric-value" />
+            <Label fx:id="successRateSubtitleLabel" text="0/0 finished" styleClass="metric-subtitle" />
+        </VBox>
+    </HBox>
+
+    <ScrollPane fitToWidth="true" styleClass="card-scroll" VBox.vgrow="ALWAYS">
+        <VBox fx:id="auctionListContainer" spacing="12" styleClass="card">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20" />
+            </padding>
+            <Label text="Your Auctions" styleClass="section-title" />
+            
+            <!-- List Headers -->
+            <HBox spacing="16" alignment="CENTER_LEFT" style="-fx-padding: 8 12; -fx-background-color: #f3f4f6; -fx-background-radius: 6;">
+                <Label text="PRODUCT NAME" style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #6b7280;" HBox.hgrow="ALWAYS" maxWidth="Infinity" />
+                <Label text="START PRICE" style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #6b7280;" prefWidth="100" />
+                <Label text="CURRENT PRICE" style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #6b7280;" prefWidth="100" />
+                <Label text="STATUS" style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #6b7280;" prefWidth="80" />
+                <Label text="ACTIONS" style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #6b7280;" prefWidth="130" alignment="CENTER_RIGHT" />
+            </HBox>
+            
+            <!-- Dynamic items will be added here -->
+            <VBox fx:id="emptyPlaceholder" spacing="12" alignment="CENTER" visible="false" managed="false" minHeight="200">
+                <FontIcon iconLiteral="mdi2p-plus-circle-outline" iconSize="48" iconColor="#9ca3af" />
+                <Label text="No auctions found" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #4b5563;" />
+                <Label text="Get started by creating your first listing." style="-fx-font-size: 14px; -fx-text-fill: #9ca3af;" />
+                <Button text="Create Auction" onAction="#handleCreateAuction" styleClass="primary-button">
+                    <graphic><FontIcon iconLiteral="mdi2p-plus" iconSize="14" /></graphic>
+                </Button>
+            </VBox>
+        </VBox>
+    </ScrollPane>
+</VBox>

@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<ScrollPane
+    xmlns="http://javafx.com/javafx"
+    xmlns:fx="http://javafx.com/fxml"
+    fx:controller="com.auction.client.controller.EditAuctionController"
+    fitToWidth="true"
+    hbarPolicy="NEVER"
+    vbarPolicy="AS_NEEDED"
+    styleClass="page-scroll"
+>
+
+    <VBox alignment="TOP_CENTER" styleClass="create-page">
+        <padding>
+            <Insets top="28" right="32" bottom="32" left="32" />
+        </padding>
+
+        <VBox maxWidth="960" spacing="20">
+            <!-- Page Header -->
+            <VBox spacing="4">
+                <Label text="Edit Auction" styleClass="create-page-title" />
+                <Label
+                    text="Update the details of your auction."
+                    styleClass="create-page-subtitle"
+                />
+            </VBox>
+
+            <!-- Main Card -->
+            <VBox styleClass="create-auction-card" spacing="0">
+
+                <!-- Card Header -->
+                <HBox styleClass="create-auction-card-header" alignment="CENTER_LEFT">
+                    <padding>
+                        <Insets top="14" right="24" bottom="14" left="24" />
+                    </padding>
+                    <FontIcon iconLiteral="mdi2p-package-variant" iconSize="18" styleClass="security-icon" />
+                    <Region prefWidth="8" />
+                    <Label text="Item Information" styleClass="create-section-title" />
+                </HBox>
+
+                <!-- Card Body: 2-column layout -->
+                <GridPane hgap="32" vgap="0" styleClass="create-auction-body">
+                    <padding>
+                        <Insets top="24" right="28" bottom="24" left="28" />
+                    </padding>
+
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="55" />
+                        <ColumnConstraints percentWidth="45" />
+                    </columnConstraints>
+
+                    <!-- LEFT COLUMN: Product Info -->
+                    <VBox spacing="16" GridPane.columnIndex="0">
+
+                        <VBox spacing="6">
+                            <Label text="PRODUCT NAME" styleClass="create-form-label" />
+                            <TextField
+                                fx:id="productNameField"
+                                promptText="e.g. Vintage Rolex Submariner 1968"
+                                styleClass="create-input"
+                            />
+                        </VBox>
+
+                        <HBox spacing="16">
+                            <VBox spacing="6" HBox.hgrow="ALWAYS">
+                                <Label text="CATEGORY" styleClass="create-form-label" />
+                                <ComboBox
+                                    fx:id="categoryComboBox"
+                                    promptText="Select category"
+                                    maxWidth="Infinity"
+                                    styleClass="create-combo"
+                                />
+                            </VBox>
+
+                            <VBox spacing="6" HBox.hgrow="ALWAYS">
+                                <Label text="CONDITION" styleClass="create-form-label" />
+                                <ComboBox
+                                    fx:id="conditionComboBox"
+                                    promptText="Select condition"
+                                    maxWidth="Infinity"
+                                    styleClass="create-combo"
+                                />
+                            </VBox>
+                        </HBox>
+
+                        <VBox spacing="6">
+                            <Label text="DESCRIPTION" styleClass="create-form-label" />
+                            <TextArea
+                                fx:id="descriptionArea"
+                                promptText="Describe your item in detail — condition, history, included accessories..."
+                                prefRowCount="5"
+                                wrapText="true"
+                                styleClass="create-description"
+                            />
+                        </VBox>
+                    </VBox>
+
+                    <!-- RIGHT COLUMN: Image + Mechanics -->
+                    <VBox spacing="16" GridPane.columnIndex="1">
+
+                        <!-- Image Upload -->
+                        <VBox spacing="6">
+                            <Label text="PRODUCT IMAGE" styleClass="create-form-label" />
+
+                            <VBox
+                                fx:id="uploadBox"
+                                onDragOver="#handleDragOver"
+                                onDragDropped="#handleDragDropped"
+                                styleClass="upload-box"
+                                spacing="10"
+                                alignment="CENTER"
+                            >
+                                <FontIcon iconLiteral="mdi2c-cloud-upload-outline" iconSize="32" styleClass="security-icon" />
+                                <Label text="Drag or browse image" styleClass="upload-title" />
+                                <Label text="PNG, JPG, JPEG, GIF — max 5MB" styleClass="upload-subtitle" />
+                                <Button
+                                    text="Browse Image"
+                                    onAction="#handleChooseImage"
+                                    styleClass="create-secondary-small-button"
+                                />
+                            </VBox>
+
+                            <Label
+                                fx:id="selectedImageLabel"
+                                text="No image selected"
+                                styleClass="create-page-subtitle"
+                            />
+                        </VBox>
+
+                        <!-- Pricing + Schedule -->
+                        <VBox styleClass="auction-mechanics-card" spacing="14">
+                            <padding>
+                                <Insets top="18" right="18" bottom="18" left="18" />
+                            </padding>
+
+                            <HBox spacing="8" alignment="CENTER_LEFT">
+                                <FontIcon iconLiteral="mdi2c-cash-multiple" iconSize="16" styleClass="security-icon" />
+                                <Label text="Pricing and Schedule" styleClass="create-card-title" />
+                            </HBox>
+
+                            <HBox spacing="14">
+                                <VBox spacing="6" HBox.hgrow="ALWAYS">
+                                    <Label text="STARTING PRICE" styleClass="create-form-label" />
+                                    <TextField
+                                        fx:id="startingPriceField"
+                                        promptText="e.g. 500"
+                                        styleClass="create-input"
+                                    />
+                                </VBox>
+
+                                <VBox spacing="6" HBox.hgrow="ALWAYS">
+                                    <Label text="RESERVE PRICE" styleClass="create-form-label" />
+                                    <TextField
+                                        fx:id="reservePriceField"
+                                        promptText="Optional"
+                                        styleClass="create-input"
+                                    />
+                                </VBox>
+                            </HBox>
+
+                            <VBox spacing="6">
+                                <Label text="START DATE / TIME" styleClass="create-form-label" />
+                                <HBox spacing="8" alignment="CENTER_LEFT">
+                                    <DatePicker fx:id="startDatePicker" promptText="Date"
+                                                HBox.hgrow="ALWAYS" maxWidth="Infinity" styleClass="create-input" />
+                                    <Spinner fx:id="startHourSpinner" prefWidth="80" styleClass="create-input" />
+                                    <Label text=":" style="-fx-font-weight: bold; -fx-font-size: 16px;" />
+                                    <Spinner fx:id="startMinuteSpinner" prefWidth="80" styleClass="create-input" />
+                                </HBox>
+                            </VBox>
+
+                            <VBox spacing="6">
+                                <Label text="END DATE / TIME" styleClass="create-form-label" />
+                                <HBox spacing="8" alignment="CENTER_LEFT">
+                                    <DatePicker fx:id="endDatePicker" promptText="Date"
+                                                HBox.hgrow="ALWAYS" maxWidth="Infinity" styleClass="create-input" />
+                                    <Spinner fx:id="endHourSpinner" prefWidth="80" styleClass="create-input" />
+                                    <Label text=":" style="-fx-font-weight: bold; -fx-font-size: 16px;" />
+                                    <Spinner fx:id="endMinuteSpinner" prefWidth="80" styleClass="create-input" />
+                                </HBox>
+                            </VBox>
+
+                            <Label text="24-hour format. End must be after start." styleClass="create-help-text" />
+                        </VBox>
+                    </VBox>
+                </GridPane>
+
+                <!-- Footer -->
+                <HBox spacing="14" alignment="CENTER_RIGHT" styleClass="create-auction-footer">
+                    <padding>
+                        <Insets top="16" right="28" bottom="16" left="28" />
+                    </padding>
+
+                    <Label
+                        fx:id="messageLabel"
+                        HBox.hgrow="ALWAYS"
+                        wrapText="true"
+                        styleClass="create-page-subtitle"
+                    />
+
+                    <Region HBox.hgrow="ALWAYS" />
+
+                    <Button
+                        text="Cancel"
+                        onAction="#handleCancel"
+                        styleClass="create-secondary-footer-button"
+                        prefWidth="120"
+                    />
+
+                    <Button
+                        text="Update Auction"
+                        onAction="#handleSaveAuction"
+                        styleClass="create-primary-footer-button"
+                        prefWidth="160"
+                    >
+                        <graphic>
+                            <FontIcon iconLiteral="mdi2r-rocket-launch-outline" iconSize="16" iconColor="white" />
+                        </graphic>
+                    </Button>
+                </HBox>
+            </VBox>
+        </VBox>
+    </VBox>
+</ScrollPane>

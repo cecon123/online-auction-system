@@ -1,0 +1,379 @@
+/* =========================================================
+   Create Auction Screen Styles
+   ========================================================= */
+
+.create-page {
+    -fx-background-color: #fcf8ff;
+}
+
+.create-page-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #111827;
+}
+
+.create-page-subtitle {
+    -fx-font-size: 13px;
+    -fx-text-fill: #6b7280;
+}
+
+/* ── Card Structure ── */
+
+.create-auction-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-color: #e2e0f0;
+    -fx-border-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 8, 0, 0, 2);
+}
+
+.create-auction-card-header {
+    -fx-background-color: white;
+    -fx-background-radius: 12 12 0 0;
+    -fx-border-color: transparent transparent #e2e0f0 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.create-section-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #111827;
+}
+
+.create-auction-body {
+    -fx-background-color: #faf9ff;
+    -fx-background-radius: 0;
+}
+
+.create-auction-footer {
+    -fx-background-color: white;
+    -fx-background-radius: 0 0 12 12;
+    -fx-border-color: #e2e0f0 transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+/* ── Form Label ── */
+
+.create-form-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #6b7280;
+    -fx-padding: 0 0 2 1;
+}
+
+/* ── Inputs (inherit 42px from common.css, override cosmetics) ── */
+
+.create-input {
+    -fx-background-color: white;
+    -fx-border-color: #d1d5db;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 8 12 8 12;
+    -fx-font-size: 13px;
+    -fx-pref-height: 40px;
+    -fx-min-height: 40px;
+    -fx-text-fill: #111827;
+    -fx-prompt-text-fill: #9ca3af;
+}
+
+.create-input:focused {
+    -fx-border-color: #3525cd;
+    -fx-border-width: 1.5;
+}
+
+/* ── ComboBox — Full Fix ── */
+
+.create-combo {
+    -fx-background-color: white;
+    -fx-border-color: #d1d5db;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-pref-height: 40px;
+    -fx-min-height: 40px;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-padding: 0; /* Important to prevent squishing the list-cell */
+}
+
+.create-combo:focused,
+.create-combo:showing {
+    -fx-border-color: #3525cd;
+    -fx-border-width: 1.5;
+}
+
+.create-combo > .list-cell {
+    -fx-text-fill: #111827;
+    -fx-font-size: 13px;
+    -fx-padding: 8 12 8 12;
+    -fx-background-color: transparent;
+    -fx-background-radius: 6;
+}
+
+.create-combo .list-view .list-cell {
+    -fx-text-fill: #111827;
+    -fx-font-size: 13px;
+    -fx-padding: 8 12 8 12;
+    -fx-background-color: transparent;
+    -fx-background-radius: 6;
+}
+
+.create-combo .list-view .list-cell:hover {
+    -fx-background-color: #f5f3ff;
+    -fx-text-fill: #3525cd;
+}
+
+.create-combo .list-view .list-cell:selected {
+    -fx-background-color: #ede9fe;
+    -fx-text-fill: #3525cd;
+    -fx-font-weight: 700;
+}
+
+.create-combo .arrow-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0 8 0 0;
+}
+
+.create-combo .arrow {
+    -fx-background-color: #6b7280;
+    -fx-shape: "M 0 0 L 4 4 L 8 0 z";
+    -fx-padding: 3 4 3 4;
+}
+
+.create-combo .list-view {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: #e2e0f0;
+    -fx-border-radius: 8;
+    -fx-padding: 4;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 10, 0, 0, 4);
+}
+
+/* ── TextArea ── */
+
+.create-description {
+    -fx-background-color: white;
+    -fx-border-color: #d1d5db;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-font-size: 13px;
+    -fx-text-fill: #111827;
+    -fx-prompt-text-fill: #9ca3af;
+    -fx-pref-height: 120px;
+    -fx-max-height: 120px;
+}
+
+.create-description:focused {
+    -fx-border-color: #3525cd;
+    -fx-border-width: 1.5;
+}
+
+.create-description .content {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: transparent;
+}
+
+/* ── Upload Box ── */
+
+.upload-box {
+    -fx-background-color: #faf9ff;
+    -fx-border-color: #c7c4d8;
+    -fx-border-style: segments(8, 6);
+    -fx-border-width: 2;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 24;
+}
+
+.upload-icon {
+    -fx-font-size: 28px;
+    -fx-text-fill: #7c3aed;
+}
+
+.upload-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #374151;
+}
+
+.upload-subtitle {
+    -fx-font-size: 11px;
+    -fx-text-fill: #9ca3af;
+}
+
+/* ── Mechanics Card ── */
+
+.auction-mechanics-card {
+    -fx-background-color: #f5f3ff;
+    -fx-background-radius: 10;
+    -fx-border-color: #e2e0f0;
+    -fx-border-radius: 10;
+}
+
+.create-card-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #111827;
+}
+
+.create-help-text {
+    -fx-font-size: 11px;
+    -fx-text-fill: #9ca3af;
+}
+
+/* ── Buttons ── */
+
+.create-secondary-small-button {
+    -fx-background-color: white;
+    -fx-text-fill: #3525cd;
+    -fx-border-color: #c7c4d8;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 6 16 6 16;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-cursor: hand;
+}
+
+.create-secondary-small-button:hover {
+    -fx-background-color: #f5f3ff;
+    -fx-border-color: #3525cd;
+}
+
+.create-secondary-footer-button {
+    -fx-background-color: white;
+    -fx-text-fill: #374151;
+    -fx-border-color: #d1d5db;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 10 20 10 20;
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-pref-height: 42px;
+    -fx-min-height: 42px;
+    -fx-cursor: hand;
+}
+
+.create-secondary-footer-button:hover {
+    -fx-background-color: #f9fafb;
+    -fx-border-color: #9ca3af;
+}
+
+.create-primary-footer-button {
+    -fx-background-color: #3525cd;
+    -fx-text-fill: white;
+    -fx-border-color: transparent;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 10 24 10 24;
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-pref-height: 42px;
+    -fx-min-height: 42px;
+    -fx-cursor: hand;
+}
+
+.create-primary-footer-button:hover {
+    -fx-background-color: #4f46e5;
+}
+
+/* ── DatePicker ── */
+
+.create-input.date-picker {
+    -fx-pref-height: 42px;
+    -fx-min-height: 42px;
+    -fx-padding: 0;
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-color: #d1d5db;
+    -fx-border-width: 1;
+}
+
+.create-input.date-picker:focused {
+    -fx-border-color: #3525cd;
+    -fx-border-width: 1.5;
+}
+
+.create-input.date-picker > .text-field {
+    -fx-padding: 8 12 8 12;
+    -fx-background-color: transparent;
+    -fx-font-size: 13px;
+    -fx-text-fill: #111827;
+}
+
+.create-input.date-picker .arrow-button {
+    -fx-background-color: #f3f4f6;
+    -fx-background-radius: 0 10 10 0;
+    -fx-cursor: hand;
+    -fx-padding: 0 12 0 12;
+}
+
+.create-input.date-picker .arrow-button:hover {
+    -fx-background-color: #e5e7eb;
+}
+
+.create-input.date-picker .arrow-button .arrow {
+    -fx-background-color: #4b5563;
+    -fx-shape: "M7 11l5 5 5-5H7z";
+    -fx-scale-x: 1.2;
+    -fx-scale-y: 1.2;
+}
+
+/* ── Spinner ── */
+
+.create-input.spinner {
+    -fx-pref-height: 42px;
+    -fx-min-height: 42px;
+    -fx-padding: 0;
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-color: #d1d5db;
+    -fx-border-width: 1;
+}
+
+.create-input.spinner:focused {
+    -fx-border-color: #3525cd;
+    -fx-border-width: 1.5;
+}
+
+.create-input.spinner > .text-field {
+    -fx-padding: 8 8 8 12;
+    -fx-background-color: transparent;
+    -fx-font-size: 13px;
+    -fx-text-fill: #111827;
+}
+
+.create-input.spinner .increment-arrow-button,
+.create-input.spinner .decrement-arrow-button {
+    -fx-background-color: #f3f4f6;
+    -fx-cursor: hand;
+    -fx-padding: 4 8 4 8;
+    -fx-border-color: #e5e7eb;
+}
+
+.create-input.spinner .increment-arrow-button {
+    -fx-background-radius: 0 10 0 0;
+    -fx-border-width: 0 0 0.5 1;
+}
+
+.create-input.spinner .decrement-arrow-button {
+    -fx-background-radius: 0 0 10 0;
+    -fx-border-width: 0.5 0 0 1;
+}
+
+.create-input.spinner .increment-arrow-button:hover,
+.create-input.spinner .decrement-arrow-button:hover {
+    -fx-background-color: #e5e7eb;
+}
+
+.create-input.spinner .increment-arrow-button .increment-arrow {
+    -fx-background-color: #4b5563;
+    -fx-shape: "M7 14l5-5 5 5H7z";
+}
+
+.create-input.spinner .decrement-arrow-button .decrement-arrow {
+    -fx-background-color: #4b5563;
+    -fx-shape: "M7 10l5 5 5-5H7z";
+}

@@ -1,0 +1,17 @@
+<configuration>
+    <property name="LOG_LEVEL" value="${LOG_LEVEL:-INFO}" />
+    <property name="SOCKET_LOG_LEVEL" value="${SOCKET_LOG_LEVEL:-INFO}" />
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%cyan(%d{HH:mm:ss.SSS}) %highlight(%-5level) %magenta([%thread]) %blue(%-36.36logger{36}) | %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="com.auction.server.socket" level="${SOCKET_LOG_LEVEL}" />
+    <logger name="com.auction.server.service.NotificationService" level="${SOCKET_LOG_LEVEL}" />
+
+    <root level="${LOG_LEVEL}">
+        <appender-ref ref="STDOUT" />
+    </root>
+</configuration>

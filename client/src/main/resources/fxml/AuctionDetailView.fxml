@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.Region?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<ScrollPane
+    xmlns="http://javafx.com/javafx"
+    xmlns:fx="http://javafx.com/fxml"
+    fx:controller="com.auction.client.controller.AuctionDetailController"
+    fitToWidth="true"
+    styleClass="page-scroll"
+>
+    <VBox spacing="24" styleClass="page-content">
+        <padding>
+            <Insets top="32" right="32" bottom="32" left="32" />
+        </padding>
+
+        <Label text="Auction Detail" styleClass="page-title" />
+
+        <HBox spacing="24">
+            <StackPane
+                fx:id="imageContainer"
+                prefWidth="560"
+                prefHeight="360"
+                styleClass="card"
+            >
+                <Region fx:id="imagePreview" />
+                <Label
+                    fx:id="imagePlaceholderLabel"
+                    text="Product Image Placeholder"
+                    styleClass="image-placeholder-text"
+                />
+            </StackPane>
+
+            <VBox styleClass="card" spacing="12" prefWidth="360">
+                <padding>
+                    <Insets top="24" right="24" bottom="24" left="24" />
+                </padding>
+
+                <Label fx:id="statusLabel" text="LIVE AUCTION" styleClass="status-running" />
+                <Label
+                    fx:id="titleLabel"
+                    text="Vintage 1969 Omega Speedmaster Professional"
+                    styleClass="card-title"
+                    wrapText="true"
+                />
+                <Label text="Current High Bid" styleClass="form-label" />
+                <Label fx:id="currentPriceLabel" text="\$42,500.00" styleClass="money-large" />
+                <Label
+                    fx:id="highestBidderLabel"
+                    text="Highest Bidder: Bidder_8921"
+                    styleClass="page-subtitle"
+                />
+
+                <VBox spacing="4">
+                    <HBox spacing="10">
+                        <Label text="Item Type:" styleClass="form-label" prefWidth="100"/>
+                        <Label fx:id="itemTypeLabel" text="Electronics" styleClass="page-subtitle"/>
+                    </HBox>
+                    <HBox spacing="10">
+                        <Label text="Condition:" styleClass="form-label" prefWidth="100"/>
+                        <Label fx:id="conditionLabel" text="Used - Like New" styleClass="page-subtitle"/>
+                    </HBox>
+                    <HBox spacing="10">
+                        <Label text="Starting Price:" styleClass="form-label" prefWidth="100"/>
+                        <Label fx:id="startingPriceLabel" text="\$10,000.00" styleClass="page-subtitle"/>
+                    </HBox>
+                    <HBox spacing="10">
+                        <Label text="Reserve Price:" styleClass="form-label" prefWidth="100"/>
+                        <Label fx:id="reservePriceLabel" text="\$12,000.00" styleClass="page-subtitle"/>
+                    </HBox>
+                    <HBox spacing="10">
+                        <Label text="Seller:" styleClass="form-label" prefWidth="100"/>
+                        <Label fx:id="sellerLabel" text="Premium_Seller" styleClass="page-subtitle"/>
+                    </HBox>
+                    <HBox spacing="10">
+                        <Label text="Start Time:" styleClass="form-label" prefWidth="100"/>
+                        <Label fx:id="startTimeLabel" text="2024-01-01 10:00" styleClass="page-subtitle"/>
+                    </HBox>
+                    <HBox spacing="10">
+                        <Label text="End Time:" styleClass="form-label" prefWidth="100"/>
+                        <Label fx:id="endTimeLabel" text="2024-01-07 10:00" styleClass="page-subtitle"/>
+                    </HBox>
+                </VBox>
+
+                <Button
+                    onAction="#handlePlaceBid"
+                    styleClass="primary-button"
+                    maxWidth="Infinity"
+                    text="Place Bid"
+                >
+                    <graphic>
+                        <FontIcon iconLiteral="mdi2g-gavel" iconSize="18" iconColor="white" />
+                    </graphic>
+                </Button>
+            </VBox>
+        </HBox>
+
+        <VBox styleClass="card" spacing="10">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20" />
+            </padding>
+
+            <Label
+                fx:id="descriptionTitleLabel"
+                text="Haas VF-2TR 5-Axis CNC Milling Machine"
+                styleClass="section-title"
+            />
+            <Label
+                fx:id="descriptionLabel"
+                wrapText="true"
+                text="Exceptional condition 2019 Haas VF-2TR. Low spindle hours. Includes probing system and tooling package."
+                styleClass="page-subtitle"
+            />
+        </VBox>
+
+        <!-- Bid History Section -->
+        <VBox styleClass="card" spacing="10">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20" />
+            </padding>
+
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <FontIcon iconLiteral="mdi2h-history" iconSize="20" iconColor="#3525cd" />
+                <Label text="Bid History" styleClass="section-title" />
+            </HBox>
+
+            <ScrollPane
+                fx:id="bidHistoryScrollPane"
+                fitToWidth="true"
+                styleClass="bid-history-scroll"
+                maxHeight="280"
+                minHeight="80"
+                hbarPolicy="NEVER"
+                vbarPolicy="AS_NEEDED"
+            >
+                <VBox fx:id="bidHistoryContainer" spacing="0">
+                    <Label
+                        fx:id="noBidsLabel"
+                        text="No bids have been placed yet."
+                        styleClass="page-subtitle"
+                        managed="true"
+                        visible="true"
+                    >
+                        <padding>
+                            <Insets top="8" right="0" bottom="8" left="4" />
+                        </padding>
+                    </Label>
+                </VBox>
+            </ScrollPane>
+        </VBox>
+    </VBox>
+</ScrollPane>

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<ScrollPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.auction.client.controller.MyBidsController"
+            fitToWidth="true"
+            hbarPolicy="NEVER"
+            vbarPolicy="AS_NEEDED"
+            styleClass="page-scroll">
+
+    <VBox spacing="24" styleClass="page">
+        <padding>
+            <Insets top="32" right="32" bottom="40" left="32"/>
+        </padding>
+
+        <VBox spacing="6">
+            <Label text="My Bids" styleClass="page-title"/>
+            <Label text="Track auctions you joined, your bid status, and your bidding history."
+                   styleClass="page-subtitle"/>
+        </VBox>
+
+        <HBox spacing="16">
+            <VBox styleClass="card" spacing="8" prefWidth="260">
+                <padding>
+                    <Insets top="18" right="18" bottom="18" left="18"/>
+                </padding>
+
+                <Label text="ACTIVE BIDS" styleClass="form-label"/>
+                <Label fx:id="activeBidsLabel" text="0" styleClass="stat-number"/>
+                <Label text="Across active auctions" styleClass="page-subtitle"/>
+            </VBox>
+
+            <VBox styleClass="card" spacing="8" prefWidth="260">
+                <padding>
+                    <Insets top="18" right="18" bottom="18" left="18"/>
+                </padding>
+
+                <Label text="CURRENTLY WINNING" styleClass="form-label"/>
+                <Label fx:id="winningBidsLabel" text="0" styleClass="stat-number"/>
+                <Label text="You are leading these auctions" styleClass="success-text"/>
+            </VBox>
+
+            <VBox styleClass="card" spacing="8" prefWidth="260">
+                <padding>
+                    <Insets top="18" right="18" bottom="18" left="18"/>
+                </padding>
+
+                <Label text="OUTBID" styleClass="form-label"/>
+                <Label fx:id="outbidLabel" text="0" styleClass="stat-number"/>
+                <Label text="Need a higher bid to win" styleClass="error-text"/>
+            </VBox>
+
+            <VBox styleClass="card" spacing="8" prefWidth="260">
+                <padding>
+                    <Insets top="18" right="18" bottom="18" left="18"/>
+                </padding>
+
+                <Label text="WON AUCTIONS" styleClass="form-label"/>
+                <Label fx:id="wonAuctionsLabel" text="0" styleClass="stat-number"/>
+                <Label text="Auctions you have won" styleClass="success-text"/>
+            </VBox>
+        </HBox>
+
+        <VBox spacing="14">
+            <HBox alignment="CENTER_LEFT">
+                <Label text="Participating Auctions" styleClass="section-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button onAction="#loadMyBids" styleClass="secondary-button" text="Refresh">
+                    <graphic>
+                        <FontIcon iconLiteral="mdi2r-refresh" iconSize="16" />
+                    </graphic>
+                </Button>
+            </HBox>
+
+            <VBox fx:id="participatingAuctionsContainer" styleClass="card" spacing="0">
+                <GridPane hgap="20" styleClass="admin-table-header">
+                    <padding>
+                        <Insets top="12" right="18" bottom="12" left="18"/>
+                    </padding>
+
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="28"/>
+                        <ColumnConstraints percentWidth="15"/>
+                        <ColumnConstraints percentWidth="15"/>
+                        <ColumnConstraints percentWidth="15"/>
+                        <ColumnConstraints percentWidth="15"/>
+                        <ColumnConstraints percentWidth="12"/>
+                    </columnConstraints>
+
+                    <Label text="AUCTION" styleClass="admin-table-header-text" GridPane.columnIndex="0"/>
+                    <Label text="YOUR BID" styleClass="admin-table-header-text" GridPane.columnIndex="1"/>
+                    <Label text="CURRENT BID" styleClass="admin-table-header-text" GridPane.columnIndex="2"/>
+                    <Label text="STATUS" styleClass="admin-table-header-text" GridPane.columnIndex="3"/>
+                    <Label text="ENDS IN" styleClass="admin-table-header-text" GridPane.columnIndex="4"/>
+                    <Label text="ACTION" styleClass="admin-table-header-text" GridPane.columnIndex="5"/>
+                </GridPane>
+                <!-- Dynamic rows will be added here -->
+            </VBox>
+        </VBox>
+
+        <VBox spacing="14">
+            <Label text="Recent Bid History" styleClass="section-title"/>
+
+            <VBox fx:id="bidHistoryContainer" styleClass="card" spacing="0">
+                <GridPane hgap="20" styleClass="admin-table-header">
+                    <padding>
+                        <Insets top="12" right="18" bottom="12" left="18"/>
+                    </padding>
+
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="18"/>
+                        <ColumnConstraints percentWidth="37"/>
+                        <ColumnConstraints percentWidth="20"/>
+                        <ColumnConstraints percentWidth="25"/>
+                    </columnConstraints>
+
+                    <Label text="TIME" styleClass="admin-table-header-text" GridPane.columnIndex="0"/>
+                    <Label text="AUCTION" styleClass="admin-table-header-text" GridPane.columnIndex="1"/>
+                    <Label text="AMOUNT" styleClass="admin-table-header-text" GridPane.columnIndex="2"/>
+                    <Label text="RESULT" styleClass="admin-table-header-text" GridPane.columnIndex="3"/>
+                </GridPane>
+                <!-- Dynamic rows will be added here -->
+            </VBox>
+        </VBox>
+    </VBox>
+</ScrollPane>

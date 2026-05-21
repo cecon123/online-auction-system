@@ -1,0 +1,427 @@
+/* =========================================================
+   Common UI Components
+   ========================================================= */
+
+.page-title {
+    -fx-font-size: 30px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -text-main;
+}
+
+.page-subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: -text-muted;
+}
+
+.section-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #111827;
+}
+
+.card {
+    -fx-background-color: -bg-card;
+    -fx-background-radius: 8;
+    -fx-border-color: -border-color;
+    -fx-border-radius: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.09), 5, 0, 0, 1);
+}
+
+.card-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #111827;
+}
+
+.form-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -text-main;
+}
+
+.stat-number {
+    -fx-font-size: 32px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #111827;
+}
+
+.money-large {
+    -fx-font-size: 26px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -brand-primary;
+}
+
+.money {
+    -fx-font-family: "Consolas", "Courier New", monospace;
+    -fx-font-weight: 800;
+}
+
+.success-text {
+    -fx-text-fill: -color-success;
+}
+
+.error-text {
+    -fx-text-fill: -color-error;
+}
+
+/* ── Unified Status Badge System ── */
+
+.status-badge {
+    -fx-background-radius: 999;
+    -fx-padding: 4 12 4 12;
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+    -fx-alignment: center;
+    -fx-label-padding: 0;
+}
+
+/* Auction statuses */
+.status-running {
+    -fx-background-color: #dcfce7;
+    -fx-text-fill: #166534;
+}
+
+.status-open {
+    -fx-background-color: #dbeafe;
+    -fx-text-fill: #1e40af;
+}
+
+.status-finished {
+    -fx-background-color: #f1f5f9;
+    -fx-text-fill: #475569;
+}
+
+.status-paid {
+    -fx-background-color: #ccfbf1;
+    -fx-text-fill: #0f766e;
+}
+
+.status-canceled,
+.status-cancelled {
+    -fx-background-color: #fef3c7;
+    -fx-text-fill: -color-warning;
+}
+
+/* Bid result statuses */
+.status-won {
+    -fx-background-color: #dcfce7;
+    -fx-text-fill: #166534;
+}
+
+.status-winning {
+    -fx-background-color: #e0e7ff;
+    -fx-text-fill: #3730a3;
+}
+
+.status-outbid {
+    -fx-background-color: #ffe4e6;
+    -fx-text-fill: #be123c;
+}
+
+.status-ended {
+    -fx-background-color: #f1f5f9;
+    -fx-text-fill: #475569;
+}
+
+/* User statuses */
+.status-active {
+    -fx-background-color: #dcfce7;
+    -fx-text-fill: #166534;
+}
+
+.status-suspended {
+    -fx-background-color: #ffe4e6;
+    -fx-text-fill: #be123c;
+}
+
+.primary-button {
+    -fx-background-color: #3525cd;
+    -fx-text-fill: white;
+    -fx-font-weight: 800;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: transparent;
+    -fx-padding: 10 18 10 18;
+    -fx-pref-height: 42px;
+    -fx-min-height: 42px;
+    -fx-cursor: hand;
+}
+
+.primary-button:hover {
+    -fx-background-color: #4f46e5;
+}
+
+.secondary-button {
+    -fx-background-color: white;
+    -fx-text-fill: #3525cd;
+    -fx-border-color: #c7c4d8;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 10 18 10 18;
+    -fx-pref-height: 42px;
+    -fx-min-height: 42px;
+    -fx-font-weight: 700;
+    -fx-cursor: hand;
+}
+
+.secondary-button:hover {
+    -fx-background-color: #f5f2ff;
+}
+
+.text-field,
+.password-field {
+    -fx-background-color: white;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 8 12 8 12;
+    -fx-font-size: 14px;
+    -fx-text-fill: #1e293b;
+    -fx-prompt-text-fill: #94a3b8;
+    -fx-pref-height: 42px;
+    -fx-min-height: 42px;
+}
+
+.combo-box {
+    -fx-background-color: white;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-font-size: 14px;
+    -fx-pref-height: 42px;
+    -fx-min-height: 42px;
+}
+
+.text-area {
+    -fx-background-color: white;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 8 12 8 12;
+    -fx-font-size: 14px;
+    -fx-text-fill: #1e293b;
+    -fx-prompt-text-fill: #94a3b8;
+}
+
+.text-field:focused,
+.password-field:focused,
+.combo-box:focused,
+.combo-box:showing {
+    -fx-border-color: #94a3b8; /* Muted gray for focus to keep it subtle */
+    -fx-border-width: 1;
+}
+
+.combo-box:hover {
+    -fx-border-color: #cbd5e1;
+}
+
+/* Dropdown Menu (Popup) Styling */
+.combo-box .list-view {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 10;
+    -fx-padding: 4;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.05), 10, 0, 0, 4);
+}
+
+.combo-box > .list-cell {
+    -fx-padding: 8 12 8 12;
+    -fx-text-fill: #1e293b;
+    -fx-background-color: transparent;
+}
+
+.combo-box .list-view .list-cell {
+    -fx-padding: 8 12 8 12;
+    -fx-background-color: transparent;
+    -fx-text-fill: #1e293b;
+    -fx-font-size: 14px;
+    -fx-background-radius: 6;
+}
+
+.combo-box .list-view .list-cell:hover {
+    -fx-background-color: #f8fafc; /* Very light gray-blue for hover */
+    -fx-text-fill: #3525cd;
+}
+
+.combo-box .list-view .list-cell:selected {
+    -fx-background-color: #f1f5f9;
+    -fx-text-fill: #3525cd;
+    -fx-font-weight: bold;
+}
+
+.image-placeholder {
+    -fx-background-color: linear-gradient(to bottom right, #ede9fe, #ddd6fe);
+    -fx-background-radius: 8 8 0 0;
+    -fx-alignment: center;
+}
+
+.image-placeholder-text {
+    -fx-text-fill: #4c1d95;
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+}
+
+/* =========================================================
+   Dashboard Metric Cards
+   ========================================================= */
+
+.metric-card {
+    -fx-padding: 24;
+    -fx-alignment: top-left;
+    -fx-spacing: 4;
+}
+
+.metric-title {
+    -fx-font-size: 14px;
+    -fx-text-fill: #6b7280;
+    -fx-font-weight: 700;
+}
+
+.metric-value {
+    -fx-font-size: 28px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #111827;
+}
+
+.metric-highlight {
+    -fx-text-fill: #3525cd;
+}
+
+.metric-success {
+    -fx-text-fill: #10b981;
+}
+
+.metric-subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: #9ca3af;
+}
+
+/* =========================================================
+   Small Button Variants (used in table rows / action columns)
+   ========================================================= */
+
+.btn {
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-border-color: transparent;
+    -fx-font-weight: 700;
+    -fx-cursor: hand;
+    -fx-padding: 6 14 6 14;
+    -fx-pref-height: 32px;
+    -fx-min-height: 32px;
+}
+
+.btn-sm {
+    -fx-font-size: 12px;
+    -fx-padding: 4 12 4 12;
+    -fx-pref-height: 28px;
+    -fx-min-height: 28px;
+}
+
+.btn-danger {
+    -fx-background-color: #fee2e2;
+    -fx-text-fill: #b91c1c;
+    -fx-border-color: #fca5a5;
+}
+
+.btn-danger:hover {
+    -fx-background-color: #fecaca;
+    -fx-border-color: #f87171;
+}
+
+.btn-secondary {
+    -fx-background-color: #f3f4f6;
+    -fx-text-fill: #374151;
+    -fx-border-color: #d1d5db;
+}
+
+.btn-secondary:hover {
+    -fx-background-color: #e5e7eb;
+    -fx-border-color: #9ca3af;
+}
+
+/* =========================================================
+   Seller Center – Auction Row Table
+   ========================================================= */
+
+.auction-row {
+    -fx-alignment: center-left;
+    -fx-padding: 10 16 10 16;
+    -fx-background-color: white;
+    -fx-border-color: transparent transparent #f1f5f9 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.auction-row:hover {
+    -fx-background-color: #faf9ff;
+}
+
+/* =========================================================
+   Bid History – Scrollable Section (AuctionDetailView)
+   ========================================================= */
+
+.bid-history-scroll {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.bid-history-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.bid-history-scroll > .scroll-bar:vertical {
+    -fx-pref-width: 6;
+    -fx-background-color: transparent;
+}
+
+.bid-history-scroll > .scroll-bar:vertical > .thumb {
+    -fx-background-color: #c7c4d8;
+    -fx-background-radius: 999;
+}
+
+.bid-history-scroll > .scroll-bar:vertical > .track {
+    -fx-background-color: transparent;
+}
+
+.bid-row {
+    -fx-alignment: center-left;
+    -fx-padding: 8 12 8 12;
+    -fx-background-color: white;
+    -fx-border-color: transparent transparent #f1f5f9 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.bid-row:hover {
+    -fx-background-color: #faf9ff;
+}
+
+.bid-amount {
+    -fx-font-weight: 800;
+    -fx-font-size: 14px;
+    -fx-text-fill: #3525cd;
+}
+
+.bid-timestamp {
+    -fx-font-size: 12px;
+    -fx-text-fill: #94a3b8;
+}
+
+.text-bold {
+    -fx-font-weight: 700;
+}
+
+/* ── Placeholder Styles ── */
+.image-placeholder {
+    -fx-background-color: #f3f4f6;
+    -fx-background-radius: 8;
+    -fx-alignment: center;
+}
+
+.image-placeholder-text {
+    -fx-text-fill: #94a3b8;
+    -fx-font-weight: 800;
+    -fx-font-size: 14px;
+    -fx-text-alignment: center;
+}

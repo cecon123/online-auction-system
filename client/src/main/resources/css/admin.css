@@ -1,0 +1,206 @@
+/* =========================================================
+   Admin Panel Styles
+   ========================================================= */
+
+.admin-export-button {
+    -fx-background-color: #f5f2ff;
+    -fx-text-fill: #3525cd;
+    -fx-border-color: #c7c4d8;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 10 18 10 18;
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-cursor: hand;
+}
+
+.admin-export-button:hover {
+    -fx-background-color: #ede9fe;
+}
+
+.admin-stat-card {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 4, 0, 0, 1);
+    -fx-min-height: 80px;
+}
+
+.admin-stat-card:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.12), 12, 0, 0, 4);
+    -fx-translate-y: -2px;
+}
+
+/* Gradient Variants */
+.admin-card-users {
+    -fx-background-color: linear-gradient(to bottom right, #f8fafc, #f1f5f9);
+}
+
+.admin-card-auctions {
+    -fx-background-color: linear-gradient(to bottom right, #f0fdfa, #ccfbf1);
+}
+
+.admin-card-running {
+    -fx-background-color: linear-gradient(to bottom right, #fff7ed, #ffedd5);
+}
+
+.admin-card-finished {
+    -fx-background-color: linear-gradient(to bottom right, #faf5ff, #f3e8ff);
+}
+
+.admin-stat-title {
+    -fx-font-size: 13px;
+    -fx-text-fill: #4b445c;
+}
+
+.admin-stat-number {
+    -fx-font-size: 24px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #111827;
+}
+
+.admin-stat-change {
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #2563eb;
+}
+
+.admin-section-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #111827;
+}
+
+.admin-table {
+    -fx-background-color: white;
+    -fx-background-radius: 6;
+    -fx-border-color: #c7c4d8;
+    -fx-border-radius: 6;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 4, 0, 0, 1);
+}
+
+.admin-table-header {
+    -fx-background-color: #f0edf8;
+    -fx-background-radius: 6 6 0 0;
+    -fx-border-color: transparent transparent #c7c4d8 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.admin-table-header-text {
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #475569;
+}
+
+.admin-table-row {
+    -fx-background-color: white;
+    -fx-border-color: transparent transparent #ddd8ea transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-min-height: 38px;
+}
+
+.admin-table-row:hover {
+    -fx-background-color: #f8fafc;
+}
+
+.admin-table-row-alt {
+    -fx-background-color: #fbfaff;
+    -fx-border-color: transparent transparent #ddd8ea transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-min-height: 38px;
+}
+
+.admin-table-row-alt:hover {
+    -fx-background-color: #f8fafc;
+}
+
+.admin-table-cell {
+    -fx-font-size: 12px;
+    -fx-text-fill: #2f2a3c;
+}
+
+.admin-money-cell {
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #3525cd;
+}
+
+.admin-pill-btn {
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-padding: 4 14 4 14;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-cursor: hand;
+    -fx-border-width: 0;
+}
+
+.admin-btn-primary {
+    -fx-background-color: #e0e7ff;
+    -fx-text-fill: #3730a3;
+}
+
+.admin-btn-primary:hover {
+    -fx-background-color: #c7d2fe;
+}
+
+.admin-btn-danger {
+    -fx-background-color: #fee2e2;
+    -fx-text-fill: #991b1b;
+}
+
+.admin-btn-danger:hover {
+    -fx-background-color: #fecaca;
+}
+
+.admin-btn-success {
+    -fx-background-color: #dcfce7;
+    -fx-text-fill: #166534;
+}
+
+.admin-btn-success:hover {
+    -fx-background-color: #bbf7d0;
+}
+
+.admin-btn-disabled {
+    -fx-background-color: #f1f5f9;
+    -fx-text-fill: #94a3b8;
+    -fx-cursor: default;
+}
+
+/* Status badges use unified .status-badge + .status-* from common.css */
+
+.admin-item-thumb,
+.admin-empty-thumb {
+    -fx-min-width: 32px;
+    -fx-min-height: 32px;
+    -fx-pref-width: 32px;
+    -fx-pref-height: 32px;
+    -fx-background-radius: 2;
+    -fx-border-radius: 2;
+}
+
+.admin-item-thumb {
+    -fx-background-color: #f1f5f9;
+    -fx-border-color: #cbd5e1;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+
+.admin-item-thumb .ikonli-font-icon {
+    -fx-icon-color: #64748b;
+    -fx-icon-size: 18px;
+}
+
+.admin-empty-thumb {
+    -fx-background-color: #f1eef8;
+    -fx-border-color: #c7c4d8;
+}
+
+.admin-message-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: #3525cd;
+    -fx-font-weight: 700;
+}

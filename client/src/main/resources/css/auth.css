@@ -1,0 +1,200 @@
+/* =========================================================
+   Auth: Login / Register
+   ========================================================= */
+
+.auth-root {
+    -fx-background-color: #fcf8ff;
+    -fx-alignment: center;
+}
+
+.login-card-compact {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-color: #c7c4d8;
+    -fx-border-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.12), 10, 0, 0, 2);
+    -fx-alignment: center;
+    -fx-min-width: 380px;
+    -fx-pref-width: 380px;
+    -fx-max-width: 380px;
+}
+
+.register-card-modern {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-color: #c7c4d8;
+    -fx-border-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.12), 10, 0, 0, 2);
+    -fx-alignment: center;
+    -fx-min-width: 390px;
+    -fx-pref-width: 390px;
+    -fx-max-width: 390px;
+}
+
+.auth-logo-text {
+    -fx-font-size: 28px;
+    -fx-text-fill: #3525cd;
+}
+
+.auth-icon-box {
+    -fx-background-color: #eee9ff;
+    -fx-background-radius: 14;
+    -fx-text-fill: #3525cd;
+    -fx-font-size: 23px;
+    -fx-alignment: center;
+    -fx-min-width: 48px;
+    -fx-min-height: 48px;
+    -fx-pref-width: 48px;
+    -fx-pref-height: 48px;
+}
+
+.auth-title {
+    -fx-font-size: 23px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #111827;
+}
+
+.auth-subtitle-bold {
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #2f2a3c;
+}
+
+.auth-subtitle-normal {
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+    -fx-text-fill: #4b445c;
+}
+
+.auth-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #2f2a3c;
+}
+
+.auth-input {
+    -fx-background-color: white;
+    -fx-border-color: #c7c4d8;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 8 14 8 14;
+    -fx-font-size: 14px;
+    -fx-pref-height: 40px;
+    -fx-text-fill: #111827;
+    -fx-prompt-text-fill: #9ca3af;
+}
+
+.auth-input:focused {
+    -fx-border-color: #3525cd;
+    -fx-border-width: 2;
+}
+
+.auth-primary-button {
+    -fx-pref-height: 42px;
+    -fx-background-color: #3525cd;
+    -fx-text-fill: white;
+    -fx-font-weight: 800;
+    -fx-font-size: 13px;
+    -fx-background-radius: 7;
+    -fx-border-radius: 7;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+}
+
+.auth-primary-button:hover {
+    -fx-background-color: #4f46e5;
+}
+
+.auth-secondary-button {
+    -fx-pref-height: 42px;
+    -fx-background-color: white;
+    -fx-border-color: #c7c4d8;
+    -fx-text-fill: #3525cd;
+    -fx-font-weight: 700;
+    -fx-font-size: 13px;
+    -fx-border-radius: 7;
+    -fx-background-radius: 7;
+    -fx-cursor: hand;
+}
+
+.auth-secondary-button:hover {
+    -fx-background-color: #f5f2ff;
+}
+
+.auth-link-button {
+    -fx-pref-height: 34px;
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: #3525cd;
+    -fx-font-weight: 800;
+    -fx-font-size: 12px;
+    -fx-cursor: hand;
+}
+
+.auth-link-button:hover {
+    -fx-background-color: #f5f2ff;
+}
+
+.auth-error-box {
+    -fx-background-color: #ffdad6;
+    -fx-border-color: #ba1a1a;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 8;
+}
+
+.auth-error-icon {
+    -fx-text-fill: #ba1a1a;
+    -fx-font-weight: 800;
+}
+
+.auth-error-text {
+    -fx-text-fill: #ba1a1a;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+}
+
+.auth-message {
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-min-height: 14px;
+}
+
+.auth-error-message {
+    -fx-text-fill: #ba1a1a;
+}
+
+.auth-success-message {
+    -fx-text-fill: #059669;
+}
+
+.auth-segment {
+    -fx-background-color: #ede9f8;
+    -fx-background-radius: 7;
+    -fx-padding: 3;
+}
+
+.auth-segment-left,
+.auth-segment-right {
+    -fx-background-color: transparent;
+    -fx-text-fill: #2f2a3c;
+    -fx-font-weight: 800;
+    -fx-font-size: 12px;
+    -fx-pref-height: 31px;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+}
+
+.auth-segment-left {
+    -fx-background-radius: 6 0 0 6;
+}
+
+.auth-segment-right {
+    -fx-background-radius: 0 6 6 0;
+}
+
+.auth-segment-left:selected,
+.auth-segment-right:selected {
+    -fx-background-color: #3525cd;
+    -fx-text-fill: white;
+}
