@@ -17,7 +17,6 @@ Mỗi release sẽ có:
 - `auction-client-linux-<version>.jar`: client fat JAR build trên Linux.
 - `auction-client-windows-<version>.jar`: client fat JAR build trên Windows.
 - `auction-client-macos-<version>.jar`: client fat JAR build trên macOS.
-- `auctionpro-report-<version>.pdf`: báo cáo PDF nếu file `docs/pdf/auctionpro-report.pdf` tồn tại.
 
 Client JavaFX dùng native dependency theo hệ điều hành, nên release tách client JAR theo platform. Khi demo trên Windows, dùng file `auction-client-windows-<version>.jar`.
 
@@ -58,7 +57,7 @@ Client JavaFX dùng native dependency theo hệ điều hành, nên release tác
 
 6. Mở tab **Actions** trên GitHub để theo dõi workflow `Build, Test, and Release`.
 
-7. Sau khi workflow pass, kiểm tra tab **Releases**. Release mới sẽ có các JAR và PDF đính kèm.
+7. Sau khi workflow pass, kiểm tra tab **Releases**. Release mới sẽ có các JAR đính kèm.
 
 ## Nếu cần sửa release
 

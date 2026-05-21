@@ -1,7 +1,13 @@
+## Branch Workflow
+
+- If any work requires modifying files, make the changes on `dev` first.
+- Do not commit, merge, or apply changes directly on `main`.
+- After changes are complete and verified on `dev`, merge `dev` into `main` only when explicitly asked.
+
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **online-auction-system** (3000 symbols, 8784 relationships, 255 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **online-auction-system** (2919 symbols, 8697 relationships, 248 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

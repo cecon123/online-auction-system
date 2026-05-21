@@ -116,7 +116,7 @@ java -jar client/target/auction-client.jar
 
 Để demo nhiều client, mở thêm terminal và chạy lại client JAR. Server mặc định dùng socket port `8080`, asset port `8081`, SQLite database `auction.db` và thư mục upload `uploads/`. Kịch bản demo phù hợp là đăng nhập seller để tạo phiên đấu giá, mở hai client bidder để đặt giá cạnh tranh, quan sát realtime update, sau đó dùng admin kiểm tra trạng thái người dùng hoặc phiên đấu giá.
 
-CI/CD trên GitHub Actions chạy build và test khi có push hoặc pull request vào `dev`/`main`. Khi tạo tag dạng `v*`, workflow sẽ build release artifact cho server, client Linux, client Windows, client macOS và đính kèm báo cáo PDF vào GitHub Release. Quy trình này giúp lần nộp cuối chỉ cần merge source ổn định vào `main`, tạo tag phiên bản và kiểm tra release tự động.
+CI/CD trên GitHub Actions chạy build và test khi có push hoặc pull request vào `dev`/`main`. Khi tạo tag dạng `v*`, workflow sẽ build release artifact cho server, client Linux, client Windows và client macOS. Quy trình này giúp lần nộp cuối chỉ cần merge source ổn định vào `main`, tạo tag phiên bản và kiểm tra release tự động.
 
 Kịch bản demo đề xuất gồm bốn bước. Bước một là chạy server bằng JAR để xác nhận socket port và database được khởi tạo. Bước hai là mở hai hoặc ba client, đăng nhập bằng các vai trò khác nhau. Bước ba là seller tạo phiên đấu giá, hai bidder đặt giá liên tiếp và quan sát realtime update trên các cửa sổ client. Bước bốn là demo một tình huống kỹ thuật: hai bidder đặt giá gần nhau để thể hiện concurrent bidding, hoặc bật auto-bid để server tự đưa ra giá kế tiếp trong giới hạn tối đa.
 
@@ -130,4 +130,4 @@ Nếu tiếp tục phát triển, hệ thống có thể chuyển database sang 
 
 AuctionPro hoàn thành các yêu cầu cốt lõi của bài tập lớn LTNC: có kiến trúc client-server rõ ràng, giao diện desktop, lưu trữ dữ liệu, xác thực, phân quyền, ví điện tử, đấu giá realtime, xử lý đồng thời, kiểm thử và đóng gói chạy bằng JAR. Điểm mạnh của hệ thống là server giữ toàn bộ nghiệp vụ quan trọng, nhờ đó các client chỉ đóng vai trò giao diện và không thể tự quyết định trạng thái đấu giá.
 
-Trong phạm vi môn học, nhóm ưu tiên sự ổn định khi demo local và khả năng kiểm tra lại bằng CI/CD, nên các thành phần được giữ đủ đơn giản để dễ build, dễ chạy và dễ đánh giá. Báo cáo, README và release artifact được đặt trực tiếp trong repository để người chấm có thể truy vết từ tài liệu tới source code, từ source code tới file JAR và từ file JAR tới kịch bản demo thực tế.
+Trong phạm vi môn học, nhóm ưu tiên sự ổn định khi demo local và khả năng kiểm tra lại bằng CI/CD, nên các thành phần được giữ đủ đơn giản để dễ build, dễ chạy và dễ đánh giá. README, báo cáo và release artifact được đặt trực tiếp trong repository để người chấm có thể truy vết từ tài liệu tới source code, từ source code tới file JAR và từ file JAR tới kịch bản demo thực tế.
