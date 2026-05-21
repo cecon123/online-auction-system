@@ -1,51 +1,67 @@
-# Hướng dẫn Kiểm thử (Testing Guide)
+# Hướng dẫn kiểm thử
 
-Hệ thống AuctionPro được kiểm thử thông qua sự kết hợp giữa các bài kiểm tra tự động và quy trình thủ công nghiêm ngặt.
+AuctionPro sử dụng JUnit 5 và Mockito cho test tự động. Các bài test hiện bao phủ service layer, DAO SQLite, socket server/client và một số tiện ích UI.
 
-## 1. Kiểm thử Tự động (Automated Testing)
+## Chạy test
 
-Dự án sử dụng JUnit 5 và Mockito cho các bài test.
+Chạy toàn bộ test:
+
 ```bash
 mvn test
 ```
 
-### 1.1 Unit Tests
-- Tập trung vào logic nghiệp vụ tại các lớp Service (`BidServiceTest`, `AuctionServiceTest`).
-- Giả lập (Mock) các lớp DAO để kiểm soát dữ liệu đầu vào và kiểm tra các trường hợp biên (số dư không đủ, thời gian không hợp lệ).
+Chạy giống CI, bao gồm verify và checkstyle:
 
-### 1.2 Integration Tests
-- Kiểm tra sự tương tác giữa code và cơ sở dữ liệu SQLite thực tế.
-- Đảm bảo các ràng buộc (Constraints) trong DB hoạt động đúng như mong đợi.
-- Kiểm tra socket/realtime tự động:
-    - `ClientHandlerIntegrationTest` dùng `ServerSocket(0)` và socket thật để kiểm tra newline-delimited JSON request/response.
-    - Test subscribe rồi `NotificationService.broadcast(...)` để xác nhận client đã đăng ký nhận được `BID_UPDATE`.
-    - Test disconnect để xác nhận writer được cleanup khỏi subscription/user connection mapping.
-    - `SocketClientIntegrationTest` dùng fake TCP server để kiểm tra `sendRequest()` match đúng `requestId`, event `event-*` được dispatch qua listener, và khi server đóng kết nối thì client chuyển `DISCONNECTED`, fail pending request, clear token, không set `RECONNECTING`.
+```bash
+mvn clean verify
+```
 
-## 2. Kiểm thử Thủ công (Manual Testing)
+Trên Linux headless, JavaFX cần display ảo:
 
-### 2.1 Kiểm thử Luồng Realtime
-Đây là phần quan trọng nhất để đảm bảo Socket hoạt động ổn định:
-1. Mở 3 cửa sổ Client đồng thời.
-2. **Client A & B:** Cùng vào một phòng đấu giá trực tiếp.
-3. **Client C:** Đăng nhập với vai trò Admin.
-4. Client A thực hiện đặt thầu.
-5. **Xác nhận:** Client B thấy giá cập nhật ngay lập tức mà không cần load lại. Client C (Admin) thấy số liệu thống kê trong Admin Panel thay đổi tức thì.
+```bash
+xvfb-run -a mvn clean verify
+```
 
-### 2.2 Kiểm thử Mất kết nối hiện tại
-1. Đang mở Client và đã đăng nhập.
-2. Tắt ứng dụng Server (Ctrl+C).
-3. **Xác nhận:** Client chuyển trạng thái kết nối về `DISCONNECTED`.
-4. **Xác nhận:** Các request đang chờ bị fail và token phía client bị xóa.
-5. Bật lại Server và đăng nhập lại thủ công nếu cần tiếp tục phiên làm việc.
+GitHub Actions đã chạy Maven dưới `xvfb-run` để `SocketClientIntegrationTest` có thể khởi động JavaFX toolkit mà không gặp lỗi `Unable to open DISPLAY`.
 
-> Hiện chưa có retry reconnect hoặc silent re-authentication tự động. Nếu bổ sung sau này, cần cập nhật tài liệu và test tương ứng.
+## Nhóm test chính
 
-## 3. Danh sách kiểm tra (Regression Checklist)
-Trước mỗi lần bàn giao, hãy kiểm tra các mục sau:
-- [ ] Đăng ký/Đăng nhập thành công với cả 3 vai trò.
-- [ ] Người bán có thể tải ảnh lên và tạo phiên đấu giá.
-- [ ] Người thầu có thể nạp tiền và đặt thầu.
-- [ ] Hệ thống tự động đóng phiên đấu giá khi hết thời gian.
-- [ ] Admin có thể khóa tài khoản người dùng vi phạm.
-- [ ] Logic phong tỏa số dư (Locked Balance) hoạt động chính xác.
+- `server/src/test/java/com/auction/server/service`: kiểm thử nghiệp vụ đấu giá, ví, auth, settlement và concurrency.
+- `server/src/test/java/com/auction/server/dao/sqlite`: kiểm thử DAO với SQLite thật.
+- `server/src/test/java/com/auction/server/socket`: kiểm thử routing, authorization và socket request/response.
+- `client/src/test/java/com/auction/client/socket`: kiểm thử `SocketClient` với fake TCP server.
+- `client/src/test/java/com/auction/client/util`: kiểm thử logic tiện ích không phụ thuộc UI thật.
+- `common/src/test/java`: kiểm thử model inheritance.
+
+## Kiểm thử thủ công trước khi bàn giao
+
+1. Build toàn bộ:
+
+   ```bash
+   mvn clean install
+   ```
+
+2. Chạy server:
+
+   ```bash
+   mvn -pl server exec:java
+   ```
+
+3. Chạy ít nhất hai client:
+
+   ```bash
+   mvn -pl client javafx:run
+   ```
+
+4. Kiểm tra các luồng:
+
+   - Đăng nhập bằng `admin`, `seller01`, `bidder01`.
+   - Seller tạo phiên đấu giá mới.
+   - Bidder nạp tiền và đặt giá.
+   - Mở hai client cùng xem một phiên để xác nhận giá cập nhật realtime.
+   - Admin hủy một phiên `OPEN` hoặc `RUNNING`.
+   - Tắt server trong lúc client đang mở để xác nhận client chuyển về `DISCONNECTED`.
+
+## Lưu ý
+
+Client hiện không có retry reconnect hoặc silent re-authentication tự động. Khi server bị tắt, các request đang chờ sẽ fail, token phía client bị xóa và người dùng cần đăng nhập lại sau khi server chạy lại.

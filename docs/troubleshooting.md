@@ -1,37 +1,72 @@
-# Khắc phục Sự cố (Troubleshooting)
+# Khắc phục sự cố
 
-Tài liệu này tổng hợp các vấn đề thường gặp và cách xử lý trong quá trình phát triển và vận hành AuctionPro.
+## Client báo không kết nối được server
 
-## 1. Vấn đề về Kết nối Socket
+Nguyên nhân thường gặp:
 
-### Hiện tượng: Client hiển thị "Connection Refused" ngay khi khởi động.
-- **Nguyên nhân:** Server chưa được bật hoặc đang chạy trên một cổng (Port) khác.
-- **Cách xử lý:** 
-    - Kiểm tra xem bạn đã chạy `mvn -pl server exec:java` chưa.
-    - Đảm bảo cổng `8080` không bị chiếm dụng bởi ứng dụng khác.
+- Server chưa chạy.
+- Server không chạy ở port `8080`.
+- Port bị firewall hoặc ứng dụng khác chặn.
 
-### Hiện tượng: Kết nối bị ngắt quãng liên tục.
-- **Nguyên nhân:** Tường lửa (Firewall) hoặc phần mềm diệt virus chặn kết nối TCP cục bộ.
-- **Cách xử lý:** Thêm ngoại lệ cho ứng dụng Java hoặc tạm tắt tường lửa để kiểm tra.
+Cách kiểm tra:
 
-## 2. Vấn đề về Biên dịch (Build Issues)
+```bash
+mvn -pl server exec:java
+```
 
-### Hiện tượng: Lỗi "Class not found" sau khi cập nhật code từ Git.
-- **Nguyên nhân:** Các module chưa được đồng bộ hóa bản build mới nhất.
-- **Cách xử lý:** Chạy `mvn clean install` ở thư mục gốc của dự án để đảm bảo module `common` được cài đặt vào kho lưu trữ cục bộ trước khi `server` và `client` biên dịch.
+Nếu đổi port server bằng `-Dserver.port=...`, client hiện cần được chỉnh cấu hình/field tương ứng trong code trước khi chạy.
 
-### Hiện tượng: Lỗi JavaFX không khởi động được (Graphics Device error).
-- **Nguyên nhân:** Thiếu driver đồ họa hoặc đang chạy trong môi trường không hỗ trợ giao diện (ví dụ: WSL không cấu hình X11).
-- **Cách xử lý:** Đảm bảo bạn đang chạy ứng dụng trực tiếp trên hệ điều hành có hỗ trợ đồ họa (Windows/macOS/Linux Desktop).
+## JavaFX không khởi động được
 
-## 3. Vấn đề về Dữ liệu (Database Issues)
+Khi chạy client thật, máy cần môi trường đồ họa. Lỗi thường gặp trên Linux headless hoặc WSL chưa cấu hình display:
 
-### Hiện tượng: Lỗi "Database is locked".
-- **Nguyên nhân:** Có nhiều ứng dụng đang cùng ghi vào file `auction.db` hoặc một transaction chưa được đóng đúng cách.
-- **Cách xử lý:** 
-    - Đảm bảo chỉ có một tiến trình Server đang chạy.
-    - Sử dụng một công cụ quản lý SQLite (như DB Browser for SQLite) để kiểm tra xem có tiến trình nào đang giữ khóa không.
+```text
+Unable to open DISPLAY
+```
 
-### Hiện tượng: Ảnh không hiển thị trên giao diện.
-- **Nguyên nhân:** Đường dẫn trong `uploads/` không khớp hoặc Server chưa phục vụ tài nguyên tĩnh đúng cách.
-- **Cách xử lý:** Kiểm tra xem ảnh có tồn tại trong thư mục `uploads/` của module server không. Xem log backend để biết URL của ảnh đang được sinh ra như thế nào.
+Cách xử lý:
+
+- Chạy client trên Windows, macOS hoặc Linux desktop.
+- Với CI/test headless, chạy Maven dưới display ảo:
+
+  ```bash
+  xvfb-run -a mvn clean verify
+  ```
+
+## Build lỗi sau khi pull code mới
+
+Với Maven multi-module, hãy build từ thư mục gốc để module `common` được biên dịch trước:
+
+```bash
+mvn clean install
+```
+
+Nếu chỉ chạy một module riêng lẻ và gặp lỗi thiếu dependency nội bộ, chạy lại lệnh trên ở root project.
+
+## Database bị khóa
+
+Lỗi `database is locked` thường xuất hiện khi nhiều tiến trình cùng ghi vào một file SQLite hoặc có transaction chưa đóng.
+
+Cách xử lý:
+
+- Đảm bảo chỉ có một server đang chạy trên cùng database.
+- Tắt tool SQLite đang mở file `auction.db` nếu tool đó giữ lock ghi.
+- Kiểm tra log server để tìm transaction hoặc request lỗi trước đó.
+
+## Muốn reset dữ liệu demo
+
+Tắt server rồi xóa file database đang dùng, mặc định là:
+
+```text
+auction.db
+```
+
+Khi chạy lại server, schema và seed data sẽ được tạo lại nếu không truyền `-Dauction.skip.seed=true`.
+
+## Ảnh mặt hàng không hiển thị
+
+Kiểm tra:
+
+- File ảnh có tồn tại trong thư mục `uploads`.
+- Asset server đang chạy ở port `8081`.
+- URL ảnh trong log/server response có đúng host và port không.

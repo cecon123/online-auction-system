@@ -1,50 +1,47 @@
-# Hướng dẫn Cho Thành viên mới (Developer Onboarding)
+# Hướng dẫn cho thành viên mới
 
-Chào mừng bạn gia nhập đội ngũ phát triển AuctionPro! Tài liệu này giúp bạn nhanh chóng nắm bắt quy trình và bắt đầu đóng góp cho dự án.
+Tài liệu này giúp thành viên trong nhóm nắm nhanh cách build, chạy và đóng góp cho AuctionPro.
 
-## 1. Quy trình Làm việc (Workflow)
+## Quy trình branch
 
-Chúng tôi sử dụng **Enterprise Git Workflow** để quản lý mã nguồn:
+- `main`: mã ổn định để demo/nộp bài.
+- `dev`: nhánh tích hợp.
+- `feature/<tên-người-làm>/<tên-task>`: nhánh làm việc cho từng task.
 
-1. **Nhánh Chính:**
-    - `main`: Chứa mã nguồn ổn định nhất, sẵn sàng triển khai.
-    - `dev`: Nhánh tích hợp cho các tính năng đang phát triển.
-2. **Nhánh Tính năng:**
-    - Tạo nhánh mới từ `dev` theo cú pháp: `feature/<tên-người-làm>/<tên-task>`.
-    - Ví dụ: `feature/huy/bid-auto-refresh`.
-3. **Pull Request (PR):**
-    - Sau khi hoàn thành và tự kiểm thử, tạo PR vào nhánh `dev`.
-    - Phải có ít nhất một thành viên (Reviewer) approve trước khi merge.
+Ví dụ:
 
-## 2. Quy ước Lập trình (Coding Conventions)
+```bash
+git switch dev
+git pull origin dev
+git switch -c feature/huy/auth-service
+```
 
-- **Ngôn ngữ:**
-    - Code (Biến, Hàm, Lớp, Comment): **Tiếng Anh**.
-    - Tài liệu hướng dẫn & Báo cáo: **Tiếng Việt**.
-- **Tiêu chuẩn Code:**
-    - Tuân thủ Google Java Style Guide.
-    - Sử dụng `final` cho các biến không thay đổi.
-    - Ưu tiên Composition (Thành phần) hơn Inheritance (Kế thừa).
-- **Logging:**
-    - Tuyệt đối không sử dụng `System.out.println`.
-    - Sử dụng SLF4J: `logger.info()`, `logger.error()`, `logger.debug()`.
+## Quy ước code
 
-## 3. Quy trình Commit Nghiêm ngặt
+- Tên class, method, variable, comment, log và exception message dùng tiếng Anh.
+- Tài liệu và trao đổi nhóm có thể dùng tiếng Việt.
+- Không dùng `System.out.println` trong code logic; dùng SLF4J + Logback.
+- Commit message theo Conventional Commits: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore:`.
 
-Trước khi thực hiện `git commit`, bạn BẮT BUỘC phải:
-1. Chạy `mvn clean install` để đảm bảo không lỗi biên dịch.
-2. Chạy `mvn test` để đảm bảo không lỗi logic (Regressions).
-3. Chạy thực tế (Server + Client) để kiểm tra tính ổn định.
-4. Commit message theo chuẩn **Conventional Commits**:
-    - `feat: ...` (Tính năng mới)
-    - `fix: ...` (Sửa lỗi)
-    - `docs: ...` (Cập nhật tài liệu)
-    - `chore: ...` (Cấu hình, build...)
+## Kiểm tra trước khi tạo Pull Request
 
-## 4. Các bước cho ngày đầu tiên
+```bash
+mvn clean verify
+```
 
-1. Clone dự án và cài đặt môi trường (Theo [Setup Guide](setup.md)).
-2. Đọc hiểu giao thức Socket tại [API Protocol](../protocol.md).
-3. Chạy thử hệ thống với tài khoản admin mẫu.
-4. Nhận task đầu tiên từ bảng điều khiển (Task Board) trong README.
-5. Tạo nhánh và bắt đầu hành trình phát triển của bạn!
+Sau đó chạy thủ công:
+
+```bash
+mvn -pl server exec:java
+mvn -pl client javafx:run
+```
+
+Kiểm tra ít nhất luồng đăng nhập, tạo phiên đấu giá, nạp tiền, đặt giá và cập nhật realtime giữa hai client.
+
+## Tài liệu cần đọc
+
+1. [Setup guide](setup.md)
+2. [Socket protocol](protocol.md)
+3. [Class diagram](class-diagram.md)
+4. [Testing guide](testing.md)
+5. [Git workflow](git-workflow.md)
