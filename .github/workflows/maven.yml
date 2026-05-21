@@ -89,9 +89,6 @@ jobs:
           cp client/target/auction-client.jar "dist/auction-client-${matrix_platform}-${version}.jar"
           if [ "$matrix_platform" = "linux" ]; then
             cp server/target/auction-server.jar "dist/auction-server-${version}.jar"
-            if [ -f docs/pdf/auctionpro-report.pdf ]; then
-              cp docs/pdf/auctionpro-report.pdf "dist/auctionpro-report-${version}.pdf"
-            fi
           fi
         env:
           release_tag: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
@@ -135,5 +132,5 @@ jobs:
           else
             gh release create "$TAG_NAME" dist/* \
               --title "AuctionPro ${version}" \
-              --notes "Automated release for AuctionPro ${version}. Includes server fat JAR, platform-specific client fat JARs, and the project report PDF when available."
+              --notes "Automated release for AuctionPro ${version}. Includes server fat JAR and platform-specific client fat JARs."
           fi
