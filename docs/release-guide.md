@@ -7,6 +7,7 @@ Workflow GitHub Actions tự động build, test và tạo release khi repositor
 - Push vào `dev` hoặc `main`: chạy `mvn clean verify` trên Ubuntu và upload JAR artifact của lần build CI.
 - Pull Request vào `dev` hoặc `main`: chạy `mvn clean verify`.
 - Push tag dạng `v1.0.0`: chạy verify, build release artifacts trên Linux/Windows/macOS và tạo GitHub Release.
+- Chạy thủ công bằng **Actions** > **Build, Test, and Release** > **Run workflow**: nhập tag đã tồn tại, ví dụ `v1.0.0`, để build lại artifact và tạo/cập nhật release cho tag đó.
 
 ## Artifact trong release
 
@@ -61,4 +62,8 @@ Client JavaFX dùng native dependency theo hệ điều hành, nên release tác
 
 ## Nếu cần sửa release
 
-Nếu tag đã push nhưng release lỗi, ưu tiên tạo version mới như `v1.0.2` sau khi sửa code. Chỉ xóa/recreate tag khi chắc chắn release đó chưa được dùng để nộp hoặc chia sẻ.
+Nếu tag đã push nhưng release lỗi do bước publish, không cần tạo lại tag ngay. Mở **Actions** > **Build, Test, and Release** > **Run workflow**, nhập tag cần release, ví dụ `v1.0.0`, rồi chạy lại. Workflow sẽ checkout đúng tag, build lại JAR và tạo release; nếu release đã tồn tại thì upload lại asset bằng chế độ ghi đè.
+
+Nếu lỗi nằm ở source code hoặc artifact của tag đã sai nội dung, ưu tiên sửa trên branch mới, merge vào `dev`, merge tiếp vào `main`, rồi tạo version mới như `v1.0.1` hoặc `v1.0.2`. Chỉ xóa/recreate tag khi chắc chắn tag đó chưa được dùng để nộp hoặc chia sẻ.
+
+Nếu release job fail ở bước **Create GitHub Release**, kiểm tra thêm mục **Settings** > **Actions** > **General** > **Workflow permissions**. Repository cần cho phép GitHub Actions tạo release bằng quyền ghi nội dung repository.
