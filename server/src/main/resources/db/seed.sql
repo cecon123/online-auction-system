@@ -1,5 +1,5 @@
 -- Seed data for AuctionPro System
--- Password for all users is 'password123' (BCrypt hashed)
+-- Password for all users is '123456' (BCrypt hashed)
 
 -- 1. Insert Users
 INSERT INTO users (username, password_hash, full_name, role, balance, active, created_at) VALUES

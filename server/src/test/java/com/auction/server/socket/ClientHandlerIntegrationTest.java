@@ -87,7 +87,7 @@ class ClientHandlerIntegrationTest {
                   new RegisterRequest(
                       "Realtime Bidder",
                       "realtime_bidder",
-                      "password123",
+                      "123456",
                       Role.BIDDER))));
       Response<?> registerResponse = readResponse(reader);
       assertTrue(registerResponse.isSuccess(), registerResponse.getMessage());
@@ -98,7 +98,7 @@ class ClientHandlerIntegrationTest {
                   MessageType.LOGIN,
                   "login-1",
                   null,
-                  new LoginRequest("realtime_bidder", "password123"))));
+                  new LoginRequest("realtime_bidder", "123456"))));
       Response<?> loginResponse = readResponse(reader);
       assertTrue(loginResponse.isSuccess(), loginResponse.getMessage());
       assertEquals(MessageType.LOGIN, loginResponse.getType());

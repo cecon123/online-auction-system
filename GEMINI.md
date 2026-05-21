@@ -57,8 +57,8 @@ AI Agent và thành viên PHẢI thực hiện:
 
 ### 8.2 Test Socket bằng Ncat (Backend Test)
 Sử dụng `ncat localhost 8080` và gửi các dòng JSON mẫu:
-- **Register:** `{"type":"REGISTER","requestId":"req-001","token":null,"data":{"fullName":"Test User","username":"test01","password":"password123","role":"BIDDER"}}`
-- **Login:** `{"type":"LOGIN","requestId":"req-002","token":null,"data":{"username":"test01","password":"password123"}}`
+- **Register:** `{"type":"REGISTER","requestId":"req-001","token":null,"data":{"fullName":"Test User","username":"test01","password":"123456","role":"BIDDER"}}`
+- **Login:** `{"type":"LOGIN","requestId":"req-002","token":null,"data":{"username":"test01","password":"123456"}}`
 
 ### 8.3 Quan sát Log
 Theo dõi cửa sổ Server để thấy các log SLF4J (INFO/ERROR) nhằm debug luồng xử lý.
